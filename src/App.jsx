@@ -23,7 +23,29 @@ function loadReports(){
 function saveReports(list){ try{ localStorage.setItem(REPORTS_KEY, JSON.stringify(list)); }catch(e){} }
 
 function vibrate(pattern){
+  try{
+    const tg = typeof window !== "undefined" ? window.Telegram && window.Telegram.WebApp : null;
+    if(tg && tg.HapticFeedback){
+      // Telegram's haptics API takes discrete styles, not ms patterns — map roughly.
+      if(Array.isArray(pattern)) tg.HapticFeedback.notificationOccurred("success");
+      else if(pattern && pattern > 20) tg.HapticFeedback.impactOccurred("medium");
+      else tg.HapticFeedback.impactOccurred("light");
+      return;
+    }
+  }catch(e){}
   try{ if(typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
+}
+
+/* ============ telegram mini app ============ */
+function getTelegram(){
+  try{ return (typeof window !== "undefined" && window.Telegram && window.Telegram.WebApp) || null; }catch(e){ return null; }
+}
+function telegramUserToAccount(tgUser, colorScheme){
+  const langMap = { ru:"ru", uz:"uz" };
+  const lang = langMap[tgUser.language_code] || "en";
+  const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ") || tgUser.username || "Telegram";
+  const email = "tg_" + tgUser.id + "@telegram.local";
+  return { name, email, lang, dark: colorScheme === "dark" };
 }
 
 function makeAccount({ name, email, lang }){
@@ -146,7 +168,7 @@ const STRINGS = {
 
     libraryTitle: "Библиотека",
     searchPlaceholder: "Поиск по названию и автору",
-    filterAll: "Все", filterBook: "Книги", filterAudio: "Аудио", filterVisual: "Визуал", filterSaved: "Сохранённые",
+    filterAll: "Все", filterBook: "Книги", filterAudio: "Аудио", filterVisual: "Визуал", filterHearing: "Слух", filterLearning: "Обучение", filterSaved: "Сохранённые",
     libraryEmpty: "Ничего не найдено. Попробуйте другое слово или снимите фильтр.",
 
     storiesTitle: "Голоса сообщества",
@@ -202,7 +224,39 @@ const STRINGS = {
     insightsVoice: "С голосовыми подсказками",
     insightsStories: "Опубликовано историй",
     insightsReports: "Отправлено отчётов",
-    insightsNote: "Данные только с этого устройства и браузера — для полной статистики команды нужен сервер."
+    insightsNote: "Данные только с этого устройства и браузера — для полной статистики команды нужен сервер.",
+
+    libraryAudioBtn: "Аудио", libraryReadBtn: "Читать",
+
+    learnTitle: "«Как вам удобнее учиться?»",
+    uploadPdfTitle: "Загрузить PDF", uploadPdfSub: "Нажмите, чтобы выбрать документ",
+    uploadPdfChosen: "Файл выбран",
+    accessibilityOptionsLabel: "Опции доступности",
+    optConvertAudio: "Преобразовать в аудио", optConvertAudioSub: "Озвучивание текста",
+    optSimplify: "Упростить текст", optSimplifySub: "Версия простым языком",
+    optSummarize: "Сократить содержание", optSummarizeSub: "Только ключевые мысли",
+    optLargeText: "Крупный текст", optLargeTextSub: "Увеличенный размер шрифта",
+    optScreenReader: "Для экранного диктора", optScreenReaderSub: "Оптимизировано для вспомогательных технологий",
+    uploadCtaDisabled: "Загрузите PDF, чтобы продолжить",
+    uploadCtaReady: "Обработать документ",
+    uploadProcessing: "Обрабатываем документ…",
+    uploadDone: "Готово — настройки применены",
+    browsePathwaysLink: "Или откройте готовые маршруты обучения →",
+
+    storyQuote: "«Ваш опыт важен»",
+    storyIntro: "Помогите нам понять барьеры в образовании через ваш личный опыт. Каждая история влияет на исследование.",
+    formatWrite: "Написать историю", formatWriteSub: "Введите текст своего опыта",
+    formatVoice: "Голосовая запись", formatVoiceSub: "Расскажите историю голосом",
+    formatVideo: "Загрузить видео", formatVideoSub: "Поделитесь видеообращением",
+    chooseFormatCta: "Выберите формат выше",
+    continueCta: "Продолжить",
+    anonNote: "Можно поделиться анонимно · Принимаем любой формат",
+    recStart: "Начать запись", recStop: "Остановить", recRetake: "Записать заново",
+    recNeedMic: "Нужен доступ к микрофону",
+    videoChoose: "Выбрать видеофайл", videoRetake: "Выбрать другое видео",
+    attachTitleLabel: "Название", attachCountryLabel: "Страна",
+    mediaNote: "Аудио и видео сохраняются только в этой сессии — после перезагрузки страницы файл нужно будет прикрепить заново.",
+    continueAsTelegram: "Продолжить как {name}", orLabel: "или"
   },
   uz: {
     appTagline: "ONGGA YO'L OCHAMIZ",
@@ -265,7 +319,7 @@ const STRINGS = {
 
     libraryTitle: "Kutubxona",
     searchPlaceholder: "Nom va muallif bo'yicha qidiring",
-    filterAll: "Barchasi", filterBook: "Kitoblar", filterAudio: "Audio", filterVisual: "Vizual", filterSaved: "Saqlangan",
+    filterAll: "Barchasi", filterBook: "Kitoblar", filterAudio: "Audio", filterVisual: "Vizual", filterHearing: "Eshitish", filterLearning: "Ta'lim", filterSaved: "Saqlangan",
     libraryEmpty: "Hech narsa topilmadi. Boshqa so'z bilan qidiring yoki filtrni olib tashlang.",
 
     storiesTitle: "Jamoa ovozlari",
@@ -321,7 +375,39 @@ const STRINGS = {
     insightsVoice: "Ovozli yordam yoqilgan",
     insightsStories: "Nashr qilingan hikoyalar",
     insightsReports: "Yuborilgan xabarlar",
-    insightsNote: "Ma'lumotlar faqat shu qurilma va brauzerdan — jamoaning to'liq statistikasi uchun server kerak."
+    insightsNote: "Ma'lumotlar faqat shu qurilma va brauzerdan — jamoaning to'liq statistikasi uchun server kerak.",
+
+    libraryAudioBtn: "Audio", libraryReadBtn: "O'qish",
+
+    learnTitle: "\u00abQanday o'qishni xohlaysiz?\u00bb",
+    uploadPdfTitle: "PDF yuklash", uploadPdfSub: "Hujjat tanlash uchun bosing",
+    uploadPdfChosen: "Fayl tanlandi",
+    accessibilityOptionsLabel: "Qulaylik parametrlari",
+    optConvertAudio: "Audioga aylantirish", optConvertAudioSub: "Matnni ovoz bilan o'qish",
+    optSimplify: "Matnni soddalashtirish", optSimplifySub: "Oddiy til versiyasi",
+    optSummarize: "Qisqacha mazmun", optSummarizeSub: "Faqat asosiy fikrlar",
+    optLargeText: "Katta matn", optLargeTextSub: "Kattalashtirilgan shrift",
+    optScreenReader: "Ekran diktori uchun", optScreenReaderSub: "Yordamchi texnologiyalar uchun moslashtirilgan",
+    uploadCtaDisabled: "Davom etish uchun PDF yuklang",
+    uploadCtaReady: "Hujjatni qayta ishlash",
+    uploadProcessing: "Hujjat qayta ishlanmoqda…",
+    uploadDone: "Tayyor — sozlamalar qo'llanildi",
+    browsePathwaysLink: "Yoki tayyor ta'lim yo'nalishlarini ko'ring →",
+
+    storyQuote: "\u00abSizning tajribangiz muhim\u00bb",
+    storyIntro: "Shaxsiy tajribangiz orqali ta'limdagi to'siqlarni tushunishga yordam bering. Har bir hikoya tadqiqotga ta'sir qiladi.",
+    formatWrite: "Hikoya yozish", formatWriteSub: "Tajribangizni matn sifatida kiriting",
+    formatVoice: "Ovozli yozuv", formatVoiceSub: "Hikoyangizni ovoz bilan aytib bering",
+    formatVideo: "Video yuklash", formatVideoSub: "Video murojaat bilan ulashing",
+    chooseFormatCta: "Yuqoridan formatni tanlang",
+    continueCta: "Davom etish",
+    anonNote: "Anonim ulashish mumkin · Har qanday format qabul qilinadi",
+    recStart: "Yozishni boshlash", recStop: "To'xtatish", recRetake: "Qayta yozish",
+    recNeedMic: "Mikrofonga ruxsat kerak",
+    videoChoose: "Video fayl tanlash", videoRetake: "Boshqa video tanlash",
+    attachTitleLabel: "Sarlavha", attachCountryLabel: "Davlat",
+    mediaNote: "Audio va video faqat shu seansda saqlanadi — sahifa yangilangach faylni qayta biriktirish kerak bo'ladi.",
+    continueAsTelegram: "{name} sifatida davom etish", orLabel: "yoki"
   },
   en: {
     appTagline: "MAKING WAY FOR MINDS",
@@ -384,7 +470,7 @@ const STRINGS = {
 
     libraryTitle: "Accessible Library",
     searchPlaceholder: "Search titles and authors",
-    filterAll: "All", filterBook: "Book", filterAudio: "Audio", filterVisual: "Visual", filterSaved: "Saved",
+    filterAll: "All", filterBook: "Book", filterAudio: "Audio", filterVisual: "Visual", filterHearing: "Hearing", filterLearning: "Learning", filterSaved: "Saved",
     libraryEmpty: "No resources match that. Try another word or clear the filter.",
 
     storiesTitle: "Community Voices",
@@ -440,7 +526,39 @@ const STRINGS = {
     insightsVoice: "With voice guide on",
     insightsStories: "Stories published",
     insightsReports: "Reports submitted",
-    insightsNote: "This is device-and-browser-only data — a real team dashboard needs a server."
+    insightsNote: "This is device-and-browser-only data — a real team dashboard needs a server.",
+
+    libraryAudioBtn: "Audio", libraryReadBtn: "Read",
+
+    learnTitle: "\u201cHow would you like to learn?\u201d",
+    uploadPdfTitle: "Upload PDF", uploadPdfSub: "Tap to select a document",
+    uploadPdfChosen: "File selected",
+    accessibilityOptionsLabel: "Accessibility Options",
+    optConvertAudio: "Convert to Audio", optConvertAudioSub: "Text-to-speech output",
+    optSimplify: "Simplify Text", optSimplifySub: "Plain language version",
+    optSummarize: "Summarize Content", optSummarizeSub: "Key points only",
+    optLargeText: "Large Text Mode", optLargeTextSub: "Increased font size",
+    optScreenReader: "Screen Reader Friendly", optScreenReaderSub: "Optimized for assistive tech",
+    uploadCtaDisabled: "Upload a PDF to continue",
+    uploadCtaReady: "Process document",
+    uploadProcessing: "Processing document…",
+    uploadDone: "Done — settings applied",
+    browsePathwaysLink: "Or browse structured pathways →",
+
+    storyQuote: "\u201cYour experience matters.\u201d",
+    storyIntro: "Help us understand barriers in education through your lived experience. Every story shapes future research.",
+    formatWrite: "Write a Story", formatWriteSub: "Type your experience",
+    formatVoice: "Voice Recording", formatVoiceSub: "Speak your story aloud",
+    formatVideo: "Upload Video", formatVideoSub: "Share a video message",
+    chooseFormatCta: "Choose a Format Above",
+    continueCta: "Continue",
+    anonNote: "Anonymous sharing available · All formats welcomed",
+    recStart: "Start recording", recStop: "Stop", recRetake: "Record again",
+    recNeedMic: "Microphone access needed",
+    videoChoose: "Choose a video file", videoRetake: "Choose a different video",
+    attachTitleLabel: "Title", attachCountryLabel: "Country",
+    mediaNote: "Audio and video only last for this session — after a page reload you'll need to attach the file again.",
+    continueAsTelegram: "Continue as {name}", orLabel: "or"
   }
 };
 function tFor(lang, key){
@@ -449,22 +567,31 @@ function tFor(lang, key){
 
 /* ============ content ============ */
 const LIBRARY = [
-  { id:"l1", title:"Teaching Every Reader", author:"R. Okonkwo", format:"Book", emoji:"📗", meta:"312 pages · EPUB, Braille-ready", year:2024 },
-  { id:"l2", title:"Sound of a Classroom", author:"Narrated by M. Duarte", format:"Audio", emoji:"🎧", meta:"4 h 12 min · Transcript included", year:2025,
+  { id:"l1", title:"Teaching Every Reader", author:"R. Okonkwo", format:"Book", category:"Book", tags:["Text","Braille"], hasAudio:false, hasRead:true, emoji:"📗", meta:"312 pages · EPUB, Braille-ready", year:2024 },
+  { id:"l2", title:"Sound of a Classroom", author:"Narrated by M. Duarte", format:"Audio", category:"Hearing", tags:["Audio","Transcript"], hasAudio:true, hasRead:true, emoji:"🎧", meta:"4 h 12 min · Transcript included", year:2025,
     transcript:["[0:00] A school bell rings. Children's voices overlap in a corridor.",
       "[0:42] Narrator: \"This is Room 4B, nine in the morning, on an ordinary Tuesday.\"",
       "[1:15] A teacher reads instructions slowly, pausing after each sentence.",
       "[2:03] Narrator: \"Notice how the room goes quiet before every new activity — that pause is not empty, it's a signal.\""] },
-  { id:"l3", title:"Colour Contrast Field Guide", author:"MWM Research", format:"Visual", emoji:"🎨", meta:"48 plates · Alt-text on every image", year:2025,
+  { id:"l3", title:"Colour Contrast Field Guide", author:"MWM Research", format:"Visual", category:"Visual", tags:["Visual","Alt Text"], hasAudio:false, hasRead:true, emoji:"🎨", meta:"48 plates · Alt-text on every image", year:2025,
     altTexts:["Plate 3: a classroom wall painted dark navy behind a whiteboard, cutting glare noticeably.",
       "Plate 11: two versions of the same worksheet — one in grey-on-white, one in near-black-on-cream — shown side by side.",
       "Plate 27: a hallway sign using a 7:1 contrast ratio, photographed from ten metres away and still legible."] },
-  { id:"l4", title:"Dyslexia in Early Grades", author:"S. Lindqvist", format:"Book", emoji:"📘", meta:"186 pages · Large-print edition", year:2023 },
-  { id:"l5", title:"Signed Stories, Vol. 2", author:"Deaf Learners Collective", format:"Visual", emoji:"🤟", meta:"22 films · Sign language + captions", year:2026 },
-  { id:"l6", title:"Listening to Learners", author:"MWM Interviews", format:"Audio", emoji:"🎙️", meta:"18 episodes · 42 countries", year:2026 },
-  { id:"l7", title:"Maths Without Sight", author:"A. Boateng", format:"Book", emoji:"📐", meta:"240 pages · Tactile diagrams", year:2024 },
-  { id:"l8", title:"Rooms That Work", author:"MWM Research", format:"Visual", emoji:"🏫", meta:"Photo study · 60 classrooms", year:2025 }
+  { id:"l4", title:"Dyslexia in Early Grades", author:"S. Lindqvist", format:"Book", category:"Learning", tags:["Large Text"], hasAudio:false, hasRead:true, emoji:"📘", meta:"186 pages · Large-print edition", year:2023 },
+  { id:"l5", title:"Signed Stories, Vol. 2", author:"Deaf Learners Collective", format:"Visual", category:"Hearing", tags:["Video","Captions"], hasAudio:false, hasRead:true, emoji:"🤟", meta:"22 films · Sign language + captions", year:2026 },
+  { id:"l6", title:"Listening to Learners", author:"MWM Interviews", format:"Audio", category:"Learning", tags:["Audio"], hasAudio:true, hasRead:true, emoji:"🎙️", meta:"18 episodes · 42 countries", year:2026 },
+  { id:"l7", title:"Maths Without Sight", author:"A. Boateng", format:"Book", category:"Visual", tags:["Braille","Tactile"], hasAudio:false, hasRead:true, emoji:"📐", meta:"240 pages · Tactile diagrams", year:2024 },
+  { id:"l8", title:"Rooms That Work", author:"MWM Research", format:"Visual", category:"Visual", tags:["Visual"], hasAudio:false, hasRead:true, emoji:"🏫", meta:"Photo study · 60 classrooms", year:2025 },
+  { id:"l9", title:"Seeing Differently", author:"MWM Research", format:"Visual", category:"Visual", tags:["Audio","Large Text"], hasAudio:true, hasRead:true, emoji:"👓", meta:"Visual accessibility guide", year:2026,
+    description:"Visual accessibility guide" },
+  { id:"l10", title:"Sound and Learning", author:"MWM Research", format:"Audio", category:"Hearing", tags:["Audio","Braille"], hasAudio:true, hasRead:true, emoji:"🔔", meta:"Hearing support strategies", year:2026,
+    description:"Hearing support strategies" },
+  { id:"l11", title:"Every Learner Counts", author:"MWM Research", format:"Book", category:"Learning", tags:["Text","Video"], hasAudio:false, hasRead:true, emoji:"🧩", meta:"Inclusive classroom tools", year:2026,
+    description:"Inclusive classroom tools" },
+  { id:"l12", title:"Pathways to Reading", author:"MWM Research", format:"Book", category:"Learning", tags:["Audio","Simplified"], hasAudio:true, hasRead:true, emoji:"🛤️", meta:"Dyslexia-friendly formats", year:2026,
+    description:"Dyslexia-friendly formats" }
 ];
+const LIBRARY_CATEGORIES = ["All","Visual","Hearing","Learning","Book"];
 const PATHS = [
   { id:"p1", title:"Foundations of Accessible Teaching", emoji:"🧭", lessons:8, mins:95, level:"Start here" },
   { id:"p2", title:"Designing Readable Materials", emoji:"📝", lessons:6, mins:70, level:"Practical" },
@@ -614,6 +741,16 @@ const I = {
   moon:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>,
   aa:(p)=><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 17 7.5 6l4.5 11"/><path d="M4.3 13.5h6.4"/><path d="M14 17c0-2.5 2-4 4-4s3.5 1.3 3.5 3v4M21.5 15.2c-.8-.5-1.7-.7-2.8-.4-1.6.4-2.2 2.6-.7 3.4 1 .5 2.2.2 3.1-.5"/></svg>,
   chart:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 20V10M11 20V4M18 20v-7"/><path d="M3 20h18"/></svg>,
+  upload:(p)=><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>,
+  volume:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>,
+  wand:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m15 4 1.5 3L20 8.5 16.5 10 15 13l-1.5-3L10 8.5 13.5 7Z"/><path d="m4 20 8-8"/></svg>,
+  layers:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg>,
+  wheelchair:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="9" cy="5" r="1.6"/><path d="M9 8v5l-4 6M9 13h6l3 6M9 13l4-2.5"/></svg>,
+  mic:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>,
+  video:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3Z"/></svg>,
+  pencil:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>,
+  stop:(p)=><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" {...p}><rect x="5" y="5" width="14" height="14" rx="3"/></svg>,
+  play:(p)=><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M7 4.5v15l13-7.5Z"/></svg>,
   signal:()=><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".45"/></svg>,
   wifi:()=><svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M1 4.2a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.9a6.8 6.8 0 0 1 8.8 0"/><path d="M6.2 9.5a3 3 0 0 1 3.6 0"/></svg>,
   battery:()=><svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x=".7" y=".7" width="19" height="10.6" rx="3" stroke="currentColor" strokeOpacity=".5"/><rect x="2.4" y="2.4" width="15.6" height="7.2" rx="1.8" fill="currentColor"/><path d="M21.4 4.4v3.2a2 2 0 0 0 0-3.2z" fill="currentColor" fillOpacity=".5"/></svg>
@@ -681,7 +818,7 @@ function Splash({ onStart, lang, setLang, t }){
 }
 
 /* ============ auth: register / login ============ */
-function AuthScreen({ lang, setLang, t, onAuth, error, setError }){
+function AuthScreen({ lang, setLang, t, onAuth, error, setError, tgUser, onTelegramLogin }){
   const [mode, setMode] = useState("register");
   const [form, setForm] = useState({ name:"", email:"", password:"" });
   const emailOk = (v)=> /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
@@ -713,7 +850,16 @@ function AuthScreen({ lang, setLang, t, onAuth, error, setError }){
           {mode === "register" ? t("authSubtitleRegister") : t("authSubtitleLogin")}
         </p>
 
-        <div className="seg" style={{marginTop:20}}>
+        {tgUser && (
+          <React.Fragment>
+            <button className="cta" style={{marginTop:18, background:"#2AABEE"}} onClick={onTelegramLogin}>
+              {t("continueAsTelegram").replace("{name}", tgUser.first_name || "Telegram")} <I.arrow/>
+            </button>
+            <div className="squiggle" style={{margin:"16px 4px"}}><i/><span className="muted" style={{fontSize:11}}>{t("orLabel")}</span><i/></div>
+          </React.Fragment>
+        )}
+
+        <div className="seg" style={{marginTop: tgUser ? 0 : 20}}>
           <button className={mode === "register" ? "on" : ""} onClick={()=>{ setMode("register"); setError(""); }}>{t("tabRegister")}</button>
           <button className={mode === "login" ? "on" : ""} onClick={()=>{ setMode("login"); setError(""); }}>{t("tabLogin")}</button>
         </div>
@@ -824,7 +970,7 @@ function VoiceFab({ onPress, hasTabbar }){
 function Home({ go, t, lang, greeting, simplified }){
   const tiles = [
     { key:"tileLibrary", emoji:"📚", to:{ tab:"library" } },
-    { key:"tileHub", emoji:"🎓", to:{ view:{ type:"paths" } } },
+    { key:"tileHub", emoji:"🎓", to:{ view:{ type:"learn" } } },
     { key:"tileShare", emoji:"🎤", to:{ view:{ type:"compose" } } },
     { key:"tileCommunity", emoji:"🌍", to:{ tab:"stories" } }
   ];
@@ -887,16 +1033,29 @@ function Home({ go, t, lang, greeting, simplified }){
 }
 
 /* ============ library ============ */
-const FILTER_KEYS = { All:"filterAll", Book:"filterBook", Audio:"filterAudio", Visual:"filterVisual", Saved:"filterSaved" };
-function Library({ go, saved, toggleSave, t }){
+const FILTER_KEYS = { All:"filterAll", Visual:"filterVisual", Hearing:"filterHearing", Learning:"filterLearning", Book:"filterBook", Saved:"filterSaved" };
+function Library({ go, saved, toggleSave, t, lang }){
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("All");
-  const filters = ["All","Book","Audio","Visual","Saved"];
+  const filters = [...LIBRARY_CATEGORIES, "Saved"];
   const items = useMemo(()=>LIBRARY.filter(it=>{
-    const okF = filter === "All" ? true : filter === "Saved" ? saved.includes(it.id) : it.format === filter;
+    const okF = filter === "All" ? true : filter === "Saved" ? saved.includes(it.id) : it.category === filter;
     const okQ = (it.title + " " + it.author).toLowerCase().includes(q.trim().toLowerCase());
     return okF && okQ;
   }), [q, filter, saved]);
+
+  const readAloud = (it)=>{
+    const text = it.title + ". " + (it.description || it.meta || "");
+    if(typeof window !== "undefined" && "speechSynthesis" in window){
+      try{
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = lang === "uz" ? "uz-UZ" : lang === "en" ? "en-US" : "ru-RU";
+        u.rate = 0.98;
+        window.speechSynthesis.speak(u);
+      }catch(e){}
+    }
+  };
 
   return (
     <div className="scroll with-tabs anim-fade">
@@ -918,20 +1077,34 @@ function Library({ go, saved, toggleSave, t }){
           <div className="emoji">🔍</div>
           <p className="muted" style={{fontSize:13}}>{t("libraryEmpty")}</p>
         </div>
-      ) : items.map(it=>(
-        <div key={it.id} className="card">
-          <button className="thumb" onClick={()=>go({ view:{ type:"resource", id:it.id } }, it.title)} aria-label={"Open " + it.title}>{it.emoji}</button>
-          <button style={{flex:1, textAlign:"left"}} onClick={()=>go({ view:{ type:"resource", id:it.id } }, it.title)}>
-            <b>{it.title}</b>
-            <div className="meta">{it.author} · {it.year}</div>
-            <span className={"pill " + it.format.toLowerCase()}>{it.format}</span>
-          </button>
-          <button
-            onClick={()=>toggleSave(it.id)}
-            aria-label={saved.includes(it.id) ? "Remove from saved" : "Save for later"}
-            style={{color: saved.includes(it.id) ? "var(--green)" : "var(--muted)"}}>
-            <I.bookmark fill={saved.includes(it.id) ? "currentColor" : "none"}/>
-          </button>
+      ) : items.map((it,i)=>(
+        <div key={it.id} className="lib-card">
+          <div className="lib-card-top">
+            <button className={"lib-thumb" + (i % 2 ? " navy" : "")} onClick={()=>go({ view:{ type:"resource", id:it.id } }, it.title)} aria-label={"Open " + it.title}>{it.emoji}</button>
+            <button style={{flex:1, textAlign:"left"}} onClick={()=>go({ view:{ type:"resource", id:it.id } }, it.title)}>
+              <b>{it.title}</b>
+              <div className="meta">{it.description || it.meta}</div>
+            </button>
+            <button
+              onClick={()=>toggleSave(it.id)}
+              aria-label={saved.includes(it.id) ? "Remove from saved" : "Save for later"}
+              style={{color: saved.includes(it.id) ? "var(--green)" : "var(--muted)"}}>
+              <I.bookmark fill={saved.includes(it.id) ? "currentColor" : "none"}/>
+            </button>
+          </div>
+          <div className="lib-tags">
+            {it.tags.map(tag=><span key={tag} className="lib-tag">{tag}</span>)}
+          </div>
+          <div className="lib-actions">
+            {it.hasAudio && (
+              <button className="lib-btn audio" onClick={()=>readAloud(it)}>
+                <I.play/> {t("libraryAudioBtn")}
+              </button>
+            )}
+            <button className="lib-btn read" onClick={()=>go({ view:{ type:"resource", id:it.id } }, it.title)}>
+              {t("libraryReadBtn")}
+            </button>
+          </div>
         </div>
       ))}
     </div>
@@ -952,11 +1125,16 @@ function Stories({ go, liked, toggleLike, myStories, t, lang }){
       </p>
       {all.map(s=>{
         const title = pick(s.title, lang);
-        const body = pick(s.body, lang);
+        const body = pick(s.body, lang) || [];
+        const preview = body[0]
+          ? body[0].slice(0,132) + "…"
+          : s.format === "voice" ? "🎙️ " + t("formatVoice")
+          : s.format === "video" ? "🎬 " + t("formatVideo")
+          : "";
         return (
           <button key={s.id} className="story-card" onClick={()=>go({ view:{ type:"story", id:s.id } }, title)}>
             <h3>{title}</h3>
-            <p>{body[0].slice(0,132)}…</p>
+            <p>{preview}</p>
             <div className="story-foot">
               <span>{s.author} · {s.country}</span>
               <span>{s.ago}</span>
@@ -1164,7 +1342,7 @@ function StoryView({ id, onBack, liked, toggleLike, myStories, t, lang, onReport
   const all = [...(myStories||[]), ...STORIES];
   const s = all.find(x=>x.id===id) || STORIES[0];
   const on = (liked||[]).includes(s.id);
-  const body = pick(s.body, lang);
+  const body = pick(s.body, lang) || [];
   return (
     <Detail title="Story" onBack={onBack} onSwipeBack={onBack}
       action={toggleLike ? (
@@ -1174,6 +1352,8 @@ function StoryView({ id, onBack, liked, toggleLike, myStories, t, lang, onReport
       <article className="article">
         <div className="eyebrow kicker">{s.author} · {s.country} · {s.ago}</div>
         <h1>{pick(s.title, lang)}</h1>
+        {s.audioUrl ? <audio className="rec-audio" controls src={s.audioUrl} style={{marginTop:14}}/> : null}
+        {s.videoUrl ? <video className="rec-video" controls src={s.videoUrl} style={{marginTop:14}}/> : null}
         {body.map((p,i)=><p key={i}>{p}</p>)}
         {t ? <ReportBox t={t} onSubmit={(r)=>onReport && onReport({ type:"story", id:s.id, ...r })}/> : null}
       </article>
@@ -1314,29 +1494,215 @@ function PathsView({ onBack, progress, setProgress, notify }){
   );
 }
 
-function Compose({ onBack, onSubmit }){
-  const [f, setF] = useState({ title:"", country:"", body:"" });
-  const ok = f.title.trim().length > 2 && f.body.trim().length > 30;
+function LearnUpload({ onBack, onApply, onBrowsePaths, t }){
+  const [file, setFile] = useState(null);
+  const [opts, setOpts] = useState({ audio:false, simplify:false, summarize:false, largeText:false, screenReader:false });
+  const [processing, setProcessing] = useState(false);
+  const fileRef = useRef(null);
+  const toggle = (k)=>setOpts(o=>({ ...o, [k]: !o[k] }));
+  const OPTIONS = [
+    { key:"audio", icon:I.volume, titleKey:"optConvertAudio", subKey:"optConvertAudioSub" },
+    { key:"simplify", icon:I.wand, titleKey:"optSimplify", subKey:"optSimplifySub" },
+    { key:"summarize", icon:I.layers, titleKey:"optSummarize", subKey:"optSummarizeSub" },
+    { key:"largeText", icon:I.aa, titleKey:"optLargeText", subKey:"optLargeTextSub" },
+    { key:"screenReader", icon:I.wheelchair, titleKey:"optScreenReader", subKey:"optScreenReaderSub" }
+  ];
+  const ready = !!file;
+  const submit = ()=>{
+    if(!ready || processing) return;
+    setProcessing(true);
+    setTimeout(()=>{ setProcessing(false); onApply(opts, file.name); }, 900);
+  };
   return (
-    <Detail title="Share Your Story" onBack={onBack}>
-      <p className="muted" style={{fontSize:"calc(13px * var(--fs))", marginTop:0, lineHeight:1.6}}>
-        Tell us what learning is like for you. Published stories are reviewed by the research team first.
-      </p>
+    <Detail title={t("tileHubTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <p className="choice-quote">{t("learnTitle")}</p>
+
+      <input ref={fileRef} type="file" accept="application/pdf,.pdf" style={{display:"none"}}
+        onChange={e=>{ const f = e.target.files && e.target.files[0]; if(f) setFile(f); }}/>
+      <button className={"upload-card" + (file ? " done" : "")} onClick={()=>fileRef.current && fileRef.current.click()}>
+        <span className="upload-icon">{file ? <I.check/> : <I.upload/>}</span>
+        <span>
+          <b>{t("uploadPdfTitle")}</b>
+          <div className="muted" style={{fontSize:"calc(11.5px * var(--fs))", marginTop:3}}>
+            {file ? file.name : t("uploadPdfSub")}
+          </div>
+        </span>
+      </button>
+
+      <div className="eyebrow section-label">{t("accessibilityOptionsLabel")}</div>
+      {OPTIONS.map(o=>{
+        const Icon = o.icon;
+        const on = opts[o.key];
+        return (
+          <button key={o.key} className="opt-row" onClick={()=>toggle(o.key)} aria-pressed={on}>
+            <span className="opt-icon"><Icon/></span>
+            <span style={{flex:1}}><b>{t(o.titleKey)}</b><small>{t(o.subKey)}</small></span>
+            <span className={"opt-box" + (on ? " on" : "")}><I.check/></span>
+          </button>
+        );
+      })}
+
+      <button className="cta" style={{marginTop:20, opacity: ready ? 1 : .5}} disabled={!ready || processing} onClick={submit}>
+        {processing ? t("uploadProcessing") : ready ? t("uploadCtaReady") : t("uploadCtaDisabled")}
+      </button>
+      <button className="link-btn" style={{marginTop:14}} onClick={onBrowsePaths}>{t("browsePathwaysLink")}</button>
+    </Detail>
+  );
+}
+
+function Compose({ onBack, onSubmit, t }){
+  const [format, setFormat] = useState(null);
+  const [step, setStep] = useState("choose");
+  const [title, setTitle] = useState("");
+  const [country, setCountry] = useState("");
+  const [body, setBody] = useState("");
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const [recSeconds, setRecSeconds] = useState(0);
+  const [micError, setMicError] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const timerRef = useRef(null);
+  const videoInputRef = useRef(null);
+
+  useEffect(()=>()=>clearInterval(timerRef.current), []);
+
+  const FORMATS = [
+    { id:"write", icon:I.pencil, titleKey:"formatWrite", subKey:"formatWriteSub" },
+    { id:"voice", icon:I.mic, titleKey:"formatVoice", subKey:"formatVoiceSub" },
+    { id:"video", icon:I.video, titleKey:"formatVideo", subKey:"formatVideoSub" }
+  ];
+
+  const startRecording = async ()=>{
+    setMicError(false);
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e)=>{ if(e.data.size > 0) chunksRef.current.push(e.data); };
+      mr.onstop = ()=>{
+        const blob = new Blob(chunksRef.current, { type:"audio/webm" });
+        setAudioUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach(tr=>tr.stop());
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+      setRecording(true);
+      setRecSeconds(0);
+      timerRef.current = setInterval(()=>setRecSeconds(sec=>sec+1), 1000);
+    }catch(e){ setMicError(true); }
+  };
+  const stopRecording = ()=>{
+    if(mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop();
+    setRecording(false);
+    clearInterval(timerRef.current);
+  };
+  const onVideoPick = (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    setVideoUrl(URL.createObjectURL(f));
+  };
+  const fmtTime = (sec)=>{ const m = Math.floor(sec/60); const s = sec%60; return m + ":" + String(s).padStart(2,"0"); };
+
+  if(step === "choose"){
+    return (
+      <Detail title={t("tileShareTitle")} onBack={onBack} onSwipeBack={onBack}>
+        <div style={{textAlign:"center", margin:"6px 0 18px"}}>
+          <div style={{fontSize:34, marginBottom:8}}>💬</div>
+          <p className="choice-quote">{t("storyQuote")}</p>
+          <p className="muted" style={{fontSize:"calc(12.5px * var(--fs))", lineHeight:1.55, marginTop:8}}>{t("storyIntro")}</p>
+        </div>
+        {FORMATS.map(fm=>{
+          const Icon = fm.icon;
+          const on = format === fm.id;
+          return (
+            <button key={fm.id} className={"format-card" + (on ? " on" : "")} onClick={()=>setFormat(fm.id)}>
+              <span className="format-icon"><Icon/></span>
+              <span style={{flex:1}}><b>{t(fm.titleKey)}</b><small>{t(fm.subKey)}</small></span>
+              <span className="format-radio"/>
+            </button>
+          );
+        })}
+        <button className="cta" style={{marginTop:8, opacity: format ? 1 : .5}} disabled={!format}
+          onClick={()=>setStep("fill")}>
+          {format ? t("continueCta") : t("chooseFormatCta")}
+        </button>
+        <p className="muted" style={{fontSize:11, textAlign:"center", marginTop:12}}>{t("anonNote")}</p>
+      </Detail>
+    );
+  }
+
+  const canPublish = title.trim().length > 1 && (
+    (format === "write" && body.trim().length > 30) ||
+    (format === "voice" && !!audioUrl) ||
+    (format === "video" && !!videoUrl)
+  );
+
+  return (
+    <Detail title={t("tileShareTitle")} onBack={()=>setStep("choose")}>
       <div className="field">
-        <label htmlFor="t">Title</label>
-        <input id="t" value={f.title} maxLength={70} onChange={e=>setF({...f, title:e.target.value})} placeholder="Give your story a name"/>
+        <label htmlFor="c-title">{t("attachTitleLabel")}</label>
+        <input id="c-title" value={title} maxLength={70} onChange={e=>setTitle(e.target.value)} placeholder={t("attachTitleLabel")}/>
       </div>
       <div className="field">
-        <label htmlFor="c">Country</label>
-        <input id="c" value={f.country} onChange={e=>setF({...f, country:e.target.value})} placeholder="Where did this happen?"/>
+        <label htmlFor="c-country">{t("attachCountryLabel")}</label>
+        <input id="c-country" value={country} onChange={e=>setCountry(e.target.value)} placeholder={t("attachCountryLabel")}/>
       </div>
-      <div className="field">
-        <label htmlFor="b">Your story</label>
-        <textarea id="b" rows={8} value={f.body} onChange={e=>setF({...f, body:e.target.value})} placeholder="Start anywhere — a moment, a teacher, a barrier you met."/>
-        <div className="hint">{f.body.trim().length} characters · at least 30 to publish</div>
-      </div>
-      <button className="cta" disabled={!ok} style={{opacity: ok ? 1 : .45}}
-        onClick={()=>{ if(!ok) return; onSubmit(f); }}>
+
+      {format === "write" && (
+        <div className="field">
+          <label htmlFor="c-body">{t("formatWrite")}</label>
+          <textarea id="c-body" rows={8} value={body} onChange={e=>setBody(e.target.value)} placeholder={t("formatWriteSub")}/>
+          <div className="hint">{body.trim().length} characters · min 30</div>
+        </div>
+      )}
+
+      {format === "voice" && (
+        <div className="rec-box">
+          {audioUrl ? (
+            <React.Fragment>
+              <audio className="rec-audio" controls src={audioUrl}/>
+              <button className="rec-btn" style={{marginTop:12}} onClick={()=>setAudioUrl(null)}><I.mic/> {t("recRetake")}</button>
+            </React.Fragment>
+          ) : recording ? (
+            <React.Fragment>
+              <div className="rec-timer"><span className="rec-dot"/>{fmtTime(recSeconds)}</div>
+              <button className="rec-btn stop" onClick={stopRecording}><I.stop/> {t("recStop")}</button>
+            </React.Fragment>
+          ) : (
+            <React.Fragment>
+              <I.mic/>
+              <div><button className="rec-btn" style={{marginTop:10}} onClick={startRecording}><I.mic/> {t("recStart")}</button></div>
+              {micError ? <p style={{color:"var(--danger)", fontSize:12, marginTop:8}}>{t("recNeedMic")}</p> : null}
+            </React.Fragment>
+          )}
+        </div>
+      )}
+
+      {format === "video" && (
+        <div className="rec-box">
+          <input ref={videoInputRef} type="file" accept="video/*" style={{display:"none"}} onChange={onVideoPick}/>
+          {videoUrl ? (
+            <React.Fragment>
+              <video className="rec-video" controls src={videoUrl}/>
+              <button className="rec-btn" style={{marginTop:12}} onClick={()=>videoInputRef.current.click()}><I.video/> {t("videoRetake")}</button>
+            </React.Fragment>
+          ) : (
+            <React.Fragment>
+              <I.video/>
+              <div><button className="rec-btn" style={{marginTop:10}} onClick={()=>videoInputRef.current.click()}><I.upload/> {t("videoChoose")}</button></div>
+            </React.Fragment>
+          )}
+        </div>
+      )}
+
+      {(format === "voice" || format === "video") && (
+        <p className="muted" style={{fontSize:11, marginTop:4}}>{t("mediaNote")}</p>
+      )}
+
+      <button className="cta" disabled={!canPublish} style={{opacity: canPublish ? 1 : .45, marginTop:16}}
+        onClick={()=>{ if(!canPublish) return; onSubmit({ title, country, body, format, audioUrl, videoUrl }); }}>
         Publish story <I.arrow/>
       </button>
     </Detail>
@@ -1381,11 +1747,25 @@ function App(){
     return (sess && accs[sess.email]) ? "app" : "splash";
   });
   const [reports, setReports] = useState(loadReports);
+  const [tgUser, setTgUser] = useState(null);
   const scrollRef = useRef(null);
   const deviceScreenRef = useRef(null);
   const ds = useDeviceScale(deviceScreenRef);
 
   const account = session ? accounts[session.email] : null;
+
+  // Telegram Mini App bootstrap: no-ops outside Telegram (window.Telegram is undefined).
+  useEffect(()=>{
+    const tg = getTelegram();
+    if(!tg) return;
+    try{
+      tg.ready();
+      tg.expand();
+      tg.setHeaderColor && tg.setHeaderColor("#16243F");
+      tg.setBackgroundColor && tg.setBackgroundColor("#16243F");
+      if(tg.initDataUnsafe && tg.initDataUnsafe.user) setTgUser(tg.initDataUnsafe.user);
+    }catch(e){}
+  }, []);
 
   useEffect(()=>{ saveAccounts(accounts); }, [accounts]);
   useEffect(()=>{ saveSession(session); }, [session]);
@@ -1400,6 +1780,16 @@ function App(){
   useEffect(()=>{
     if(stage === "app" && !account) setStage("auth");
   }, [stage, account]);
+
+  // Telegram's own back button stands in for our in-app back button when available.
+  useEffect(()=>{
+    const tg = getTelegram();
+    if(!tg || !tg.BackButton) return;
+    const onBack = ()=>setView(null);
+    if(view){ tg.BackButton.show(); tg.BackButton.onClick(onBack); }
+    else{ tg.BackButton.hide(); }
+    return ()=>{ try{ tg.BackButton.offClick(onBack); }catch(e){} };
+  }, [view]);
 
   const lang = account ? account.lang : uiLang;
   const t = useCallback((key)=> tFor(lang, key), [lang]);
@@ -1455,10 +1845,25 @@ function App(){
     const story = {
       id:"my" + Date.now(), title:f.title.trim(), author: account.name || "You",
       country:f.country.trim() || "—", ago:"just now", likes:0,
-      body:f.body.trim().split(/\n{1,}/).filter(Boolean)
+      format: f.format || "write",
+      body: f.format === "write" ? f.body.trim().split(/\n{1,}/).filter(Boolean) : [],
+      audioUrl: f.audioUrl || null,
+      videoUrl: f.videoUrl || null
     };
     updateAccount(session.email, p=>({ ...p, myStories:[story, ...p.myStories] }));
     setView(null); setTab("stories"); notify(t("storyPublished"));
+  };
+  const handleLearnApply = (opts, fileName)=>{
+    if(!session) return;
+    updateAccount(session.email, p=>{
+      const next = { ...p.settings };
+      if(opts.largeText) next.textSize = 1.3;
+      if(opts.screenReader) next.voiceGuide = true;
+      return { ...p, settings: next };
+    });
+    notify(t("uploadDone"));
+    if(opts.audio) setTimeout(()=>speakText(fileName + ". " + t("uploadDone")), 300);
+    setView(null);
   };
   const applyProfile = (id)=>{
     if(!session) return;
@@ -1521,6 +1926,24 @@ function App(){
     }
   };
 
+  const handleTelegramLogin = ()=>{
+    if(!tgUser) return;
+    const tg = getTelegram();
+    const info = telegramUserToAccount(tgUser, tg && tg.colorScheme);
+    const existing = accounts[info.email];
+    if(!existing){
+      const acc = makeAccount({ name: info.name, email: info.email, lang: info.lang });
+      if(info.dark) acc.settings.darkMode = true;
+      setAccounts(prev=>({ ...prev, [info.email]: acc }));
+      setSession({ email: info.email });
+      setStage("setup");
+    }else{
+      setSession({ email: info.email });
+      setStage(existing.onboarded ? "app" : "setup");
+      notify(tFor(existing.lang, "welcomeBack"));
+    }
+  };
+
   const greeting = useMemo(()=>{
     const h = new Date().getHours();
     const key = h < 12 ? "goodMorning" : h < 18 ? "goodAfternoon" : "goodEvening";
@@ -1548,7 +1971,8 @@ function App(){
     return (
       <div className="device"><div className="device-screen" ref={deviceScreenRef} style={{ "--ds": String(ds) }}>
         <div className="island"/>
-        <AuthScreen lang={uiLang} setLang={setUiLang} t={(k)=>tFor(uiLang,k)} onAuth={handleAuth} error={authError} setError={setAuthError}/>
+        <AuthScreen lang={uiLang} setLang={setUiLang} t={(k)=>tFor(uiLang,k)} onAuth={handleAuth} error={authError} setError={setAuthError}
+                    tgUser={tgUser} onTelegramLogin={handleTelegramLogin}/>
       </div></div>
     );
   }
@@ -1573,6 +1997,7 @@ function App(){
     view?.type === "story" ? "Story" :
     view?.type === "resource" ? (LIBRARY.find(r=>r.id===view.id)?.title || "") :
     view?.type === "paths" ? t("tileHubTitle") :
+    view?.type === "learn" ? t("tileHubTitle") :
     view?.type === "compose" ? t("tileShareTitle") :
     view?.type === "insights" ? t("insightsTitle") :
     tab === "home" ? t("welcomeTitle") : tab === "library" ? t("libraryTitle") :
@@ -1615,10 +2040,11 @@ function App(){
     else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang} onReport={submitReport}/>;
     else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} onReport={submitReport}/>;
     else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify}/>;
-    else if(view.type==="compose") body = <Compose onBack={back} onSubmit={publish}/>;
+    else if(view.type==="learn") body = <LearnUpload onBack={back} onApply={handleLearnApply} onBrowsePaths={()=>setView({ type:"paths" })} t={t}/>;
+    else if(view.type==="compose") body = <Compose onBack={back} onSubmit={publish} t={t}/>;
     else if(view.type==="insights") body = <InsightsView onBack={back} accounts={accounts} reports={reports} t={t}/>;
   } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified}/>;
-  else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t}/>;
+  else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t} lang={lang}/>;
   else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang}/>;
   else body = <Profile account={account} set={(u)=>updateAccount(session.email, u)} saved={account.saved} myStories={account.myStories} go={go} notify={notify}
                         onRerunSetup={()=>setStage("setup")} t={t} onLogout={logout}
