@@ -76,7 +76,7 @@ const LANGS = [
 
 const STRINGS = {
   ru: {
-    appTagline: "ДЕЛАЕМ ПУТЬ ДЛЯ РАЗУМА",
+    appTagline: "ДЕЛАЕМ ПУТЬ ДЛЯ РАЗУМA",
     splashQuote: "«Каждый разум заслуживает доступа к знаниям»",
     splashCta: "Начать",
     splashFooter: "Исследования · Инклюзия · Равенство",
