@@ -16,13 +16,23 @@ function loadSession(){
 }
 function saveSession(s){ try{ if(s) localStorage.setItem(SESSION_KEY, JSON.stringify(s)); else localStorage.removeItem(SESSION_KEY); }catch(e){} }
 
+const REPORTS_KEY = "mwm:reports:v1";
+function loadReports(){
+  try{ const raw = localStorage.getItem(REPORTS_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
+}
+function saveReports(list){ try{ localStorage.setItem(REPORTS_KEY, JSON.stringify(list)); }catch(e){} }
+
+function vibrate(pattern){
+  try{ if(typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
+}
+
 function makeAccount({ name, email, lang }){
   return {
     name, email, lang: lang || "ru",
     onboarded: false, profile: null,
     saved: [], liked: [], myStories: [],
     progress: { p1: 60, p2: 25, p3: 0, p4: 100 },
-    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false }
+    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false, darkMode: false, readableFont: false, haptics: true }
   };
 }
 
@@ -76,7 +86,7 @@ const LANGS = [
 
 const STRINGS = {
   ru: {
-    appTagline: "ДЕЛАЕМ ПУТЬ ДЛЯ РАЗУМA",
+    appTagline: "ДЕЛАЕМ ПУТЬ ДЛЯ РАЗУМА",
     splashQuote: "«Каждый разум заслуживает доступа к знаниям»",
     splashCta: "Начать",
     splashFooter: "Исследования · Инклюзия · Равенство",
@@ -172,7 +182,27 @@ const STRINGS = {
     storyPublished: "История опубликована",
     lessonDone: "Урок отмечен пройденным", pathwayDone: "Маршрут завершён",
     resetDone: "Данные сброшены",
-    profileApplied: "Интерфейс подстроен под вас", profileAppliedPlain: "Готово"
+    profileApplied: "Интерфейс подстроен под вас", profileAppliedPlain: "Готово",
+
+    darkModeTitle: "Тёмная тема", darkModeSub: "Тёмный фон вместо светлого",
+    readableFontTitle: "Читаемый шрифт", readableFontSub: "Шрифт Atkinson Hyperlegible для слабого зрения",
+    hapticsTitle: "Вибрация при нажатиях", hapticsSub: "Лёгкий отклик на кнопки и уведомления",
+    swipeHint: "Листайте влево-вправо, чтобы сменить раздел",
+    reportOpen: "Сообщить о проблеме",
+    reportWrong: "Неверная информация", reportOffensive: "Оскорбительный контент",
+    reportBroken: "Не работает", reportOther: "Другое",
+    reportNotePlaceholder: "Опишите подробнее (не обязательно)",
+    reportSubmit: "Отправить",
+    reportThanks: "Спасибо, мы посмотрим",
+    insightsTitle: "Аналитика команды",
+    insightsRow: "Аналитика команды",
+    insightsSub: "Аккаунты, обучающие на этом устройстве",
+    insightsAccounts: "Аккаунтов создано",
+    insightsByProfile: "По профилю восприятия",
+    insightsVoice: "С голосовыми подсказками",
+    insightsStories: "Опубликовано историй",
+    insightsReports: "Отправлено отчётов",
+    insightsNote: "Данные только с этого устройства и браузера — для полной статистики команды нужен сервер."
   },
   uz: {
     appTagline: "ONGGA YO'L OCHAMIZ",
@@ -271,7 +301,27 @@ const STRINGS = {
     storyPublished: "Hikoya nashr qilindi",
     lessonDone: "Dars tugallangan deb belgilandi", pathwayDone: "Yo'nalish tugallandi",
     resetDone: "Ma'lumotlar tozalandi",
-    profileApplied: "Interfeys siz uchun moslashtirildi", profileAppliedPlain: "Tayyor"
+    profileApplied: "Interfeys siz uchun moslashtirildi", profileAppliedPlain: "Tayyor",
+
+    darkModeTitle: "Tungi rejim", darkModeSub: "Yorug' fon o'rniga qorong'i fon",
+    readableFontTitle: "O'qish uchun shrift", readableFontSub: "Zaif ko'rish uchun Atkinson Hyperlegible shrifti",
+    hapticsTitle: "Bosganda tebranish", hapticsSub: "Tugmalar va bildirishnomalarda yengil tebranish",
+    swipeHint: "Bo'limni almashtirish uchun chapga-o'ngga suring",
+    reportOpen: "Muammo haqida xabar berish",
+    reportWrong: "Noto'g'ri ma'lumot", reportOffensive: "Haqoratli kontent",
+    reportBroken: "Ishlamayapti", reportOther: "Boshqa",
+    reportNotePlaceholder: "Batafsil yozing (ixtiyoriy)",
+    reportSubmit: "Yuborish",
+    reportThanks: "Rahmat, ko'rib chiqamiz",
+    insightsTitle: "Jamoa tahlili",
+    insightsRow: "Jamoa tahlili",
+    insightsSub: "Shu qurilmada o'qigan hisoblar",
+    insightsAccounts: "Yaratilgan hisoblar",
+    insightsByProfile: "Idrok profili bo'yicha",
+    insightsVoice: "Ovozli yordam yoqilgan",
+    insightsStories: "Nashr qilingan hikoyalar",
+    insightsReports: "Yuborilgan xabarlar",
+    insightsNote: "Ma'lumotlar faqat shu qurilma va brauzerdan — jamoaning to'liq statistikasi uchun server kerak."
   },
   en: {
     appTagline: "MAKING WAY FOR MINDS",
@@ -370,7 +420,27 @@ const STRINGS = {
     storyPublished: "Story published",
     lessonDone: "Lesson marked done", pathwayDone: "Pathway finished",
     resetDone: "Everything reset",
-    profileApplied: "Interface adjusted for you", profileAppliedPlain: "Done"
+    profileApplied: "Interface adjusted for you", profileAppliedPlain: "Done",
+
+    darkModeTitle: "Dark mode", darkModeSub: "Dark background instead of light",
+    readableFontTitle: "Readable font", readableFontSub: "Atkinson Hyperlegible, designed for low vision",
+    hapticsTitle: "Vibrate on tap", hapticsSub: "A light buzz on buttons and notifications",
+    swipeHint: "Swipe left or right to switch sections",
+    reportOpen: "Report a problem",
+    reportWrong: "Incorrect info", reportOffensive: "Offensive content",
+    reportBroken: "Not working", reportOther: "Other",
+    reportNotePlaceholder: "Add details (optional)",
+    reportSubmit: "Submit",
+    reportThanks: "Thanks, we'll take a look",
+    insightsTitle: "Team insights",
+    insightsRow: "Team insights",
+    insightsSub: "Accounts that trained on this device",
+    insightsAccounts: "Accounts created",
+    insightsByProfile: "By accessibility profile",
+    insightsVoice: "With voice guide on",
+    insightsStories: "Stories published",
+    insightsReports: "Reports submitted",
+    insightsNote: "This is device-and-browser-only data — a real team dashboard needs a server."
   }
 };
 function tFor(lang, key){
@@ -380,8 +450,15 @@ function tFor(lang, key){
 /* ============ content ============ */
 const LIBRARY = [
   { id:"l1", title:"Teaching Every Reader", author:"R. Okonkwo", format:"Book", emoji:"📗", meta:"312 pages · EPUB, Braille-ready", year:2024 },
-  { id:"l2", title:"Sound of a Classroom", author:"Narrated by M. Duarte", format:"Audio", emoji:"🎧", meta:"4 h 12 min · Transcript included", year:2025 },
-  { id:"l3", title:"Colour Contrast Field Guide", author:"MWM Research", format:"Visual", emoji:"🎨", meta:"48 plates · Alt-text on every image", year:2025 },
+  { id:"l2", title:"Sound of a Classroom", author:"Narrated by M. Duarte", format:"Audio", emoji:"🎧", meta:"4 h 12 min · Transcript included", year:2025,
+    transcript:["[0:00] A school bell rings. Children's voices overlap in a corridor.",
+      "[0:42] Narrator: \"This is Room 4B, nine in the morning, on an ordinary Tuesday.\"",
+      "[1:15] A teacher reads instructions slowly, pausing after each sentence.",
+      "[2:03] Narrator: \"Notice how the room goes quiet before every new activity — that pause is not empty, it's a signal.\""] },
+  { id:"l3", title:"Colour Contrast Field Guide", author:"MWM Research", format:"Visual", emoji:"🎨", meta:"48 plates · Alt-text on every image", year:2025,
+    altTexts:["Plate 3: a classroom wall painted dark navy behind a whiteboard, cutting glare noticeably.",
+      "Plate 11: two versions of the same worksheet — one in grey-on-white, one in near-black-on-cream — shown side by side.",
+      "Plate 27: a hallway sign using a 7:1 contrast ratio, photographed from ten metres away and still legible."] },
   { id:"l4", title:"Dyslexia in Early Grades", author:"S. Lindqvist", format:"Book", emoji:"📘", meta:"186 pages · Large-print edition", year:2023 },
   { id:"l5", title:"Signed Stories, Vol. 2", author:"Deaf Learners Collective", format:"Visual", emoji:"🤟", meta:"22 films · Sign language + captions", year:2026 },
   { id:"l6", title:"Listening to Learners", author:"MWM Interviews", format:"Audio", emoji:"🎙️", meta:"18 episodes · 42 countries", year:2026 },
@@ -394,40 +471,122 @@ const PATHS = [
   { id:"p3", title:"Assistive Technology in Class", emoji:"🖥️", lessons:10, mins:140, level:"Deep dive" },
   { id:"p4", title:"Interviewing Learners with Care", emoji:"💬", lessons:5, mins:55, level:"For researchers" }
 ];
+function pick(field, lang){
+  if(field && typeof field === "object" && !Array.isArray(field)){
+    return field[lang] || field.en || field.ru || Object.values(field)[0];
+  }
+  return field;
+}
+function pickArr(field, lang){
+  if(field && typeof field === "object" && !Array.isArray(field)){
+    return field[lang] || field.en || field.ru || Object.values(field)[0];
+  }
+  return field;
+}
+
 const STORIES = [
-  { id:"s1", title:"My Journey with Dyslexia", author:"Amara O.", country:"Kenya", ago:"5h ago", likes:212,
-    body:["I was eleven when a teacher stopped asking me to read aloud and started asking me to explain instead. That single change moved me from the back of the class to the front of my own learning.",
-      "Letters still swim. What changed is the room around them: audio versions, extra time, a font that holds still long enough for me to catch it.",
-      "I am studying to be a teacher now. The first thing I tell every student is that a slow reader is not a slow thinker."] },
-  { id:"s2", title:"The Library That Came to Us", author:"Iker M.", country:"Peru", ago:"1d ago", likes:148,
-    body:["Our village is four hours from the nearest library. Once a month, a van arrived with books, a projector and one very patient librarian.",
-      "She left recordings behind so my grandmother, who never learned to read, could listen to the same stories we did.",
-      "Access is not only about buildings. Sometimes it is about who is willing to drive."] },
-  { id:"s3", title:"Learning to Hear Differently", author:"Wei C.", country:"Singapore", ago:"2d ago", likes:96,
-    body:["I lost most of my hearing at seven. For two years I copied notes I could not follow.",
-      "Live captions changed everything — not because they are perfect, but because they let me choose when to look away.",
-      "My advice to teachers: face the class when you speak, and repeat the question before you answer it."] },
-  { id:"s4", title:"A Ramp Is a Curriculum Decision", author:"Nadia H.", country:"Jordan", ago:"4d ago", likes:74,
-    body:["The science lab was on the second floor. For three years my classes were held elsewhere, with a textbook instead of an experiment.",
-      "When the school finally installed a lift, my grades did not change — my ambitions did.",
-      "Accessibility is not charity. It is the difference between reading about chemistry and doing it."] },
-  { id:"s5", title:"Teaching in Two Languages", author:"Diego R.", country:"Mexico", ago:"6d ago", likes:61,
-    body:["Half my students think in an Indigenous language and are tested in Spanish. That gap is rarely called an accessibility issue, but it is one.",
-      "We started recording lessons in both languages. Attendance rose before the test scores did.",
-      "Belonging comes first. Comprehension follows it."] }
+  { id:"s1", author:"Amara O.", country:"Kenya", ago:"5h ago", likes:212,
+    title:{ en:"My Journey with Dyslexia", ru:"Мой путь с дислексией", uz:"Disleksiya bilan yo'lim" },
+    body:{
+      en:["I was eleven when a teacher stopped asking me to read aloud and started asking me to explain instead. That single change moved me from the back of the class to the front of my own learning.",
+        "Letters still swim. What changed is the room around them: audio versions, extra time, a font that holds still long enough for me to catch it.",
+        "I am studying to be a teacher now. The first thing I tell every student is that a slow reader is not a slow thinker."],
+      ru:["Мне было одиннадцать, когда учительница перестала просить меня читать вслух и начала просить объяснять своими словами. Эта перемена перевела меня с задней парты на передний край собственного обучения.",
+        "Буквы до сих пор плывут перед глазами. Изменилось то, что их окружает: аудиоверсии, больше времени, шрифт, который держится достаточно неподвижно, чтобы я успевала его разглядеть.",
+        "Сейчас я учусь на педагога. Первое, что я говорю каждому ученику: медленно читающий — не значит медленно думающий."],
+      uz:["O'n bir yoshimda edim, o'qituvchim meni ovoz chiqarib o'qishni emas, balki tushuntirishni so'ray boshladi. Shu bir o'zgarish meni sinfning orqa partasidan o'z ta'limimning old safiga olib chiqdi.",
+        "Harflar hali ham ko'z oldimda suzadi. O'zgargani — atrofdagi sharoit: audio versiyalar, qo'shimcha vaqt, ko'zim ilg'ab ulguradigan darajada barqaror turadigan shrift.",
+        "Hozir o'qituvchilikka o'qiyapman. Har bir o'quvchiga birinchi aytadigan gapim: sekin o'qish — sekin fikrlash degani emas."]
+    } },
+  { id:"s2", author:"Iker M.", country:"Peru", ago:"1d ago", likes:148,
+    title:{ en:"The Library That Came to Us", ru:"Библиотека, которая приехала к нам", uz:"Bizga kelgan kutubxona" },
+    body:{
+      en:["Our village is four hours from the nearest library. Once a month, a van arrived with books, a projector and one very patient librarian.",
+        "She left recordings behind so my grandmother, who never learned to read, could listen to the same stories we did.",
+        "Access is not only about buildings. Sometimes it is about who is willing to drive."],
+      ru:["От нашей деревни до ближайшей библиотеки четыре часа пути. Раз в месяц приезжал фургон с книгами, проектором и очень терпеливой библиотекаршей.",
+        "Она оставляла записи, чтобы моя бабушка, которая так и не научилась читать, могла слушать те же истории, что и мы.",
+        "Доступность — это не только про здания. Иногда это про то, кто готов сесть за руль и приехать."],
+      uz:["Qishlog'imizdan eng yaqin kutubxonagacha to'rt soat yo'l. Oyda bir marta kitoblar, proyektor va juda sabrli kutubxonachi bilan mikroavtobus kelardi.",
+        "U yozib olingan audiolarni qoldirib ketardi, shunda o'qishni hech qachon o'rganmagan buvim ham biz eshitgan hikoyalarni tinglay olardi.",
+        "Qulaylik faqat binolar haqida emas. Ba'zan bu — kim mashina haydashga tayyorligi haqida."]
+    } },
+  { id:"s3", author:"Wei C.", country:"Singapore", ago:"2d ago", likes:96,
+    title:{ en:"Learning to Hear Differently", ru:"Учиться слышать иначе", uz:"Boshqacha eshitishni o'rganish" },
+    body:{
+      en:["I lost most of my hearing at seven. For two years I copied notes I could not follow.",
+        "Live captions changed everything — not because they are perfect, but because they let me choose when to look away.",
+        "My advice to teachers: face the class when you speak, and repeat the question before you answer it."],
+      ru:["Я почти полностью потерял слух в семь лет. Два года я переписывал конспекты, смысла которых не улавливал.",
+        "Живые субтитры изменили всё — не потому что они идеальны, а потому что они позволяют мне самому решать, когда отвести взгляд.",
+        "Мой совет учителям: стойте лицом к классу, когда говорите, и повторяйте вопрос, прежде чем на него отвечать."],
+      uz:["Yetti yoshimda eshitishimning ko'p qismini yo'qotdim. Ikki yil davomida tushunmagan konspektlarni ko'chirib yozardim.",
+        "Jonli subtitrlar hammasini o'zgartirdi — ular mukammal bo'lgani uchun emas, balki qachon ko'zimni olib qochishni o'zim tanlashimga imkon bergani uchun.",
+        "O'qituvchilarga maslahatim: gapirayotganda sinfga qarab turing va javob berishdan oldin savolni takrorlang."]
+    } },
+  { id:"s4", author:"Nadia H.", country:"Jordan", ago:"4d ago", likes:74,
+    title:{ en:"A Ramp Is a Curriculum Decision", ru:"Пандус — это решение об учебной программе", uz:"Pandus — bu o'quv dasturi bo'yicha qaror" },
+    body:{
+      en:["The science lab was on the second floor. For three years my classes were held elsewhere, with a textbook instead of an experiment.",
+        "When the school finally installed a lift, my grades did not change — my ambitions did.",
+        "Accessibility is not charity. It is the difference between reading about chemistry and doing it."],
+      ru:["Кабинет естественных наук был на втором этаже. Три года мои занятия проходили в другом месте — с учебником вместо эксперимента.",
+        "Когда в школе наконец установили лифт, мои оценки не изменились — изменились мои амбиции.",
+        "Доступность — это не благотворительность. Это разница между чтением о химии и занятием ею."],
+      uz:["Tabiiy fanlar laboratoriyasi ikkinchi qavatda edi. Uch yil davomida darslarim boshqa joyda — tajriba o'rniga darslik bilan o'tardi.",
+        "Maktabda nihoyat lift o'rnatilganda, baholarim o'zgarmadi — orzularim o'zgardi.",
+        "Qulaylik xayriya emas. Bu kimyo haqida o'qish bilan uni bevosita qilish orasidagi farq."]
+    } },
+  { id:"s5", author:"Diego R.", country:"Mexico", ago:"6d ago", likes:61,
+    title:{ en:"Teaching in Two Languages", ru:"Преподавание на двух языках", uz:"Ikki tilda dars berish" },
+    body:{
+      en:["Half my students think in an Indigenous language and are tested in Spanish. That gap is rarely called an accessibility issue, but it is one.",
+        "We started recording lessons in both languages. Attendance rose before the test scores did.",
+        "Belonging comes first. Comprehension follows it."],
+      ru:["Половина моих учеников думает на языке коренного народа, а экзамены сдают на испанском. Этот разрыв редко называют вопросом доступности, но это именно он.",
+        "Мы начали записывать уроки на обоих языках. Посещаемость выросла раньше, чем оценки за тесты.",
+        "Сначала — ощущение, что ты свой. Понимание приходит следом."],
+      uz:["O'quvchilarimning yarmi mahalliy tilda fikrlaydi, lekin imtihonlar ispan tilida topshiriladi. Bu tafovut kamdan-kam hollarda qulaylik muammosi deb ataladi, lekin aslida shunday.",
+        "Darslarni ikkala tilda yozib olishni boshladik. Davomat testlardagi ballardan oldin o'sdi.",
+        "Avval — o'zingga tegishlilik hissi. Tushunish keyin keladi."]
+    } }
 ];
+
 const ARTICLES = [
-  { id:"a1", kind:"Research", title:"Visual Accessibility in Classrooms", ago:"2h ago", read:"6 min read", author:"MWM Research Team",
-    body:["We measured lighting, contrast and seating in 60 classrooms across 12 countries. In two thirds of them, a student with low vision could not read the board from the back row — not because of eyesight, but because of glare.",
-      "The cheapest fixes were the most effective: matte board surfaces, a 20-degree shift in blind angle, and printing handouts at 14pt instead of 11pt.",
-      "Teachers reported the changes helped everyone. Students without a diagnosis asked fewer clarifying questions, and copying time fell by roughly a fifth."],
-    quote:"When the room is designed for the hardest case, it works better for every case." },
-  { id:"a2", kind:"Story", title:"My Journey with Dyslexia", ago:"5h ago", read:"4 min read", author:"Amara O.", storyId:"s1" },
-  { id:"a3", kind:"Interview", title:"What 2,400 Learners Told Us", ago:"1d ago", read:"8 min read", author:"MWM Interviews",
-    body:["Over three years we recorded 2,400 interviews in 18 countries. We asked one question first: what makes a good day of learning?",
-      "Almost nobody answered with technology. They answered with people — a teacher who waited, a classmate who shared notes, a parent who did not treat a diagnosis as a verdict.",
-      "Tools matter, but they arrive second. The first accessibility feature in any classroom is attention."],
-    quote:"Nobody said the word software. They said the name of a teacher." }
+  { id:"a1", kind:"Research", ago:"2h ago", read:"6 min read", author:"MWM Research Team",
+    title:{ en:"Visual Accessibility in Classrooms", ru:"Визуальная доступность в классах", uz:"Sinflarda vizual qulaylik" },
+    body:{
+      en:["We measured lighting, contrast and seating in 60 classrooms across 12 countries. In two thirds of them, a student with low vision could not read the board from the back row — not because of eyesight, but because of glare.",
+        "The cheapest fixes were the most effective: matte board surfaces, a 20-degree shift in blind angle, and printing handouts at 14pt instead of 11pt.",
+        "Teachers reported the changes helped everyone. Students without a diagnosis asked fewer clarifying questions, and copying time fell by roughly a fifth."],
+      ru:["Мы измерили освещение, контраст и расположение мест в 60 классах в 12 странах. В двух третях из них ученик со слабым зрением не мог разглядеть доску с задних рядов — не из-за зрения, а из-за бликов.",
+        "Самые дешёвые решения оказались самыми эффективными: матовая поверхность доски, сдвиг слепой зоны на 20 градусов и печать раздаточных материалов 14-м кеглем вместо 11-го.",
+        "Учителя отметили, что изменения помогли всем. Ученики без диагноза стали реже задавать уточняющие вопросы, а время на переписывание сократилось примерно на пятую часть."],
+      uz:["Biz 12 mamlakatdagi 60 sinfda yoritish, kontrast va o'rindiqlar joylashuvini o'lchadik. Ularning uchdan ikki qismida zaif ko'ruvchi o'quvchi orqa qatordan taxtani o'qiy olmasdi — ko'rish qobiliyati emas, balki yaltirash sababli.",
+        "Eng arzon yechimlar eng samarali bo'ldi: taxtaning mat sirti, ko'r nuqtani 20 darajaga siljitish va tarqatma materiallarni 11pt o'rniga 14pt bilan chop etish.",
+        "O'qituvchilar bu o'zgarishlar hammaga yordam berganini ta'kidladi. Tashxissiz o'quvchilar kamroq aniqlashtiruvchi savol berishdi, ko'chirib yozish vaqti esa taxminan beshdan bir qismga qisqardi."]
+    },
+    quote:{ en:"When the room is designed for the hardest case, it works better for every case.",
+      ru:"Когда помещение спроектировано для самого сложного случая, оно лучше работает для любого случая.",
+      uz:"Xona eng qiyin holat uchun loyihalanganda, u har qanday holat uchun yaxshiroq ishlaydi." } },
+  { id:"a2", kind:"Story", ago:"5h ago", read:"4 min read", author:"Amara O.", storyId:"s1",
+    title:{ en:"My Journey with Dyslexia", ru:"Мой путь с дислексией", uz:"Disleksiya bilan yo'lim" } },
+  { id:"a3", kind:"Interview", ago:"1d ago", read:"8 min read", author:"MWM Interviews",
+    title:{ en:"What 2,400 Learners Told Us", ru:"Что рассказали нам 2 400 учеников", uz:"2400 ta o'quvchi bizga nima dedi" },
+    body:{
+      en:["Over three years we recorded 2,400 interviews in 18 countries. We asked one question first: what makes a good day of learning?",
+        "Almost nobody answered with technology. They answered with people — a teacher who waited, a classmate who shared notes, a parent who did not treat a diagnosis as a verdict.",
+        "Tools matter, but they arrive second. The first accessibility feature in any classroom is attention."],
+      ru:["За три года мы записали 2 400 интервью в 18 странах. Первым делом мы спрашивали: что делает день учёбы хорошим?",
+        "Почти никто не отвечал про технологии. Отвечали про людей — учителя, который подождал, одноклассника, поделившегося конспектом, родителя, который не воспринял диагноз как приговор.",
+        "Инструменты важны, но они вторичны. Первая функция доступности в любом классе — это внимание."],
+      uz:["Uch yil davomida 18 mamlakatda 2400 ta intervyu yozib oldik. Birinchi savolimiz: nima o'quv kunini yaxshi qiladi?",
+        "Deyarli hech kim texnologiya haqida javob bermadi. Ular odamlar haqida gapirishdi — kutgan o'qituvchi, konspektini ulashgan sinfdosh, tashxisni hukm sifatida qabul qilmagan ota-ona.",
+        "Vositalar muhim, lekin ular ikkinchi o'rinda. Har qanday sinfdagi birinchi qulaylik funksiyasi — bu e'tibor."]
+    },
+    quote:{ en:"Nobody said the word software. They said the name of a teacher.",
+      ru:"Никто не назвал слово «программа». Все называли имя учителя.",
+      uz:"Hech kim 'dastur' so'zini aytmadi. Hammasi o'qituvchining ismini aytishdi." } }
 ];
 
 /* ============ icons ============ */
@@ -451,6 +610,10 @@ const I = {
   sparkle:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>,
   speaker:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19.3 6a9 9 0 0 1 0 12"/></svg>,
   logout:(p)=><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>,
+  flag:(p)=><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 21V4"/><path d="M5 4h13l-3 4 3 4H5"/></svg>,
+  moon:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>,
+  aa:(p)=><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 17 7.5 6l4.5 11"/><path d="M4.3 13.5h6.4"/><path d="M14 17c0-2.5 2-4 4-4s3.5 1.3 3.5 3v4M21.5 15.2c-.8-.5-1.7-.7-2.8-.4-1.6.4-2.2 2.6-.7 3.4 1 .5 2.2.2 3.1-.5"/></svg>,
+  chart:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 20V10M11 20V4M18 20v-7"/><path d="M3 20h18"/></svg>,
   signal:()=><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".45"/></svg>,
   wifi:()=><svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M1 4.2a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.9a6.8 6.8 0 0 1 8.8 0"/><path d="M6.2 9.5a3 3 0 0 1 3.6 0"/></svg>,
   battery:()=><svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x=".7" y=".7" width="19" height="10.6" rx="3" stroke="currentColor" strokeOpacity=".5"/><rect x="2.4" y="2.4" width="15.6" height="7.2" rx="1.8" fill="currentColor"/><path d="M21.4 4.4v3.2a2 2 0 0 0 0-3.2z" fill="currentColor" fillOpacity=".5"/></svg>
@@ -658,7 +821,7 @@ function VoiceFab({ onPress, hasTabbar }){
 }
 
 /* ============ home ============ */
-function Home({ go, t, greeting, simplified }){
+function Home({ go, t, lang, greeting, simplified }){
   const tiles = [
     { key:"tileLibrary", emoji:"📚", to:{ tab:"library" } },
     { key:"tileHub", emoji:"🎓", to:{ view:{ type:"paths" } } },
@@ -706,16 +869,19 @@ function Home({ go, t, greeting, simplified }){
       </div>
 
       <div className="eyebrow section-label">{t("recentLabel")}</div>
-      {recentItems.map(a=>(
-        <button key={a.id} className="row-item" onClick={()=>go({ view:{ type:"article", id:a.id } }, a.title)}>
-          <span className="row-icon"><I.doc/></span>
-          <span style={{flex:1}}>
-            <b>{a.title}</b>
-            <small>{a.kind} · {a.ago}</small>
-          </span>
-          <I.chevron style={{color:"var(--muted)"}}/>
-        </button>
-      ))}
+      {recentItems.map(a=>{
+        const title = pick(a.title, lang);
+        return (
+          <button key={a.id} className="row-item" onClick={()=>go({ view:{ type:"article", id:a.id } }, title)}>
+            <span className="row-icon"><I.doc/></span>
+            <span style={{flex:1}}>
+              <b>{title}</b>
+              <small>{a.kind} · {a.ago}</small>
+            </span>
+            <I.chevron style={{color:"var(--muted)"}}/>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -773,7 +939,7 @@ function Library({ go, saved, toggleSave, t }){
 }
 
 /* ============ stories ============ */
-function Stories({ go, liked, toggleLike, myStories, t }){
+function Stories({ go, liked, toggleLike, myStories, t, lang }){
   const all = [...myStories, ...STORIES];
   return (
     <div className="scroll with-tabs anim-fade">
@@ -784,32 +950,36 @@ function Stories({ go, liked, toggleLike, myStories, t }){
       <p className="muted" style={{fontSize:"calc(12.5px * var(--fs))", marginTop:0, marginBottom:16, lineHeight:1.5}}>
         {t("storiesSubtitle")}
       </p>
-      {all.map(s=>(
-        <button key={s.id} className="story-card" onClick={()=>go({ view:{ type:"story", id:s.id } }, s.title)}>
-          <h3>{s.title}</h3>
-          <p>{s.body[0].slice(0,132)}…</p>
-          <div className="story-foot">
-            <span>{s.author} · {s.country}</span>
-            <span>{s.ago}</span>
-            <span
-              className={"like" + (liked.includes(s.id) ? " on" : "")}
-              onClick={(e)=>{ e.stopPropagation(); toggleLike(s.id); }}
-              role="button" tabIndex={0}
-              onKeyDown={(e)=>{ if(e.key === "Enter"){ e.stopPropagation(); toggleLike(s.id); } }}>
-              <I.heart fill={liked.includes(s.id) ? "currentColor" : "none"}/>
-              {s.likes + (liked.includes(s.id) ? 1 : 0)}
-            </span>
-          </div>
-        </button>
-      ))}
+      {all.map(s=>{
+        const title = pick(s.title, lang);
+        const body = pick(s.body, lang);
+        return (
+          <button key={s.id} className="story-card" onClick={()=>go({ view:{ type:"story", id:s.id } }, title)}>
+            <h3>{title}</h3>
+            <p>{body[0].slice(0,132)}…</p>
+            <div className="story-foot">
+              <span>{s.author} · {s.country}</span>
+              <span>{s.ago}</span>
+              <span
+                className={"like" + (liked.includes(s.id) ? " on" : "")}
+                onClick={(e)=>{ e.stopPropagation(); toggleLike(s.id); }}
+                role="button" tabIndex={0}
+                onKeyDown={(e)=>{ if(e.key === "Enter"){ e.stopPropagation(); toggleLike(s.id); } }}>
+                <I.heart fill={liked.includes(s.id) ? "currentColor" : "none"}/>
+                {s.likes + (liked.includes(s.id) ? 1 : 0)}
+              </span>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 /* ============ profile ============ */
-function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, onLogout, onChangeLang, onReset }){
+function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, onLogout, onChangeLang, onReset, onOpenInsights }){
   const s = account.settings;
-  const upd = (k,v)=> set(p=>({ ...p, settings:{ ...p.settings, [k]:v } }));
+  const upd = (k,v)=>{ set(p=>({ ...p, settings:{ ...p.settings, [k]:v } })); vibrate(s.haptics ? 12 : 0); };
   const Row = ({ title, sub, on, onToggle }) => (
     <button className="setting" onClick={()=>{
       if(s.voiceGuide) speakText(title + (on ? " off" : " on"));
@@ -856,6 +1026,9 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
       <Row title={t("rowCaptionsTitle")} sub={t("rowCaptionsSub")} on={s.captions} onToggle={()=>upd("captions", !s.captions)}/>
       <Row title={t("rowDyslexicTitle")} sub={t("rowDyslexicSub")} on={s.dyslexic} onToggle={()=>upd("dyslexic", !s.dyslexic)}/>
       <Row title={t("rowVoiceTitle")} sub={t("rowVoiceSub")} on={s.voiceGuide} onToggle={()=>upd("voiceGuide", !s.voiceGuide)}/>
+      <Row title={t("darkModeTitle")} sub={t("darkModeSub")} on={s.darkMode} onToggle={()=>upd("darkMode", !s.darkMode)}/>
+      <Row title={t("readableFontTitle")} sub={t("readableFontSub")} on={s.readableFont} onToggle={()=>upd("readableFont", !s.readableFont)}/>
+      <Row title={t("hapticsTitle")} sub={t("hapticsSub")} on={s.haptics} onToggle={()=>upd("haptics", !s.haptics)}/>
 
       <div className="eyebrow section-label">{t("accessibilityProfileLabel")}</div>
       <button className="row-item" onClick={onRerunSetup}>
@@ -884,6 +1057,11 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
       </button>
 
       <div className="eyebrow section-label">{t("appLabel")}</div>
+      <button className="row-item" onClick={onOpenInsights}>
+        <span className="row-icon"><I.chart/></span>
+        <span style={{flex:1}}><b>{t("insightsRow")}</b><small>{t("insightsSub")}</small></span>
+        <I.chevron style={{color:"var(--muted)"}}/>
+      </button>
       <button className="row-item" onClick={onReset}>
         <span className="row-icon" style={{color:"var(--danger)"}}>↺</span>
         <span style={{flex:1}}><b>{t("resetTitle")}</b><small>{t("resetSub")}</small></span>
@@ -902,7 +1080,16 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
 }
 
 /* ============ detail views ============ */
-function Detail({ title, onBack, children, action }){
+function Detail({ title, onBack, children, action, onSwipeBack }){
+  const touch = useRef({ x:0, y:0 });
+  const onTouchStart = (e)=>{ const t0=e.touches[0]; touch.current = { x:t0.clientX, y:t0.clientY }; };
+  const onTouchEnd = (e)=>{
+    if(!onSwipeBack) return;
+    const t0 = e.changedTouches[0];
+    const dx = t0.clientX - touch.current.x;
+    const dy = t0.clientY - touch.current.y;
+    if(dx > 70 && Math.abs(dy) < 60) onSwipeBack();
+  };
   return (
     <React.Fragment>
       <div className="topbar">
@@ -910,57 +1097,96 @@ function Detail({ title, onBack, children, action }){
         <h2 style={{flex:1}}>{title}</h2>
         {action}
       </div>
-      <div className="scroll detail-scroll anim-slide">{children}</div>
+      <div className="scroll detail-scroll anim-slide" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>{children}</div>
     </React.Fragment>
   );
 }
 
-function ArticleView({ id, onBack, go }){
-  const a = ARTICLES.find(x=>x.id===id);
-  if(a.storyId) return <StoryView id={a.storyId} onBack={onBack}/>;
+function ReportBox({ t, onSubmit }){
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState(null);
+  const [note, setNote] = useState("");
+  const reasons = ["reportWrong","reportOffensive","reportBroken","reportOther"];
+  if(!open){
+    return (
+      <div className="report-box">
+        <button className="report-toggle" onClick={()=>setOpen(true)}>
+          <I.flag/> {t("reportOpen")}
+        </button>
+      </div>
+    );
+  }
   return (
-    <Detail title={a.kind} onBack={onBack}>
+    <div className="report-box">
+      <div className="report-form">
+        <div className="report-reasons">
+          {reasons.map(r=>(
+            <button key={r} className={"report-reason" + (reason === r ? " on" : "")} onClick={()=>setReason(r)}>{t(r)}</button>
+          ))}
+        </div>
+        <textarea rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder={t("reportNotePlaceholder")}
+          style={{width:"100%", background:"var(--cream-3)", border:"1px solid transparent", borderRadius:13, padding:"10px 12px", fontSize:"calc(12.5px * var(--fs))", fontFamily:"inherit", resize:"none", color:"var(--navy)"}}/>
+        <button className="cta" style={{marginTop:10, opacity: reason ? 1 : .5}} disabled={!reason}
+          onClick={()=>{ onSubmit({ reason, note }); setOpen(false); setReason(null); setNote(""); }}>
+          {t("reportSubmit")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ArticleView({ id, onBack, go, t, lang, onReport }){
+  const a = ARTICLES.find(x=>x.id===id);
+  if(a.storyId) return <StoryView id={a.storyId} onBack={onBack} t={t} lang={lang} onReport={onReport}/>;
+  const body = pick(a.body, lang);
+  const quote = pick(a.quote, lang);
+  return (
+    <Detail title={a.kind} onBack={onBack} onSwipeBack={onBack}>
       <article className="article">
         <div className="eyebrow kicker">{a.author} · {a.read}</div>
-        <h1>{a.title}</h1>
-        {a.body.map((p,i)=>(
+        <h1>{pick(a.title, lang)}</h1>
+        {body.map((p,i)=>(
           <React.Fragment key={i}>
             <p>{p}</p>
-            {i===0 && a.quote ? <blockquote>{a.quote}</blockquote> : null}
+            {i===0 && quote ? <blockquote>{quote}</blockquote> : null}
           </React.Fragment>
         ))}
         <button className="cta" style={{marginTop:14}} onClick={()=>go({ tab:"library" })}>
           Read related resources <I.arrow/>
         </button>
+        <ReportBox t={t} onSubmit={(r)=>onReport({ type:"article", id:a.id, ...r })}/>
       </article>
     </Detail>
   );
 }
 
-function StoryView({ id, onBack, liked, toggleLike, myStories }){
+function StoryView({ id, onBack, liked, toggleLike, myStories, t, lang, onReport }){
   const all = [...(myStories||[]), ...STORIES];
   const s = all.find(x=>x.id===id) || STORIES[0];
   const on = (liked||[]).includes(s.id);
+  const body = pick(s.body, lang);
   return (
-    <Detail title="Story" onBack={onBack}
+    <Detail title="Story" onBack={onBack} onSwipeBack={onBack}
       action={toggleLike ? (
         <button className={"icon-btn like" + (on ? " on" : "")} onClick={()=>toggleLike(s.id)} aria-label="Like this story">
           <I.heart fill={on ? "currentColor" : "none"}/>
         </button>) : null}>
       <article className="article">
         <div className="eyebrow kicker">{s.author} · {s.country} · {s.ago}</div>
-        <h1>{s.title}</h1>
-        {s.body.map((p,i)=><p key={i}>{p}</p>)}
+        <h1>{pick(s.title, lang)}</h1>
+        {body.map((p,i)=><p key={i}>{p}</p>)}
+        {t ? <ReportBox t={t} onSubmit={(r)=>onReport && onReport({ type:"story", id:s.id, ...r })}/> : null}
       </article>
     </Detail>
   );
 }
 
-function ResourceView({ id, onBack, saved, toggleSave, notify }){
+function ResourceView({ id, onBack, saved, toggleSave, notify, t, onReport }){
   const r = LIBRARY.find(x=>x.id===id);
   const isSaved = saved.includes(r.id);
+  const [showExtra, setShowExtra] = useState(false);
   return (
-    <Detail title={r.format} onBack={onBack}>
+    <Detail title={r.format} onBack={onBack} onSwipeBack={onBack}>
       <div style={{display:"flex", gap:14, alignItems:"center", marginBottom:18}}>
         <div className="thumb" style={{width:64, height:64, fontSize:28, borderRadius:16, background:"var(--cream-2)", display:"grid", placeItems:"center"}}>{r.emoji}</div>
         <div>
@@ -983,6 +1209,70 @@ function ResourceView({ id, onBack, saved, toggleSave, notify }){
       <button className="cta" style={{marginTop:10, background:"var(--cream-2)", color:"var(--navy)"}} onClick={()=>toggleSave(r.id)}>
         {isSaved ? "Remove from saved" : "Save for later"}
       </button>
+
+      {(r.transcript || r.altTexts) && (
+        <div style={{marginTop:16}}>
+          <button className="report-toggle" onClick={()=>setShowExtra(v=>!v)}>
+            <I.doc/> {r.transcript ? "Show transcript" : "Show image descriptions"}
+          </button>
+          {showExtra && (
+            <div className="card" style={{display:"block", marginTop:10}}>
+              {(r.transcript || r.altTexts).map((line,i)=>(
+                <p key={i} style={{fontSize:"calc(12.5px * var(--fs))", lineHeight:1.6, margin:"6px 0"}}>{line}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {t ? <ReportBox t={t} onSubmit={(rep)=>onReport && onReport({ type:"resource", id:r.id, ...rep })}/> : null}
+    </Detail>
+  );
+}
+
+function InsightsView({ onBack, accounts, reports, t }){
+  const list = Object.values(accounts || {});
+  const total = list.length;
+  const byProfile = { "low-vision":0, "blind":0, "hearing":0, "standard":0, "—":0 };
+  let voiceOn = 0, storiesTotal = 0;
+  list.forEach(acc=>{
+    byProfile[acc.profile || "—"] = (byProfile[acc.profile || "—"] || 0) + 1;
+    if(acc.settings && acc.settings.voiceGuide) voiceOn++;
+    storiesTotal += (acc.myStories || []).length;
+  });
+  const profileLabels = { "low-vision":t("lowVisionTitle"), "blind":t("blindTitle"), "hearing":t("hearingTitle"), "standard":t("standardTitle"), "—":"—" };
+  const maxProfile = Math.max(1, ...Object.values(byProfile));
+  return (
+    <Detail title={t("insightsTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <div className="insight-card">
+        <b>{t("insightsAccounts")}</b>
+        <div style={{fontSize:"calc(30px * var(--fs))", fontFamily:"Fraunces,serif", fontWeight:700}}>{total}</div>
+      </div>
+      <div className="insight-card">
+        <b>{t("insightsByProfile")}</b>
+        {Object.entries(byProfile).filter(([k,v])=>v>0 || k!=="—").map(([k,v])=>(
+          <div key={k} className="insight-row">
+            <span style={{width:110, flex:"none"}}>{profileLabels[k]}</span>
+            <span className="insight-bar"><i style={{width:(v/maxProfile*100)+"%"}}/></span>
+            <span className="insight-num">{v}</span>
+          </div>
+        ))}
+      </div>
+      <div className="insight-card">
+        <b>{t("insightsVoice")}</b>
+        <div className="insight-row">
+          <span className="insight-bar"><i style={{width:(total? voiceOn/total*100:0)+"%"}}/></span>
+          <span className="insight-num">{voiceOn}/{total}</span>
+        </div>
+      </div>
+      <div className="insight-card">
+        <b>{t("insightsStories")}</b>
+        <div style={{fontSize:"calc(22px * var(--fs))", fontFamily:"Fraunces,serif", fontWeight:700}}>{storiesTotal}</div>
+      </div>
+      <div className="insight-card">
+        <b>{t("insightsReports")}</b>
+        <div style={{fontSize:"calc(22px * var(--fs))", fontFamily:"Fraunces,serif", fontWeight:700}}>{(reports||[]).length}</div>
+      </div>
+      <p className="muted" style={{fontSize:"calc(11.5px * var(--fs))", lineHeight:1.5}}>{t("insightsNote")}</p>
     </Detail>
   );
 }
@@ -1090,6 +1380,7 @@ function App(){
     const accs = MIGRATED ? MIGRATED.accounts : loadAccounts();
     return (sess && accs[sess.email]) ? "app" : "splash";
   });
+  const [reports, setReports] = useState(loadReports);
   const scrollRef = useRef(null);
   const deviceScreenRef = useRef(null);
   const ds = useDeviceScale(deviceScreenRef);
@@ -1099,6 +1390,7 @@ function App(){
   useEffect(()=>{ saveAccounts(accounts); }, [accounts]);
   useEffect(()=>{ saveSession(session); }, [session]);
   useEffect(()=>{ try{ localStorage.setItem(LANG_KEY, uiLang); }catch(e){} }, [uiLang]);
+  useEffect(()=>{ saveReports(reports); }, [reports]);
   useEffect(()=>{
     if(!toast) return;
     const tm = setTimeout(()=>setToast(null), 2200);
@@ -1112,6 +1404,14 @@ function App(){
   const lang = account ? account.lang : uiLang;
   const t = useCallback((key)=> tFor(lang, key), [lang]);
   const notify = useCallback((text)=>setToast(text), []);
+  useEffect(()=>{ try{ document.documentElement.lang = lang; }catch(e){} }, [lang]);
+
+  const submitReport = ({ type, id, reason, note })=>{
+    const entry = { id:"r"+Date.now(), type, targetId:id, reason, note, lang, at:new Date().toISOString() };
+    setReports(prev=>[entry, ...prev]);
+    notify(t("reportThanks"));
+    vibrate(account && account.settings.haptics ? [10,40,10] : 0);
+  };
 
   const updateAccount = (email, updater)=>{
     setAccounts(prev=>{
@@ -1122,8 +1422,10 @@ function App(){
   };
 
   const voiceGuide = !!(account && account.settings.voiceGuide);
+  const hapticsOn = !!(account && account.settings.haptics);
   const go = (to, label)=>{
     if(voiceGuide && label) speakText(label);
+    if(hapticsOn) vibrate(10);
     if(to.tab){ setTab(to.tab); setView(null); }
     if(to.view){ setView(to.view); }
   };
@@ -1134,6 +1436,7 @@ function App(){
       const msg = has ? t("savedRemoved") : t("savedAdded");
       notify(msg);
       if(p.settings.voiceGuide) speakText(msg);
+      if(p.settings.haptics) vibrate(has ? 8 : [8,30,8]);
       return { ...p, saved: has ? p.saved.filter(x=>x!==id) : [id, ...p.saved] };
     });
   };
@@ -1142,6 +1445,7 @@ function App(){
     updateAccount(session.email, p=>{
       const has = p.liked.includes(id);
       if(p.settings.voiceGuide) speakText(has ? t("likeRemoved") : t("likeAdded"));
+      if(p.settings.haptics) vibrate(has ? 8 : [8,30,8]);
       return { ...p, liked: has ? p.liked.filter(x=>x!==id) : [id, ...p.liked] };
     });
   };
@@ -1265,11 +1569,12 @@ function App(){
   }
 
   const screenTitle =
-    view?.type === "article" ? (ARTICLES.find(a=>a.id===view.id)?.title || "") :
+    view?.type === "article" ? pick(ARTICLES.find(a=>a.id===view.id)?.title, lang) :
     view?.type === "story" ? "Story" :
     view?.type === "resource" ? (LIBRARY.find(r=>r.id===view.id)?.title || "") :
     view?.type === "paths" ? t("tileHubTitle") :
     view?.type === "compose" ? t("tileShareTitle") :
+    view?.type === "insights" ? t("insightsTitle") :
     tab === "home" ? t("welcomeTitle") : tab === "library" ? t("libraryTitle") :
     tab === "stories" ? t("storiesTitle") : t("profileTitle");
 
@@ -1282,28 +1587,43 @@ function App(){
 
   const announceScreen = ()=> speakText(screenTitle + (screenHint ? ". " + screenHint : ""));
 
+  const tabOrder = ["home","library","stories","profile"];
   const tabs = [
     ["home", t("navHome"), I.home],
     ["library", t("navLibrary"), I.library],
     ["stories", t("navStories"), I.stories],
     ["profile", t("navProfile"), I.profile]
   ];
+  const switchTab = (dir)=>{
+    const i = tabOrder.indexOf(tab);
+    const next = tabOrder[Math.min(tabOrder.length - 1, Math.max(0, i + dir))];
+    if(next !== tab){ if(hapticsOn) vibrate(10); setTab(next); }
+  };
+  const touchRef = useRef({ x:0, y:0 });
+  const onTabTouchStart = (e)=>{ const t0=e.touches[0]; touchRef.current = { x:t0.clientX, y:t0.clientY }; };
+  const onTabTouchEnd = (e)=>{
+    const t0 = e.changedTouches[0];
+    const dx = t0.clientX - touchRef.current.x;
+    const dy = t0.clientY - touchRef.current.y;
+    if(Math.abs(dx) > 70 && Math.abs(dy) < 60) switchTab(dx < 0 ? 1 : -1);
+  };
 
   let body;
   if(view){
     const back = ()=>setView(null);
-    if(view.type==="article") body = <ArticleView id={view.id} onBack={back} go={go}/>;
-    else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories}/>;
-    else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify}/>;
+    if(view.type==="article") body = <ArticleView id={view.id} onBack={back} go={go} t={t} lang={lang} onReport={submitReport}/>;
+    else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang} onReport={submitReport}/>;
+    else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} onReport={submitReport}/>;
     else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify}/>;
     else if(view.type==="compose") body = <Compose onBack={back} onSubmit={publish}/>;
-  } else if(tab==="home") body = <Home go={go} t={t} greeting={greeting} simplified={simplified}/>;
+    else if(view.type==="insights") body = <InsightsView onBack={back} accounts={accounts} reports={reports} t={t}/>;
+  } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified}/>;
   else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t}/>;
-  else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t}/>;
+  else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang}/>;
   else body = <Profile account={account} set={(u)=>updateAccount(session.email, u)} saved={account.saved} myStories={account.myStories} go={go} notify={notify}
                         onRerunSetup={()=>setStage("setup")} t={t} onLogout={logout}
                         onChangeLang={(code)=>updateAccount(session.email, p=>({ ...p, lang:code }))}
-                        onReset={handleReset}/>;
+                        onReset={handleReset} onOpenInsights={()=>go({ view:{ type:"insights" } })}/>;
 
   return (
     <div className="device">
@@ -1311,9 +1631,14 @@ function App(){
         <div className="island"/>
         <div className="screen" style={screenStyle}
              data-contrast={s.contrast ? "on" : "off"}
-             data-motion={s.motion ? "on" : "off"}>
-          <StatusBar/>
-          <div ref={scrollRef} style={{flex:1, position:"relative", display:"flex", flexDirection:"column"}} key={view ? view.type + (view.id||"") : tab}>
+             data-motion={s.motion ? "on" : "off"}
+             data-dark={s.darkMode ? "on" : "off"}
+             data-readable={s.readableFont ? "on" : "off"}>
+          <StatusBar dark={s.darkMode}/>
+          <div className="sr-only" aria-live="polite">{screenTitle}</div>
+          <div ref={scrollRef} className="body-wrap" key={view ? view.type + (view.id||"") : tab}
+               onTouchStart={!view ? onTabTouchStart : undefined}
+               onTouchEnd={!view ? onTabTouchEnd : undefined}>
             {body}
           </div>
           {toast ? <Toast text={toast}/> : null}
@@ -1322,7 +1647,7 @@ function App(){
             <nav className="tabbar">
               {tabs.map(([id,label,Icon])=>(
                 <button key={id} className={"tab" + (tab===id ? " active" : "")}
-                        onClick={()=>{ if(voiceGuide) speakText(label); setTab(id); setView(null); }}
+                        onClick={()=>{ if(voiceGuide) speakText(label); if(hapticsOn) vibrate(10); setTab(id); setView(null); }}
                         aria-current={tab===id ? "page" : undefined}>
                   <Icon/><span>{label}</span>
                 </button>
