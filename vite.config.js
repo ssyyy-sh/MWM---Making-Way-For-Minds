@@ -2,7 +2,13 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
+// This repo is a GitHub Pages *project* site, served from a subpath:
+// https://ssyyy-sh.github.io/MWM---Making-Way-For-Minds/
+// Vite needs to know that subpath so every asset URL it generates is correct.
+const BASE_PATH = "/MWM---Making-Way-For-Minds/";
+
 export default defineConfig({
+  base: BASE_PATH,
   plugins: [
     react(),
     VitePWA({
@@ -15,7 +21,8 @@ export default defineConfig({
         theme_color: "#16243F",
         background_color: "#F7F4EA",
         display: "standalone",
-        start_url: "/",
+        start_url: BASE_PATH,
+        scope: BASE_PATH,
         icons: []
       },
       workbox: {
