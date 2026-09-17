@@ -1,27 +1,59 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import "./App.css";
 
-/* ============ storage ============ */
-const KEY = "mwm:state:v1";
-const defaultState = {
-  onboarded: false,
-  profile: null, // "low-vision" | "blind" | "hearing" | "standard"
-  saved: [],
-  liked: [],
-  myStories: [],
-  progress: { p1: 60, p2: 25, p3: 0, p4: 100 },
-  settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false }
-};
-function loadState(){
-  try{
-    const raw = localStorage.getItem(KEY);
-    if(!raw) return defaultState;
-    const p = JSON.parse(raw);
-    return { ...defaultState, ...p, settings:{ ...defaultState.settings, ...(p.settings||{}) },
-             progress:{ ...defaultState.progress, ...(p.progress||{}) } };
-  }catch(e){ return defaultState; }
+/* ============ storage: multi-account ============ */
+const ACCOUNTS_KEY = "mwm:accounts:v1";
+const SESSION_KEY = "mwm:session:v1";
+const LEGACY_KEY = "mwm:state:v1";
+const LANG_KEY = "mwm:lang:v1";
+
+function loadAccounts(){
+  try{ const raw = localStorage.getItem(ACCOUNTS_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
 }
-function saveState(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+function saveAccounts(a){ try{ localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(a)); }catch(e){} }
+function loadSession(){
+  try{ const raw = localStorage.getItem(SESSION_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function saveSession(s){ try{ if(s) localStorage.setItem(SESSION_KEY, JSON.stringify(s)); else localStorage.removeItem(SESSION_KEY); }catch(e){} }
+
+function makeAccount({ name, email, lang }){
+  return {
+    name, email, lang: lang || "ru",
+    onboarded: false, profile: null,
+    saved: [], liked: [], myStories: [],
+    progress: { p1: 60, p2: 25, p3: 0, p4: 100 },
+    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false }
+  };
+}
+
+// One-time migration from the old single-account version, so early testers keep their data.
+function migrateLegacy(){
+  try{
+    const legacyRaw = localStorage.getItem(LEGACY_KEY);
+    const accountsRaw = localStorage.getItem(ACCOUNTS_KEY);
+    if(legacyRaw && !accountsRaw){
+      const legacy = JSON.parse(legacyRaw);
+      const guestEmail = "guest@local";
+      const acc = makeAccount({ name: "Гость", email: guestEmail, lang: "ru" });
+      Object.assign(acc, {
+        onboarded: !!legacy.onboarded,
+        profile: legacy.profile || null,
+        saved: legacy.saved || [],
+        liked: legacy.liked || [],
+        myStories: legacy.myStories || [],
+        progress: { ...acc.progress, ...(legacy.progress || {}) },
+        settings: { ...acc.settings, ...(legacy.settings || {}) }
+      });
+      const accounts = { [guestEmail]: acc };
+      saveAccounts(accounts);
+      saveSession({ email: guestEmail });
+      localStorage.removeItem(LEGACY_KEY);
+      return { accounts, session: { email: guestEmail } };
+    }
+  }catch(e){}
+  return null;
+}
+const MIGRATED = (typeof window !== "undefined") ? migrateLegacy() : null;
 
 /* ============ speech (voice guide) ============ */
 function speakText(text){
@@ -33,6 +65,316 @@ function speakText(text){
     u.rate = 0.98;
     window.speechSynthesis.speak(u);
   }catch(e){}
+}
+
+/* ============ i18n ============ */
+const LANGS = [
+  { code: "ru", label: "Русский" },
+  { code: "uz", label: "O'zbekcha" },
+  { code: "en", label: "English" }
+];
+
+const STRINGS = {
+  ru: {
+    appTagline: "ДЕЛАЕМ ПУТЬ ДЛЯ РАЗУМА",
+    splashQuote: "«Каждый разум заслуживает доступа к знаниям»",
+    splashCta: "Начать",
+    splashFooter: "Исследования · Инклюзия · Равенство",
+
+    authTitle: "Добро пожаловать",
+    authSubtitleLogin: "Войдите, чтобы вернуться к своим настройкам",
+    authSubtitleRegister: "Создайте аккаунт — у каждого свои настройки",
+    tabLogin: "Вход",
+    tabRegister: "Регистрация",
+    nameLabel: "Имя",
+    namePlaceholder: "Как вас зовут",
+    emailLabel: "Email",
+    emailPlaceholder: "you@example.com",
+    passwordLabel: "Пароль",
+    passwordPlaceholder: "Не менее 4 символов",
+    languageLabel: "Язык интерфейса",
+    submitLogin: "Войти",
+    submitRegister: "Создать аккаунт",
+    switchToRegister: "Нет аккаунта? Зарегистрироваться",
+    switchToLogin: "Уже есть аккаунт? Войти",
+    guestLink: "Продолжить без регистрации",
+    errNameRequired: "Введите имя",
+    errEmailInvalid: "Проверьте email",
+    errPasswordShort: "Пароль слишком короткий",
+    errEmailTaken: "Такой email уже зарегистрирован",
+    errEmailNotFound: "Аккаунт не найден — зарегистрируйтесь",
+    errWrongPassword: "Неверный пароль",
+    welcomeBack: "С возвращением",
+    registeredToast: "Аккаунт создан",
+
+    setupStep: "Шаг 1 из 1",
+    setupTitle: "Каким должен быть интерфейс для вас?",
+    setupSubtitle: "Мы делаем приложение для людей с разными типами восприятия. Выберите вариант — его всегда можно изменить в профиле.",
+    setupContinue: "Продолжить",
+    lowVisionTitle: "Слабое зрение",
+    lowVisionSub: "Очень крупный текст и контраст",
+    blindTitle: "Незрячим",
+    blindSub: "Одна большая кнопка озвучивает экран",
+    hearingTitle: "Слабослышащим",
+    hearingSub: "Субтитры включены везде",
+    standardTitle: "Продолжить как есть",
+    standardSub: "Настроить это позже в профиле",
+
+    navHome: "Главная", navLibrary: "Библиотека", navStories: "Истории", navProfile: "Профиль",
+
+    goodMorning: "Доброе утро", goodAfternoon: "Добрый день", goodEvening: "Добрый вечер",
+    welcomeTitle: "Добро пожаловать в MWM",
+    missionEyebrow: "Наша миссия",
+    missionText: "Исследуем доступность образования через истории, интервью и данные.",
+    statsStories: "Историй", statsCountries: "Стран", statsFree: "Бесплатно",
+    exploreLabel: "Разделы",
+    tileLibraryTitle: "Библиотека", tileLibrarySub: "Книги, аудио и видео",
+    tileHubTitle: "Learning Hub", tileHubSub: "Обучающие маршруты",
+    tileShareTitle: "Поделиться историей", tileShareSub: "Ваш опыт важен",
+    tileCommunityTitle: "Голоса сообщества", tileCommunitySub: "Истории со всего мира",
+    recentLabel: "Недавнее",
+
+    libraryTitle: "Библиотека",
+    searchPlaceholder: "Поиск по названию и автору",
+    filterAll: "Все", filterBook: "Книги", filterAudio: "Аудио", filterVisual: "Визуал", filterSaved: "Сохранённые",
+    libraryEmpty: "Ничего не найдено. Попробуйте другое слово или снимите фильтр.",
+
+    storiesTitle: "Голоса сообщества",
+    storiesSubtitle: "Личные истории учеников, учителей и семей из 18 стран.",
+
+    profileTitle: "Профиль",
+    statMyStories: "Ваши истории", statSaved: "Сохранено", statProgress: "Обучение",
+    readingComfort: "Комфорт чтения",
+    sizeStandard: "Обычный", sizeLarge: "Крупный", sizeLargest: "Очень крупный",
+    accessibilityLabel: "Доступность",
+    rowContrastTitle: "Высокий контраст", rowContrastSub: "Сильнее границы и темнее текст",
+    rowAnimationTitle: "Анимация", rowAnimationSub: "Переходы между экранами",
+    rowCaptionsTitle: "Субтитры по умолчанию", rowCaptionsSub: "Включать субтитры для видео",
+    rowDyslexicTitle: "Удобные интервалы", rowDyslexicSub: "Шире межбуквенный и межстрочный интервал",
+    rowVoiceTitle: "Голосовые подсказки", rowVoiceSub: "Одна кнопка озвучивает экран и действия",
+    accessibilityProfileLabel: "Профиль восприятия",
+    rerunSetup: "Пройти настройку заново",
+    languageRowLabel: "Язык интерфейса",
+    yourLibraryLabel: "Ваша библиотека",
+    savedResourcesTitle: "Сохранённые материалы",
+    learningPathsTitle: "Обучающие маршруты",
+    learningPathsSub: "Продолжить с места остановки",
+    appLabel: "Приложение",
+    resetTitle: "Сбросить данные",
+    resetSub: "Удалит сохранённое, лайки и ваши истории",
+    logoutTitle: "Выйти из аккаунта",
+    logoutSub: "Вернуться к экрану входа",
+    footerTag: "Исследования · Инклюзия · Равенство",
+    itemsWord: "элементов",
+
+    savedAdded: "Сохранено в библиотеке", savedRemoved: "Убрано из сохранённого",
+    likeAdded: "Понравилось", likeRemoved: "Лайк убран",
+    storyPublished: "История опубликована",
+    lessonDone: "Урок отмечен пройденным", pathwayDone: "Маршрут завершён",
+    resetDone: "Данные сброшены",
+    profileApplied: "Интерфейс подстроен под вас", profileAppliedPlain: "Готово"
+  },
+  uz: {
+    appTagline: "ONGGA YO'L OCHAMIZ",
+    splashQuote: "“Har bir ong bilimga ega bo'lishga loyiq”",
+    splashCta: "Boshlash",
+    splashFooter: "Tadqiqot · Inklyuziya · Tenglik",
+
+    authTitle: "Xush kelibsiz",
+    authSubtitleLogin: "Sozlamalaringizga qaytish uchun tizimga kiring",
+    authSubtitleRegister: "Hisob yarating — har kimning o'z sozlamalari bo'ladi",
+    tabLogin: "Kirish",
+    tabRegister: "Ro'yxatdan o'tish",
+    nameLabel: "Ism",
+    namePlaceholder: "Ismingiz",
+    emailLabel: "Email",
+    emailPlaceholder: "siz@example.com",
+    passwordLabel: "Parol",
+    passwordPlaceholder: "Kamida 4 ta belgi",
+    languageLabel: "Interfeys tili",
+    submitLogin: "Kirish",
+    submitRegister: "Hisob yaratish",
+    switchToRegister: "Hisobingiz yo'qmi? Ro'yxatdan o'ting",
+    switchToLogin: "Hisobingiz bormi? Kiring",
+    guestLink: "Ro'yxatdan o'tmasdan davom etish",
+    errNameRequired: "Ismingizni kiriting",
+    errEmailInvalid: "Emailni tekshiring",
+    errPasswordShort: "Parol juda qisqa",
+    errEmailTaken: "Bu email allaqachon ro'yxatdan o'tgan",
+    errEmailNotFound: "Hisob topilmadi — ro'yxatdan o'ting",
+    errWrongPassword: "Parol noto'g'ri",
+    welcomeBack: "Xush kelibsiz, qaytganingizdan xursandmiz",
+    registeredToast: "Hisob yaratildi",
+
+    setupStep: "1-qadam / 1",
+    setupTitle: "Interfeys siz uchun qanday bo'lishi kerak?",
+    setupSubtitle: "Biz turli idrok turiga ega odamlar uchun ilova yaratyapmiz. Variantni tanlang — buni istalgan vaqt profilda o'zgartirish mumkin.",
+    setupContinue: "Davom etish",
+    lowVisionTitle: "Zaif ko'rish",
+    lowVisionSub: "Juda katta matn va kontrast",
+    blindTitle: "Ko'rmaydiganlar uchun",
+    blindSub: "Bitta katta tugma ekranni ovoz bilan o'qiydi",
+    hearingTitle: "Eshitish qiyin bo'lganlar uchun",
+    hearingSub: "Subtitrlar hamma joyda yoqilgan",
+    standardTitle: "Shu holicha davom etish",
+    standardSub: "Buni keyin profilda sozlang",
+
+    navHome: "Bosh sahifa", navLibrary: "Kutubxona", navStories: "Hikoyalar", navProfile: "Profil",
+
+    goodMorning: "Xayrli tong", goodAfternoon: "Xayrli kun", goodEvening: "Xayrli kech",
+    welcomeTitle: "MWM ga xush kelibsiz",
+    missionEyebrow: "Bizning maqsadimiz",
+    missionText: "Hikoyalar, intervyular va ma'lumotlar orqali ta'limga qulaylikni o'rganamiz.",
+    statsStories: "Hikoyalar", statsCountries: "Davlatlar", statsFree: "Bepul",
+    exploreLabel: "Bo'limlar",
+    tileLibraryTitle: "Kutubxona", tileLibrarySub: "Kitoblar, audio va video",
+    tileHubTitle: "Learning Hub", tileHubSub: "Ta'lim yo'nalishlari",
+    tileShareTitle: "Hikoyangizni ulashing", tileShareSub: "Sizning tajribangiz muhim",
+    tileCommunityTitle: "Jamoa ovozlari", tileCommunitySub: "Dunyo bo'ylab hikoyalar",
+    recentLabel: "So'nggi",
+
+    libraryTitle: "Kutubxona",
+    searchPlaceholder: "Nom va muallif bo'yicha qidiring",
+    filterAll: "Barchasi", filterBook: "Kitoblar", filterAudio: "Audio", filterVisual: "Vizual", filterSaved: "Saqlangan",
+    libraryEmpty: "Hech narsa topilmadi. Boshqa so'z bilan qidiring yoki filtrni olib tashlang.",
+
+    storiesTitle: "Jamoa ovozlari",
+    storiesSubtitle: "18 ta davlatdan o'quvchilar, o'qituvchilar va oilalarning shaxsiy hikoyalari.",
+
+    profileTitle: "Profil",
+    statMyStories: "Hikoyalaringiz", statSaved: "Saqlangan", statProgress: "O'quv",
+    readingComfort: "O'qish qulayligi",
+    sizeStandard: "Oddiy", sizeLarge: "Katta", sizeLargest: "Juda katta",
+    accessibilityLabel: "Qulaylik",
+    rowContrastTitle: "Yuqori kontrast", rowContrastSub: "Chegaralar qalinroq, matn to'qroq",
+    rowAnimationTitle: "Animatsiya", rowAnimationSub: "Ekranlar orasidagi o'tishlar",
+    rowCaptionsTitle: "Subtitrlar doim yoniq", rowCaptionsSub: "Videolarda subtitrlarni yoqish",
+    rowDyslexicTitle: "Qulay masofalar", rowDyslexicSub: "Harflar va qatorlar orasidagi masofa kengroq",
+    rowVoiceTitle: "Ovozli yordam", rowVoiceSub: "Bitta tugma ekran va amallarni ovoz bilan aytadi",
+    accessibilityProfileLabel: "Idrok profili",
+    rerunSetup: "Sozlamani qayta o'tish",
+    languageRowLabel: "Interfeys tili",
+    yourLibraryLabel: "Kutubxonangiz",
+    savedResourcesTitle: "Saqlangan materiallar",
+    learningPathsTitle: "Ta'lim yo'nalishlari",
+    learningPathsSub: "To'xtagan joyingizdan davom eting",
+    appLabel: "Ilova",
+    resetTitle: "Ma'lumotlarni tozalash",
+    resetSub: "Saqlanganlar, layklar va hikoyalaringiz o'chadi",
+    logoutTitle: "Hisobdan chiqish",
+    logoutSub: "Kirish ekraniga qaytish",
+    footerTag: "Tadqiqot · Inklyuziya · Tenglik",
+    itemsWord: "ta",
+
+    savedAdded: "Kutubxonaga saqlandi", savedRemoved: "Saqlanganlardan olib tashlandi",
+    likeAdded: "Yoqdi", likeRemoved: "Layk olib tashlandi",
+    storyPublished: "Hikoya nashr qilindi",
+    lessonDone: "Dars tugallangan deb belgilandi", pathwayDone: "Yo'nalish tugallandi",
+    resetDone: "Ma'lumotlar tozalandi",
+    profileApplied: "Interfeys siz uchun moslashtirildi", profileAppliedPlain: "Tayyor"
+  },
+  en: {
+    appTagline: "MAKING WAY FOR MINDS",
+    splashQuote: "“Every mind deserves access to learning.”",
+    splashCta: "Get Started",
+    splashFooter: "Research · Inclusion · Equity",
+
+    authTitle: "Welcome",
+    authSubtitleLogin: "Log in to return to your settings",
+    authSubtitleRegister: "Create an account — everyone gets their own settings",
+    tabLogin: "Log in",
+    tabRegister: "Register",
+    nameLabel: "Name",
+    namePlaceholder: "Your name",
+    emailLabel: "Email",
+    emailPlaceholder: "you@example.com",
+    passwordLabel: "Password",
+    passwordPlaceholder: "At least 4 characters",
+    languageLabel: "Interface language",
+    submitLogin: "Log in",
+    submitRegister: "Create account",
+    switchToRegister: "No account? Register",
+    switchToLogin: "Already have an account? Log in",
+    guestLink: "Continue without an account",
+    errNameRequired: "Enter your name",
+    errEmailInvalid: "Check your email",
+    errPasswordShort: "Password is too short",
+    errEmailTaken: "That email is already registered",
+    errEmailNotFound: "No account found — please register",
+    errWrongPassword: "Wrong password",
+    welcomeBack: "Welcome back",
+    registeredToast: "Account created",
+
+    setupStep: "Step 1 of 1",
+    setupTitle: "What should the interface be like for you?",
+    setupSubtitle: "We're building this app for people with different kinds of perception. Pick an option — you can always change it later in your profile.",
+    setupContinue: "Continue",
+    lowVisionTitle: "Low vision",
+    lowVisionSub: "Extra-large text and contrast",
+    blindTitle: "Blind",
+    blindSub: "One big button reads the screen aloud",
+    hearingTitle: "Hard of hearing",
+    hearingSub: "Captions turned on everywhere",
+    standardTitle: "Continue as is",
+    standardSub: "Set this up later in your profile",
+
+    navHome: "Home", navLibrary: "Library", navStories: "Stories", navProfile: "Profile",
+
+    goodMorning: "Good morning", goodAfternoon: "Good afternoon", goodEvening: "Good evening",
+    welcomeTitle: "Welcome to MWM",
+    missionEyebrow: "Our Mission",
+    missionText: "Researching educational accessibility through stories, interviews, and data.",
+    statsStories: "Stories", statsCountries: "Countries", statsFree: "Free Access",
+    exploreLabel: "Explore",
+    tileLibraryTitle: "Accessible Library", tileLibrarySub: "Books, audio & visual resources",
+    tileHubTitle: "Learning Hub", tileHubSub: "Curated educational pathways",
+    tileShareTitle: "Share Your Story", tileShareSub: "Your experience matters",
+    tileCommunityTitle: "Community Voices", tileCommunitySub: "Stories from around the world",
+    recentLabel: "Recent",
+
+    libraryTitle: "Accessible Library",
+    searchPlaceholder: "Search titles and authors",
+    filterAll: "All", filterBook: "Book", filterAudio: "Audio", filterVisual: "Visual", filterSaved: "Saved",
+    libraryEmpty: "No resources match that. Try another word or clear the filter.",
+
+    storiesTitle: "Community Voices",
+    storiesSubtitle: "First-hand accounts from learners, teachers and families in 18 countries.",
+
+    profileTitle: "Profile",
+    statMyStories: "Your stories", statSaved: "Saved", statProgress: "Learning done",
+    readingComfort: "Reading comfort",
+    sizeStandard: "Standard", sizeLarge: "Large", sizeLargest: "Largest",
+    accessibilityLabel: "Accessibility",
+    rowContrastTitle: "High contrast", rowContrastSub: "Stronger borders and darker text",
+    rowAnimationTitle: "Animation", rowAnimationSub: "Screen transitions and motion",
+    rowCaptionsTitle: "Captions by default", rowCaptionsSub: "Turn on captions for every film",
+    rowDyslexicTitle: "Reading-friendly spacing", rowDyslexicSub: "Wider letter and line spacing",
+    rowVoiceTitle: "Voice guide", rowVoiceSub: "One button reads the screen and actions aloud",
+    accessibilityProfileLabel: "Accessibility profile",
+    rerunSetup: "Redo the setup",
+    languageRowLabel: "Interface language",
+    yourLibraryLabel: "Your library",
+    savedResourcesTitle: "Saved resources",
+    learningPathsTitle: "Learning pathways",
+    learningPathsSub: "Continue where you stopped",
+    appLabel: "App",
+    resetTitle: "Reset app data",
+    resetSub: "Clears saves, likes and your stories",
+    logoutTitle: "Log out",
+    logoutSub: "Return to the sign-in screen",
+    footerTag: "Research · Inclusion · Equity",
+    itemsWord: "items",
+
+    savedAdded: "Saved to your library", savedRemoved: "Removed from saved",
+    likeAdded: "Liked", likeRemoved: "Like removed",
+    storyPublished: "Story published",
+    lessonDone: "Lesson marked done", pathwayDone: "Pathway finished",
+    resetDone: "Everything reset",
+    profileApplied: "Interface adjusted for you", profileAppliedPlain: "Done"
+  }
+};
+function tFor(lang, key){
+  return (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.ru[key] || key;
 }
 
 /* ============ content ============ */
@@ -108,6 +450,7 @@ const I = {
   ear:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 18c-3 0-5.5-2.7-5.5-6.5S8 4 12 4a7 7 0 0 1 7 7c0 2.5-1.8 3.5-3 4s-2 1.3-2 3a2.5 2.5 0 0 1-5 0"/></svg>,
   sparkle:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>,
   speaker:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19.3 6a9 9 0 0 1 0 12"/></svg>,
+  logout:(p)=><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>,
   signal:()=><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".45"/></svg>,
   wifi:()=><svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M1 4.2a10.5 10.5 0 0 1 14 0"/><path d="M3.6 6.9a6.8 6.8 0 0 1 8.8 0"/><path d="M6.2 9.5a3 3 0 0 1 3.6 0"/></svg>,
   battery:()=><svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x=".7" y=".7" width="19" height="10.6" rx="3" stroke="currentColor" strokeOpacity=".5"/><rect x="2.4" y="2.4" width="15.6" height="7.2" rx="1.8" fill="currentColor"/><path d="M21.4 4.4v3.2a2 2 0 0 0 0-3.2z" fill="currentColor" fillOpacity=".5"/></svg>
@@ -125,16 +468,27 @@ function StatusBar({ dark }){
 function Toast({ text }){
   return <div className="toast"><I.check/> {text}</div>;
 }
+function LangRow({ lang, setLang }){
+  return (
+    <div className="lang-row" role="group" aria-label="Language">
+      {LANGS.map(l=>(
+        <button key={l.code} className={"lang-chip" + (lang === l.code ? " on" : "")}
+                onClick={()=>setLang(l.code)}>{l.label}</button>
+      ))}
+    </div>
+  );
+}
 
 /* ============ splash ============ */
-function Splash({ onStart }){
+function Splash({ onStart, lang, setLang, t }){
   return (
     <div className="screen anim-fade">
       <StatusBar/>
       <div className="splash">
-        <div className="logo-tile">M</div>
+        <LangRow lang={lang} setLang={setLang}/>
+        <div className="logo-tile" style={{marginTop:14}}>M</div>
         <div className="wordmark serif">M<span className="g">W</span>M</div>
-        <div className="tagline">MAKING WAY FOR MINDS</div>
+        <div className="tagline">{t("appTagline")}</div>
 
         <svg className="art" viewBox="0 0 220 120" fill="none" aria-hidden="true">
           <g stroke="#9DBE86" strokeWidth="1.6" strokeLinecap="round">
@@ -154,48 +508,126 @@ function Splash({ onStart }){
         </svg>
 
         <div style={{flex:1}}/>
-        <p className="quote serif">“Every mind deserves access to learning.”</p>
+        <p className="quote serif">{t("splashQuote")}</p>
         <div className="squiggle"><i/><span className="serif">∿</span><i/></div>
-        <button className="cta" onClick={onStart}>Get Started <I.arrow/></button>
-        <div className="foot-note">Research · Inclusion · Equity</div>
+        <button className="cta" onClick={onStart}>{t("splashCta")} <I.arrow/></button>
+        <div className="foot-note">{t("splashFooter")}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ auth: register / login ============ */
+function AuthScreen({ lang, setLang, t, onAuth, error, setError }){
+  const [mode, setMode] = useState("register");
+  const [form, setForm] = useState({ name:"", email:"", password:"" });
+  const emailOk = (v)=> /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
+  const submit = ()=>{
+    const email = form.email.trim().toLowerCase();
+    if(mode === "register"){
+      if(form.name.trim().length < 2){ setError(t("errNameRequired")); return; }
+      if(!emailOk(email)){ setError(t("errEmailInvalid")); return; }
+      if(form.password.length < 4){ setError(t("errPasswordShort")); return; }
+      onAuth({ mode:"register", name:form.name.trim(), email, password:form.password, lang });
+    }else{
+      if(!emailOk(email)){ setError(t("errEmailInvalid")); return; }
+      if(!form.password){ setError(t("errPasswordShort")); return; }
+      onAuth({ mode:"login", email, password:form.password });
+    }
+  };
+
+  return (
+    <div className="screen anim-fade">
+      <StatusBar/>
+      <div className="auth">
+        <LangRow lang={lang} setLang={setLang}/>
+        <div className="logo-tile" style={{margin:"16px auto 0"}}>M</div>
+        <h1 className="serif" style={{textAlign:"center", fontSize:"calc(22px * var(--fs))", marginTop:14, lineHeight:1.2}}>
+          {t("authTitle")}
+        </h1>
+        <p className="muted" style={{textAlign:"center", fontSize:"calc(12.5px * var(--fs))", marginTop:6, lineHeight:1.5}}>
+          {mode === "register" ? t("authSubtitleRegister") : t("authSubtitleLogin")}
+        </p>
+
+        <div className="seg" style={{marginTop:20}}>
+          <button className={mode === "register" ? "on" : ""} onClick={()=>{ setMode("register"); setError(""); }}>{t("tabRegister")}</button>
+          <button className={mode === "login" ? "on" : ""} onClick={()=>{ setMode("login"); setError(""); }}>{t("tabLogin")}</button>
+        </div>
+
+        <div style={{marginTop:16}}>
+          {mode === "register" && (
+            <div className="field">
+              <label htmlFor="au-name">{t("nameLabel")}</label>
+              <input id="au-name" value={form.name} onChange={e=>setForm({ ...form, name:e.target.value })} placeholder={t("namePlaceholder")}/>
+            </div>
+          )}
+          <div className="field">
+            <label htmlFor="au-email">{t("emailLabel")}</label>
+            <input id="au-email" type="email" inputMode="email" value={form.email} onChange={e=>setForm({ ...form, email:e.target.value })} placeholder={t("emailPlaceholder")}/>
+          </div>
+          <div className="field">
+            <label htmlFor="au-pass">{t("passwordLabel")}</label>
+            <input id="au-pass" type="password" value={form.password} onChange={e=>setForm({ ...form, password:e.target.value })} placeholder={t("passwordPlaceholder")}/>
+          </div>
+          {mode === "register" && (
+            <div className="field">
+              <label>{t("languageLabel")}</label>
+              <div className="chips" style={{paddingBottom:0}}>
+                {LANGS.map(l=>(
+                  <button key={l.code} type="button" className={"chip" + (lang === l.code ? " on" : "")} onClick={()=>setLang(l.code)}>{l.label}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {error ? <p role="alert" style={{color:"var(--danger)", fontSize:"calc(12px * var(--fs))", margin:"2px 0 0"}}>{error}</p> : null}
+
+        <button className="cta" style={{marginTop:16}} onClick={submit}>
+          {mode === "register" ? t("submitRegister") : t("submitLogin")} <I.arrow/>
+        </button>
+        <button className="link-btn" style={{marginTop:14}} onClick={()=>{ setMode(mode === "register" ? "login" : "register"); setError(""); }}>
+          {mode === "register" ? t("switchToLogin") : t("switchToRegister")}
+        </button>
+        <button className="link-btn muted" style={{marginTop:8}} onClick={()=>onAuth({ mode:"guest", lang })}>
+          {t("guestLink")}
+        </button>
       </div>
     </div>
   );
 }
 
 /* ============ accessibility setup ============ */
-const PROFILES = [
-  { id:"low-vision", icon:I.eye, title:"Слабое зрение", sub:"Крупный текст и усиленный контраст" },
-  { id:"blind", icon:I.eyeOff, title:"Незрячим", sub:"Одна большая кнопка озвучивает экран" },
-  { id:"hearing", icon:I.ear, title:"Слабослышащим", sub:"Субтитры включены везде, где это возможно" },
-  { id:"standard", icon:I.sparkle, title:"Продолжить как есть", sub:"Настроить это позже в профиле" }
-];
-function AccessibilitySetup({ onPick }){
+function AccessibilitySetup({ onPick, t }){
   const [picked, setPicked] = useState(null);
+  const PROFILES = [
+    { id:"low-vision", icon:I.eye, titleKey:"lowVisionTitle", subKey:"lowVisionSub" },
+    { id:"blind", icon:I.eyeOff, titleKey:"blindTitle", subKey:"blindSub" },
+    { id:"hearing", icon:I.ear, titleKey:"hearingTitle", subKey:"hearingSub" },
+    { id:"standard", icon:I.sparkle, titleKey:"standardTitle", subKey:"standardSub" }
+  ];
   return (
     <div className="screen anim-fade">
       <StatusBar/>
       <div className="setup">
-        <div className="eyebrow">Шаг 1 из 1</div>
-        <h1 style={{fontSize:"calc(24px * var(--fs))", marginTop:8, lineHeight:1.2}}>
-          Каким должен быть интерфейс для вас?
-        </h1>
-        <p className="muted" style={{fontSize:"calc(13px * var(--fs))", lineHeight:1.55, marginTop:8}}>
-          Мы делаем приложение для людей с разными типами восприятия. Выберите вариант — всегда можно изменить его в профиле.
-        </p>
+        <div className="eyebrow">{t("setupStep")}</div>
+        <h1 style={{fontSize:"calc(24px * var(--fs))", marginTop:8, lineHeight:1.2}}>{t("setupTitle")}</h1>
+        <p className="muted" style={{fontSize:"calc(13px * var(--fs))", lineHeight:1.55, marginTop:8}}>{t("setupSubtitle")}</p>
 
         <div className="setup-list">
           {PROFILES.map(p=>{
             const Icon = p.icon;
             const on = picked === p.id;
+            const title = t(p.titleKey);
             return (
               <button key={p.id} className={"setup-card" + (on ? " on" : "")}
-                      onClick={()=>{ setPicked(p.id); speakText(p.title); }}
+                      onClick={()=>{ setPicked(p.id); speakText(title); }}
                       aria-pressed={on}>
                 <span className="setup-icon"><Icon/></span>
                 <span style={{flex:1}}>
-                  <b>{p.title}</b>
-                  <small>{p.sub}</small>
+                  <b>{title}</b>
+                  <small>{t(p.subKey)}</small>
                 </span>
                 {on ? <span className="setup-check"><I.check/></span> : null}
               </button>
@@ -206,7 +638,7 @@ function AccessibilitySetup({ onPick }){
         <button className="cta" style={{marginTop:"auto", opacity: picked ? 1 : .5}}
                 disabled={!picked}
                 onClick={()=>onPick(picked)}>
-          Продолжить <I.arrow/>
+          {t("setupContinue")} <I.arrow/>
         </button>
       </div>
     </div>
@@ -226,49 +658,55 @@ function VoiceFab({ onPress, hasTabbar }){
 }
 
 /* ============ home ============ */
-function Home({ go, greeting }){
+function Home({ go, t, greeting, simplified }){
   const tiles = [
-    { emoji:"📚", title:"Accessible Library", sub:"Books, audio & visual resources", to:{ tab:"library" } },
-    { emoji:"🎓", title:"Learning Hub", sub:"Curated educational pathways", to:{ view:{ type:"paths" } } },
-    { emoji:"🎤", title:"Share Your Story", sub:"Your experience matters", to:{ view:{ type:"compose" } } },
-    { emoji:"🌍", title:"Community Voices", sub:"Stories from around the world", to:{ tab:"stories" } }
+    { key:"tileLibrary", emoji:"📚", to:{ tab:"library" } },
+    { key:"tileHub", emoji:"🎓", to:{ view:{ type:"paths" } } },
+    { key:"tileShare", emoji:"🎤", to:{ view:{ type:"compose" } } },
+    { key:"tileCommunity", emoji:"🌍", to:{ tab:"stories" } }
   ];
+  const recentItems = simplified ? ARTICLES.slice(0, 1) : ARTICLES;
   return (
     <div className="scroll with-tabs anim-fade">
       <div className="home-head">
         <div>
           <div className="eyebrow">{greeting}</div>
-          <h1 style={{fontSize:"calc(27px * var(--fs))", marginTop:6}}>Welcome to MWM</h1>
+          <h1 style={{fontSize:"calc(27px * var(--fs))", marginTop:6}}>{t("welcomeTitle")}</h1>
         </div>
-        <button className="avatar" onClick={()=>go({ tab:"profile" }, "Профиль")} aria-label="Open profile">M</button>
+        <button className="avatar" onClick={()=>go({ tab:"profile" }, t("navProfile"))} aria-label={t("navProfile")}>M</button>
       </div>
 
       <section className="mission">
         <div className="row">
           <span className="badge"><I.check/></span>
-          <span className="eyebrow">Our Mission</span>
+          <span className="eyebrow">{t("missionEyebrow")}</span>
         </div>
-        <p>Researching educational accessibility through stories, interviews, and data.</p>
-        <div className="stats">
-          <div className="stat gold"><b>2,400+</b><span>Stories</span></div>
-          <div className="stat"><b>18</b><span>Countries</span></div>
-          <div className="stat green"><b>94%</b><span>Free Access</span></div>
-        </div>
+        <p>{t("missionText")}</p>
+        {!simplified && (
+          <div className="stats">
+            <div className="stat gold"><b>2,400+</b><span>{t("statsStories")}</span></div>
+            <div className="stat"><b>18</b><span>{t("statsCountries")}</span></div>
+            <div className="stat green"><b>94%</b><span>{t("statsFree")}</span></div>
+          </div>
+        )}
       </section>
 
-      <div className="eyebrow section-label">Explore</div>
-      <div className="grid">
-        {tiles.map(t=>(
-          <button key={t.title} className="tile" onClick={()=>go(t.to, t.title)}>
-            <span className="emoji">{t.emoji}</span>
-            <b>{t.title}</b>
-            <span>{t.sub}</span>
-          </button>
-        ))}
+      <div className="eyebrow section-label">{t("exploreLabel")}</div>
+      <div className={"grid" + (simplified ? " single" : "")}>
+        {tiles.map(tile=>{
+          const title = t(tile.key + "Title");
+          return (
+            <button key={tile.key} className={"tile" + (simplified ? " big" : "")} onClick={()=>go(tile.to, title)}>
+              <span className="emoji">{tile.emoji}</span>
+              <b>{title}</b>
+              {!simplified && <span>{t(tile.key + "Sub")}</span>}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="eyebrow section-label">Recent</div>
-      {ARTICLES.map(a=>(
+      <div className="eyebrow section-label">{t("recentLabel")}</div>
+      {recentItems.map(a=>(
         <button key={a.id} className="row-item" onClick={()=>go({ view:{ type:"article", id:a.id } }, a.title)}>
           <span className="row-icon"><I.doc/></span>
           <span style={{flex:1}}>
@@ -283,27 +721,28 @@ function Home({ go, greeting }){
 }
 
 /* ============ library ============ */
-function Library({ go, saved, toggleSave }){
+const FILTER_KEYS = { All:"filterAll", Book:"filterBook", Audio:"filterAudio", Visual:"filterVisual", Saved:"filterSaved" };
+function Library({ go, saved, toggleSave, t }){
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("All");
   const filters = ["All","Book","Audio","Visual","Saved"];
   const items = useMemo(()=>LIBRARY.filter(it=>{
-    const okF = filter==="All" ? true : filter==="Saved" ? saved.includes(it.id) : it.format===filter;
+    const okF = filter === "All" ? true : filter === "Saved" ? saved.includes(it.id) : it.format === filter;
     const okQ = (it.title + " " + it.author).toLowerCase().includes(q.trim().toLowerCase());
     return okF && okQ;
   }), [q, filter, saved]);
 
   return (
     <div className="scroll with-tabs anim-fade">
-      <h1 style={{fontSize:"calc(26px * var(--fs))", marginBottom:14}}>Accessible Library</h1>
+      <h1 style={{fontSize:"calc(26px * var(--fs))", marginBottom:14}}>{t("libraryTitle")}</h1>
       <div className="search">
         <I.search style={{color:"var(--muted)"}}/>
-        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search titles and authors" aria-label="Search the library"/>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder={t("searchPlaceholder")} aria-label={t("searchPlaceholder")}/>
       </div>
       <div className="chips">
         {filters.map(f=>(
-          <button key={f} className={"chip" + (filter===f ? " on" : "")} onClick={()=>setFilter(f)}>
-            {f}{f==="Saved" && saved.length ? " · " + saved.length : ""}
+          <button key={f} className={"chip" + (filter === f ? " on" : "")} onClick={()=>setFilter(f)}>
+            {t(FILTER_KEYS[f])}{f === "Saved" && saved.length ? " · " + saved.length : ""}
           </button>
         ))}
       </div>
@@ -311,7 +750,7 @@ function Library({ go, saved, toggleSave }){
       {items.length === 0 ? (
         <div className="empty">
           <div className="emoji">🔍</div>
-          <p className="muted" style={{fontSize:13}}>No resources match that. Try another word or clear the filter.</p>
+          <p className="muted" style={{fontSize:13}}>{t("libraryEmpty")}</p>
         </div>
       ) : items.map(it=>(
         <div key={it.id} className="card">
@@ -334,16 +773,16 @@ function Library({ go, saved, toggleSave }){
 }
 
 /* ============ stories ============ */
-function Stories({ go, liked, toggleLike, myStories }){
+function Stories({ go, liked, toggleLike, myStories, t }){
   const all = [...myStories, ...STORIES];
   return (
     <div className="scroll with-tabs anim-fade">
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14}}>
-        <h1 style={{fontSize:"calc(26px * var(--fs))"}}>Community Voices</h1>
-        <button className="icon-btn" onClick={()=>go({ view:{ type:"compose" } }, "Поделиться историей")} aria-label="Share your story"><I.plus/></button>
+        <h1 style={{fontSize:"calc(26px * var(--fs))"}}>{t("storiesTitle")}</h1>
+        <button className="icon-btn" onClick={()=>go({ view:{ type:"compose" } }, t("tileShareTitle"))} aria-label={t("tileShareTitle")}><I.plus/></button>
       </div>
       <p className="muted" style={{fontSize:"calc(12.5px * var(--fs))", marginTop:0, marginBottom:16, lineHeight:1.5}}>
-        First-hand accounts from learners, teachers and families in 18 countries.
+        {t("storiesSubtitle")}
       </p>
       {all.map(s=>(
         <button key={s.id} className="story-card" onClick={()=>go({ view:{ type:"story", id:s.id } }, s.title)}>
@@ -356,7 +795,7 @@ function Stories({ go, liked, toggleLike, myStories }){
               className={"like" + (liked.includes(s.id) ? " on" : "")}
               onClick={(e)=>{ e.stopPropagation(); toggleLike(s.id); }}
               role="button" tabIndex={0}
-              onKeyDown={(e)=>{ if(e.key==="Enter"){ e.stopPropagation(); toggleLike(s.id);} }}>
+              onKeyDown={(e)=>{ if(e.key === "Enter"){ e.stopPropagation(); toggleLike(s.id); } }}>
               <I.heart fill={liked.includes(s.id) ? "currentColor" : "none"}/>
               {s.likes + (liked.includes(s.id) ? 1 : 0)}
             </span>
@@ -368,81 +807,95 @@ function Stories({ go, liked, toggleLike, myStories }){
 }
 
 /* ============ profile ============ */
-function Profile({ state, set, saved, myStories, go, notify, onRerunSetup }){
-  const s = state.settings;
+function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, onLogout, onChangeLang, onReset }){
+  const s = account.settings;
   const upd = (k,v)=> set(p=>({ ...p, settings:{ ...p.settings, [k]:v } }));
   const Row = ({ title, sub, on, onToggle }) => (
     <button className="setting" onClick={()=>{
-      if(s.voiceGuide) speakText(title + (on ? " выключено" : " включено"));
+      if(s.voiceGuide) speakText(title + (on ? " off" : " on"));
       onToggle();
     }} aria-pressed={on}>
       <span style={{flex:1}}><b>{title}</b><small>{sub}</small></span>
       <span className={"switch" + (on ? " on" : "")}><i/></span>
     </button>
   );
-  const profileLabel = { "low-vision":"Слабое зрение", "blind":"Незрячим", "hearing":"Слабослышащим", "standard":"Стандартный" }[state.profile] || "Не выбран";
+  const profileLabel = {
+    "low-vision": t("lowVisionTitle"), "blind": t("blindTitle"),
+    "hearing": t("hearingTitle"), "standard": t("standardTitle")
+  }[account.profile] || "—";
+
   return (
     <div className="scroll with-tabs anim-fade">
-      <h1 style={{fontSize:"calc(26px * var(--fs))", marginBottom:18}}>Profile</h1>
+      <h1 style={{fontSize:"calc(26px * var(--fs))", marginBottom:18}}>{t("profileTitle")}</h1>
       <div style={{display:"flex", alignItems:"center", gap:14, marginBottom:20}}>
-        <div className="avatar" style={{width:56, height:56, fontSize:21}}>M</div>
+        <div className="avatar" style={{width:56, height:56, fontSize:21}}>{(account.name || "?").trim().slice(0,1).toUpperCase()}</div>
         <div>
-          <b className="serif" style={{fontSize:"calc(17px * var(--fs))"}}>Maya Rivera</b>
-          <div className="muted" style={{fontSize:"calc(12px * var(--fs))"}}>Researcher · Joined 2025</div>
+          <b className="serif" style={{fontSize:"calc(17px * var(--fs))"}}>{account.name}</b>
+          <div className="muted" style={{fontSize:"calc(12px * var(--fs))"}}>{account.email}</div>
         </div>
       </div>
 
       <div className="mission" style={{marginTop:0}}>
         <div className="stats" style={{borderTop:0, paddingTop:0, marginTop:0}}>
-          <div className="stat gold"><b>{myStories.length}</b><span>Your stories</span></div>
-          <div className="stat"><b>{saved.length}</b><span>Saved</span></div>
-          <div className="stat green"><b>{Math.round(Object.values(state.progress).reduce((a,b)=>a+b,0)/4)}%</b><span>Learning done</span></div>
+          <div className="stat gold"><b>{myStories.length}</b><span>{t("statMyStories")}</span></div>
+          <div className="stat"><b>{saved.length}</b><span>{t("statSaved")}</span></div>
+          <div className="stat green"><b>{Math.round(Object.values(account.progress).reduce((a,b)=>a+b,0)/4)}%</b><span>{t("statProgress")}</span></div>
         </div>
       </div>
 
-      <div className="eyebrow section-label">Reading comfort</div>
-      <div className="seg" role="group" aria-label="Text size">
-        {[["Standard",1],["Large",1.14],["Largest",1.3]].map(([label,val])=>(
-          <button key={label} className={s.textSize===val ? "on" : ""} onClick={()=>upd("textSize", val)}>{label}</button>
+      <div className="eyebrow section-label">{t("readingComfort")}</div>
+      <div className="seg" role="group" aria-label={t("readingComfort")}>
+        {[["sizeStandard",1],["sizeLarge",1.14],["sizeLargest",1.3]].map(([key,val])=>(
+          <button key={key} className={s.textSize === val ? "on" : ""} onClick={()=>upd("textSize", val)}>{t(key)}</button>
         ))}
       </div>
 
-      <div className="eyebrow section-label">Accessibility</div>
-      <Row title="High contrast" sub="Stronger borders and darker text" on={s.contrast} onToggle={()=>upd("contrast", !s.contrast)}/>
-      <Row title="Animation" sub="Screen transitions and motion" on={s.motion} onToggle={()=>upd("motion", !s.motion)}/>
-      <Row title="Captions by default" sub="Turn on captions for every film" on={s.captions} onToggle={()=>upd("captions", !s.captions)}/>
-      <Row title="Reading-friendly spacing" sub="Wider letter and line spacing" on={s.dyslexic} onToggle={()=>upd("dyslexic", !s.dyslexic)}/>
-      <Row title="Голосовые подсказки" sub="Одна кнопка озвучивает экран и действия" on={s.voiceGuide} onToggle={()=>upd("voiceGuide", !s.voiceGuide)}/>
+      <div className="eyebrow section-label">{t("accessibilityLabel")}</div>
+      <Row title={t("rowContrastTitle")} sub={t("rowContrastSub")} on={s.contrast} onToggle={()=>upd("contrast", !s.contrast)}/>
+      <Row title={t("rowAnimationTitle")} sub={t("rowAnimationSub")} on={s.motion} onToggle={()=>upd("motion", !s.motion)}/>
+      <Row title={t("rowCaptionsTitle")} sub={t("rowCaptionsSub")} on={s.captions} onToggle={()=>upd("captions", !s.captions)}/>
+      <Row title={t("rowDyslexicTitle")} sub={t("rowDyslexicSub")} on={s.dyslexic} onToggle={()=>upd("dyslexic", !s.dyslexic)}/>
+      <Row title={t("rowVoiceTitle")} sub={t("rowVoiceSub")} on={s.voiceGuide} onToggle={()=>upd("voiceGuide", !s.voiceGuide)}/>
 
-      <div className="eyebrow section-label">Accessibility profile</div>
+      <div className="eyebrow section-label">{t("accessibilityProfileLabel")}</div>
       <button className="row-item" onClick={onRerunSetup}>
         <span className="row-icon"><I.sparkle/></span>
-        <span style={{flex:1}}><b>{profileLabel}</b><small>Пройти настройку заново</small></span>
+        <span style={{flex:1}}><b>{profileLabel}</b><small>{t("rerunSetup")}</small></span>
         <I.chevron style={{color:"var(--muted)"}}/>
       </button>
 
-      <div className="eyebrow section-label">Your library</div>
-      <button className="row-item" onClick={()=>go({ tab:"library" }, "Библиотека")}>
+      <div className="eyebrow section-label">{t("languageRowLabel")}</div>
+      <div className="seg" role="group" aria-label={t("languageRowLabel")}>
+        {LANGS.map(l=>(
+          <button key={l.code} className={account.lang === l.code ? "on" : ""} onClick={()=>onChangeLang(l.code)}>{l.label}</button>
+        ))}
+      </div>
+
+      <div className="eyebrow section-label">{t("yourLibraryLabel")}</div>
+      <button className="row-item" onClick={()=>go({ tab:"library" }, t("navLibrary"))}>
         <span className="row-icon"><I.bookmark/></span>
-        <span style={{flex:1}}><b>Saved resources</b><small>{saved.length} item{saved.length===1?"":"s"}</small></span>
+        <span style={{flex:1}}><b>{t("savedResourcesTitle")}</b><small>{saved.length} {t("itemsWord")}</small></span>
         <I.chevron style={{color:"var(--muted)"}}/>
       </button>
-      <button className="row-item" onClick={()=>go({ view:{ type:"paths" } }, "Обучающие пути")}>
+      <button className="row-item" onClick={()=>go({ view:{ type:"paths" } }, t("tileHubTitle"))}>
         <span className="row-icon">🎓</span>
-        <span style={{flex:1}}><b>Learning pathways</b><small>Continue where you stopped</small></span>
+        <span style={{flex:1}}><b>{t("learningPathsTitle")}</b><small>{t("learningPathsSub")}</small></span>
         <I.chevron style={{color:"var(--muted)"}}/>
       </button>
 
-      <div className="eyebrow section-label">App</div>
-      <button className="row-item" onClick={()=>{
-        set(()=>({ ...defaultState }));
-        notify("Everything reset");
-      }}>
+      <div className="eyebrow section-label">{t("appLabel")}</div>
+      <button className="row-item" onClick={onReset}>
         <span className="row-icon" style={{color:"var(--danger)"}}>↺</span>
-        <span style={{flex:1}}><b>Reset app data</b><small>Clears saves, likes and your stories</small></span>
+        <span style={{flex:1}}><b>{t("resetTitle")}</b><small>{t("resetSub")}</small></span>
       </button>
+      <button className="row-item" onClick={onLogout}>
+        <span className="row-icon"><I.logout/></span>
+        <span style={{flex:1}}><b>{t("logoutTitle")}</b><small>{t("logoutSub")}</small></span>
+        <I.chevron style={{color:"var(--muted)"}}/>
+      </button>
+
       <p className="muted" style={{fontSize:11, textAlign:"center", margin:"22px 0 6px", letterSpacing:".06em"}}>
-        Research · Inclusion · Equity
+        {t("footerTag")}
       </p>
     </div>
   );
@@ -476,7 +929,7 @@ function ArticleView({ id, onBack, go }){
             {i===0 && a.quote ? <blockquote>{a.quote}</blockquote> : null}
           </React.Fragment>
         ))}
-        <button className="cta" style={{marginTop:14}} onClick={()=>go({ tab:"library" }, "Библиотека")}>
+        <button className="cta" style={{marginTop:14}} onClick={()=>go({ tab:"library" })}>
           Read related resources <I.arrow/>
         </button>
       </article>
@@ -600,140 +1053,261 @@ function Compose({ onBack, onSubmit }){
   );
 }
 
+/* ============ device-adaptive scale ============ */
+function useDeviceScale(ref){
+  const [scale, setScale] = useState(1);
+  useEffect(()=>{
+    const el = ref.current;
+    if(!el || typeof ResizeObserver === "undefined") return;
+    const compute = ()=>{
+      const w = el.clientWidth || (typeof window !== "undefined" ? window.innerWidth : 390);
+      const raw = w / 390; // reference design width
+      const clamped = Math.max(0.92, Math.min(1.18, raw));
+      setScale(Number(clamped.toFixed(3)));
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(el);
+    window.addEventListener("orientationchange", compute);
+    return ()=>{ ro.disconnect(); window.removeEventListener("orientationchange", compute); };
+  }, [ref]);
+  return scale;
+}
+
 /* ============ app ============ */
 function App(){
-  const [state, setState] = useState(loadState);
+  const [accounts, setAccounts] = useState(()=> MIGRATED ? MIGRATED.accounts : loadAccounts());
+  const [session, setSession] = useState(()=> MIGRATED ? MIGRATED.session : loadSession());
+  const [uiLang, setUiLang] = useState(()=>{
+    try{ return localStorage.getItem(LANG_KEY) || "ru"; }catch(e){ return "ru"; }
+  });
+  const [authError, setAuthError] = useState("");
   const [tab, setTab] = useState("home");
   const [view, setView] = useState(null);
   const [toast, setToast] = useState(null);
-  const [stage, setStage] = useState(()=> loadState().onboarded ? "app" : "splash"); // splash -> setup -> app
+  const [stage, setStage] = useState(()=>{
+    const sess = MIGRATED ? MIGRATED.session : loadSession();
+    const accs = MIGRATED ? MIGRATED.accounts : loadAccounts();
+    return (sess && accs[sess.email]) ? "app" : "splash";
+  });
   const scrollRef = useRef(null);
+  const deviceScreenRef = useRef(null);
+  const ds = useDeviceScale(deviceScreenRef);
 
-  useEffect(()=>{ saveState(state); }, [state]);
+  const account = session ? accounts[session.email] : null;
+
+  useEffect(()=>{ saveAccounts(accounts); }, [accounts]);
+  useEffect(()=>{ saveSession(session); }, [session]);
+  useEffect(()=>{ try{ localStorage.setItem(LANG_KEY, uiLang); }catch(e){} }, [uiLang]);
   useEffect(()=>{
     if(!toast) return;
-    const t = setTimeout(()=>setToast(null), 2200);
-    return ()=>clearTimeout(t);
+    const tm = setTimeout(()=>setToast(null), 2200);
+    return ()=>clearTimeout(tm);
   }, [toast]);
   useEffect(()=>()=>{ try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){} }, []);
+  useEffect(()=>{
+    if(stage === "app" && !account) setStage("auth");
+  }, [stage, account]);
 
-  const voiceGuide = state.settings.voiceGuide;
+  const lang = account ? account.lang : uiLang;
+  const t = useCallback((key)=> tFor(lang, key), [lang]);
   const notify = useCallback((text)=>setToast(text), []);
+
+  const updateAccount = (email, updater)=>{
+    setAccounts(prev=>{
+      const cur = prev[email];
+      if(!cur) return prev;
+      return { ...prev, [email]: updater(cur) };
+    });
+  };
+
+  const voiceGuide = !!(account && account.settings.voiceGuide);
   const go = (to, label)=>{
     if(voiceGuide && label) speakText(label);
     if(to.tab){ setTab(to.tab); setView(null); }
     if(to.view){ setView(to.view); }
   };
   const toggleSave = (id)=>{
-    setState(p=>{
+    if(!session) return;
+    updateAccount(session.email, p=>{
       const has = p.saved.includes(id);
-      const msg = has ? "Removed from saved" : "Saved to your library";
+      const msg = has ? t("savedRemoved") : t("savedAdded");
       notify(msg);
-      if(p.settings.voiceGuide) speakText(has ? "Убрано из сохранённого" : "Сохранено в библиотеке");
+      if(p.settings.voiceGuide) speakText(msg);
       return { ...p, saved: has ? p.saved.filter(x=>x!==id) : [id, ...p.saved] };
     });
   };
-  const toggleLike = (id)=>setState(p=>{
-    const has = p.liked.includes(id);
-    if(p.settings.voiceGuide) speakText(has ? "Лайк убран" : "Понравилось");
-    return { ...p, liked: has ? p.liked.filter(x=>x!==id) : [id, ...p.liked] };
-  });
-  const setProgress = (id, v)=>setState(p=>({ ...p, progress:{ ...p.progress, [id]:v } }));
+  const toggleLike = (id)=>{
+    if(!session) return;
+    updateAccount(session.email, p=>{
+      const has = p.liked.includes(id);
+      if(p.settings.voiceGuide) speakText(has ? t("likeRemoved") : t("likeAdded"));
+      return { ...p, liked: has ? p.liked.filter(x=>x!==id) : [id, ...p.liked] };
+    });
+  };
+  const setProgress = (id, v)=>{ if(session) updateAccount(session.email, p=>({ ...p, progress:{ ...p.progress, [id]:v } })); };
   const publish = (f)=>{
+    if(!session || !account) return;
     const story = {
-      id:"my" + Date.now(), title:f.title.trim(), author:"Maya Rivera",
-      country:f.country.trim() || "Not given", ago:"just now", likes:0,
+      id:"my" + Date.now(), title:f.title.trim(), author: account.name || "You",
+      country:f.country.trim() || "—", ago:"just now", likes:0,
       body:f.body.trim().split(/\n{1,}/).filter(Boolean)
     };
-    setState(p=>({ ...p, myStories:[story, ...p.myStories] }));
-    setView(null); setTab("stories"); notify("Story published");
+    updateAccount(session.email, p=>({ ...p, myStories:[story, ...p.myStories] }));
+    setView(null); setTab("stories"); notify(t("storyPublished"));
   };
-
-  const greeting = useMemo(()=>{
-    const h = new Date().getHours();
-    return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  }, []);
-
-  const s = state.settings;
-  const screenStyle = {
-    "--fs": s.textSize,
-    letterSpacing: s.dyslexic ? ".02em" : "normal",
-    lineHeight: s.dyslexic ? 1.75 : 1.5
-  };
-
   const applyProfile = (id)=>{
-    setState(p=>{
+    if(!session) return;
+    updateAccount(session.email, p=>{
       const next = { ...p.settings };
       if(id === "low-vision"){ next.textSize = 1.3; next.contrast = true; }
       if(id === "blind"){ next.textSize = 1.3; next.voiceGuide = true; }
       if(id === "hearing"){ next.captions = true; }
-      return { ...p, onboarded:true, profile:id, settings:next };
+      return { ...p, onboarded:true, profile:id, settings: next };
     });
     setStage("app");
-    notify(id === "standard" ? "Готово" : "Интерфейс подстроен под вас");
+    notify(id === "standard" ? t("profileAppliedPlain") : t("profileApplied"));
     if(id === "blind" || id === "low-vision"){
-      setTimeout(()=>speakText("Интерфейс настроен. Главный экран."), 400);
+      setTimeout(()=>speakText(t("welcomeTitle")), 400);
+    }
+  };
+  const handleReset = ()=>{
+    if(!session || !account) return;
+    updateAccount(session.email, p=>makeAccount({ name:p.name, email:p.email, lang:p.lang }));
+    setTab("home"); setView(null);
+    setStage("setup");
+    notify(t("resetDone"));
+  };
+  const logout = ()=>{
+    setSession(null);
+    setTab("home"); setView(null);
+    setStage("auth");
+  };
+  const handleAuth = ({ mode, name, email, password, lang: chosenLang })=>{
+    setAuthError("");
+    if(mode === "guest"){
+      const guestEmail = "guest@local";
+      const existing = accounts[guestEmail];
+      if(!existing){
+        const guestName = chosenLang === "uz" ? "Mehmon" : chosenLang === "en" ? "Guest" : "Гость";
+        setAccounts(prev=>({ ...prev, [guestEmail]: makeAccount({ name:guestName, email:guestEmail, lang:chosenLang }) }));
+      }
+      setSession({ email: guestEmail });
+      setStage(existing && existing.onboarded ? "app" : "setup");
+      return;
+    }
+    if(mode === "register"){
+      if(accounts[email]){ setAuthError(tFor(chosenLang, "errEmailTaken")); return; }
+      const acc = makeAccount({ name, email, lang: chosenLang });
+      acc._password = password;
+      setAccounts(prev=>({ ...prev, [email]: acc }));
+      setSession({ email });
+      setStage("setup");
+      notify(tFor(chosenLang, "registeredToast"));
+      return;
+    }
+    if(mode === "login"){
+      const acc = accounts[email];
+      if(!acc){ setAuthError(tFor(uiLang, "errEmailNotFound")); return; }
+      if(acc._password && acc._password !== password){ setAuthError(tFor(uiLang, "errWrongPassword")); return; }
+      setSession({ email });
+      setStage(acc.onboarded ? "app" : "setup");
+      notify(tFor(acc.lang, "welcomeBack"));
+      return;
     }
   };
 
+  const greeting = useMemo(()=>{
+    const h = new Date().getHours();
+    const key = h < 12 ? "goodMorning" : h < 18 ? "goodAfternoon" : "goodEvening";
+    return t(key);
+  }, [t]);
+
+  const s = account ? account.settings : { textSize:1, contrast:false, motion:true, dyslexic:false };
+  const screenStyle = {
+    "--user-fs": s.textSize,
+    "--ds": String(ds),
+    letterSpacing: s.dyslexic ? ".02em" : "normal",
+    lineHeight: s.dyslexic ? 1.75 : 1.5
+  };
+  const simplified = !!account && (account.profile === "low-vision" || account.profile === "blind");
+
   if(stage === "splash"){
     return (
-      <div className="device"><div className="device-screen">
+      <div className="device"><div className="device-screen" ref={deviceScreenRef} style={{ "--ds": String(ds) }}>
         <div className="island"/>
-        <Splash onStart={()=>setStage("setup")}/>
+        <Splash onStart={()=>setStage("auth")} lang={uiLang} setLang={setUiLang} t={(k)=>tFor(uiLang,k)}/>
+      </div></div>
+    );
+  }
+  if(stage === "auth"){
+    return (
+      <div className="device"><div className="device-screen" ref={deviceScreenRef} style={{ "--ds": String(ds) }}>
+        <div className="island"/>
+        <AuthScreen lang={uiLang} setLang={setUiLang} t={(k)=>tFor(uiLang,k)} onAuth={handleAuth} error={authError} setError={setAuthError}/>
       </div></div>
     );
   }
   if(stage === "setup"){
     return (
-      <div className="device"><div className="device-screen">
+      <div className="device"><div className="device-screen" ref={deviceScreenRef} style={{ "--ds": String(ds) }}>
         <div className="island"/>
-        <AccessibilitySetup onPick={applyProfile}/>
+        <AccessibilitySetup onPick={applyProfile} t={t}/>
+      </div></div>
+    );
+  }
+  if(!account){
+    return (
+      <div className="device"><div className="device-screen" ref={deviceScreenRef} style={{ "--ds": String(ds) }}>
+        <div className="island"/>
       </div></div>
     );
   }
 
   const screenTitle =
-    view?.type === "article" ? (ARTICLES.find(a=>a.id===view.id)?.title || "Статья") :
+    view?.type === "article" ? (ARTICLES.find(a=>a.id===view.id)?.title || "") :
     view?.type === "story" ? "Story" :
-    view?.type === "resource" ? (LIBRARY.find(r=>r.id===view.id)?.title || "Ресурс") :
-    view?.type === "paths" ? "Learning Hub" :
-    view?.type === "compose" ? "Share Your Story" :
-    tab === "home" ? "Главный экран" : tab === "library" ? "Библиотека" :
-    tab === "stories" ? "Голоса сообщества" : "Профиль";
+    view?.type === "resource" ? (LIBRARY.find(r=>r.id===view.id)?.title || "") :
+    view?.type === "paths" ? t("tileHubTitle") :
+    view?.type === "compose" ? t("tileShareTitle") :
+    tab === "home" ? t("welcomeTitle") : tab === "library" ? t("libraryTitle") :
+    tab === "stories" ? t("storiesTitle") : t("profileTitle");
 
   const screenHint =
-    !view && tab === "home" ? "Доступно: библиотека, обучающие пути, поделиться историей, лента сообщества" :
-    !view && tab === "library" ? "Есть поиск и фильтры: все, книги, аудио, визуальные, сохранённые" :
-    !view && tab === "stories" ? "Можно читать истории и опубликовать свою через кнопку плюс наверху" :
-    !view && tab === "profile" ? "Здесь размер текста, контраст, голосовые подсказки и сброс данных" :
-    view?.type === "compose" ? "Заполните название, страну и текст истории, затем опубликуйте" :
-    "Кнопка назад в левом верхнем углу возвращает на предыдущий экран";
+    !view && tab === "home" ? t("exploreLabel") + ": " + [t("tileLibraryTitle"), t("tileHubTitle"), t("tileShareTitle"), t("tileCommunityTitle")].join(", ") :
+    !view && tab === "library" ? t("searchPlaceholder") :
+    !view && tab === "stories" ? t("storiesSubtitle") :
+    !view && tab === "profile" ? t("accessibilityLabel") :
+    "";
 
-  const announceScreen = ()=> speakText(screenTitle + ". " + screenHint);
+  const announceScreen = ()=> speakText(screenTitle + (screenHint ? ". " + screenHint : ""));
 
   const tabs = [
-    ["home","Home",I.home],["library","Library",I.library],
-    ["stories","Stories",I.stories],["profile","Profile",I.profile]
+    ["home", t("navHome"), I.home],
+    ["library", t("navLibrary"), I.library],
+    ["stories", t("navStories"), I.stories],
+    ["profile", t("navProfile"), I.profile]
   ];
 
   let body;
   if(view){
     const back = ()=>setView(null);
     if(view.type==="article") body = <ArticleView id={view.id} onBack={back} go={go}/>;
-    else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={state.liked} toggleLike={toggleLike} myStories={state.myStories}/>;
-    else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={state.saved} toggleSave={toggleSave} notify={notify}/>;
-    else if(view.type==="paths") body = <PathsView onBack={back} progress={state.progress} setProgress={setProgress} notify={notify}/>;
+    else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories}/>;
+    else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify}/>;
+    else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify}/>;
     else if(view.type==="compose") body = <Compose onBack={back} onSubmit={publish}/>;
-  } else if(tab==="home") body = <Home go={go} greeting={greeting}/>;
-  else if(tab==="library") body = <Library go={go} saved={state.saved} toggleSave={toggleSave}/>;
-  else if(tab==="stories") body = <Stories go={go} liked={state.liked} toggleLike={toggleLike} myStories={state.myStories}/>;
-  else body = <Profile state={state} set={setState} saved={state.saved} myStories={state.myStories} go={go} notify={notify}
-                        onRerunSetup={()=>setStage("setup")}/>;
+  } else if(tab==="home") body = <Home go={go} t={t} greeting={greeting} simplified={simplified}/>;
+  else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t}/>;
+  else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t}/>;
+  else body = <Profile account={account} set={(u)=>updateAccount(session.email, u)} saved={account.saved} myStories={account.myStories} go={go} notify={notify}
+                        onRerunSetup={()=>setStage("setup")} t={t} onLogout={logout}
+                        onChangeLang={(code)=>updateAccount(session.email, p=>({ ...p, lang:code }))}
+                        onReset={handleReset}/>;
 
   return (
     <div className="device">
-      <div className="device-screen">
+      <div className="device-screen" ref={deviceScreenRef} style={{ "--ds": String(ds) }}>
         <div className="island"/>
         <div className="screen" style={screenStyle}
              data-contrast={s.contrast ? "on" : "off"}
