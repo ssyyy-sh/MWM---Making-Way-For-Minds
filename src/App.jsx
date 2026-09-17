@@ -1758,13 +1758,17 @@ function App(){
   useEffect(()=>{
     const tg = getTelegram();
     if(!tg) return;
-    try{
-      tg.ready();
-      tg.expand();
-      tg.setHeaderColor && tg.setHeaderColor("#16243F");
-      tg.setBackgroundColor && tg.setBackgroundColor("#16243F");
-      if(tg.initDataUnsafe && tg.initDataUnsafe.user) setTgUser(tg.initDataUnsafe.user);
-    }catch(e){}
+    try{ tg.ready(); }catch(e){}
+    try{ tg.expand(); }catch(e){}
+    // Telegram intercepts vertical swipes by default (to let people close the app
+    // with a swipe-down gesture). That conflicts with normal in-page scrolling —
+    // this hands vertical touch gestures back to the page. Each call is isolated
+    // so an older client that doesn't support one method still runs the rest.
+    try{ tg.disableVerticalSwipes && tg.disableVerticalSwipes(); }catch(e){}
+    try{ tg.isVerticalSwipesEnabled = false; }catch(e){}
+    try{ tg.setHeaderColor && tg.setHeaderColor("#16243F"); }catch(e){}
+    try{ tg.setBackgroundColor && tg.setBackgroundColor("#16243F"); }catch(e){}
+    try{ if(tg.initDataUnsafe && tg.initDataUnsafe.user) setTgUser(tg.initDataUnsafe.user); }catch(e){}
   }, []);
 
   useEffect(()=>{ saveAccounts(accounts); }, [accounts]);
