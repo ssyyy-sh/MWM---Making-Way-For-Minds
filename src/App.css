@@ -8,6 +8,7 @@
     --line:rgba(22,36,63,.4);
     --gold:#9A6B10;
     --green:#3F6B22;
+    --body-text:#20283A;
   }
   .screen[data-motion="off"] *{ animation:none !important; transition:none !important; }
 
@@ -24,6 +25,7 @@
     --muted:#8B90A0;
     --line:rgba(243,241,232,.14);
     --danger:#E08069;
+    --body-text:#C9CAD6;
   }
   .screen[data-dark="on"] .device{ background:linear-gradient(160deg,#3a3548,#1a1a1f 22%,#16161a 60%,#332f3d); }
   .screen[data-dark="on"] .avatar{ background:var(--gold); color:#12141C; }
@@ -32,6 +34,11 @@
   .screen[data-readable="on"]{ font-family:"Atkinson Hyperlegible", Inter, sans-serif; }
   .screen[data-readable="on"] h1, .screen[data-readable="on"] h2, .screen[data-readable="on"] h3,
   .screen[data-readable="on"] .serif{ font-family:"Atkinson Hyperlegible", Fraunces, serif; }
+
+  /* colour-vision filters, applied via SVG filter defs injected once at app root */
+  .screen[data-colorfilter="protanopia"]{ filter:url(#mwm-protanopia); }
+  .screen[data-colorfilter="deuteranopia"]{ filter:url(#mwm-deuteranopia); }
+  .screen[data-colorfilter="tritanopia"]{ filter:url(#mwm-tritanopia); }
 
   .sr-only{
     position:absolute; width:1px; height:1px; padding:0; margin:-1px;
@@ -322,6 +329,7 @@
   }
   .lib-btn.audio{ background:rgba(127,168,92,.18); color:#4E7031; }
   .lib-btn.read{ background:var(--navy); color:#F7F4EA; }
+  .screen[data-dark="on"] .lib-btn.audio{ background:rgba(143,194,107,.22); color:#C9EFA8; }
 
   /* ---------- upload / format-choice cards (shared) ---------- */
   .choice-quote{ font-family:Fraunces,serif; font-style:italic; font-weight:600; font-size:calc(19px * var(--fs)); line-height:1.4; }
@@ -380,19 +388,32 @@
   video.rec-video{ width:100%; border-radius:14px; margin-top:4px; background:#000; }
   audio.rec-audio{ width:100%; margin-top:10px; }
 
+  /* ---------- onboarding tour ---------- */
+  .tour-overlay{
+    position:absolute; inset:0; z-index:80; background:rgba(10,14,24,.62);
+    display:flex; align-items:flex-end; padding:0;
+  }
+  .tour-card{
+    width:100%; background:var(--cream); border-radius:24px 24px 0 0; padding:26px 22px calc(26px + env(safe-area-inset-bottom));
+    box-shadow:0 -20px 50px rgba(0,0,0,.3);
+  }
+  .tour-dots{ display:flex; gap:6px; margin-top:16px; }
+  .tour-dot{ width:7px; height:7px; border-radius:50%; background:var(--cream-3); }
+  .tour-dot.on{ background:var(--green); width:20px; border-radius:4px; }
+
   .progress{ height:5px; border-radius:99px; background:var(--cream-3); overflow:hidden; margin-top:10px; }
   .progress i{ display:block; height:100%; background:var(--green); border-radius:99px; }
 
   .story-card{ background:var(--cream-2); border-radius:18px; padding:17px; margin-bottom:12px; text-align:left; width:100%; }
   .story-card h3{ font-size:calc(16px * var(--fs)); margin-bottom:6px; }
-  .story-card p{ margin:0; font-size:calc(13px * var(--fs)); line-height:1.5; color:#43506A; }
+  .story-card p{ margin:0; font-size:calc(13px * var(--fs)); line-height:1.5; color:var(--body-text); }
   .story-foot{ display:flex; align-items:center; gap:14px; margin-top:13px; font-size:calc(11.5px * var(--fs)); color:var(--muted); }
   .like{ display:flex; align-items:center; gap:5px; margin-left:auto; color:var(--muted); }
   .like.on{ color:var(--danger); }
 
   .article h1{ font-size:calc(25px * var(--fs)); line-height:1.22; }
   .article .kicker{ margin-bottom:10px; }
-  .article p{ font-size:calc(14.5px * var(--fs)); line-height:1.72; color:#3A465E; }
+  .article p{ font-size:calc(14.5px * var(--fs)); line-height:1.72; color:var(--body-text); }
   .article blockquote{
     margin:20px 0; padding:2px 0 2px 16px; border-left:3px solid var(--gold);
     font-family:Fraunces,serif; font-style:italic; font-size:calc(16px * var(--fs)); line-height:1.5;

@@ -54,7 +54,8 @@ function makeAccount({ name, email, lang }){
     onboarded: false, profile: null,
     saved: [], liked: [], myStories: [],
     progress: { p1: 0, p2: 0, p3: 0, p4: 0 },
-    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false, darkMode: false, readableFont: false, haptics: true, speechRate: 1 }
+    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false, darkMode: false, readableFont: false, haptics: true, speechRate: 1, colorFilter: "none" },
+    tourSeen: false
   };
 }
 
@@ -216,6 +217,9 @@ const STRINGS = {
     darkModeTitle: "Тёмная тема", darkModeSub: "Тёмный фон вместо светлого",
     readableFontTitle: "Читаемый шрифт", readableFontSub: "Шрифт Atkinson Hyperlegible для слабого зрения",
     hapticsTitle: "Вибрация при нажатиях", hapticsSub: "Лёгкий отклик на кнопки и уведомления",
+    colorFilterLabel: "Симуляция цветовосприятия",
+    colorFilterSub: "Не для коррекции — показывает, как экран выглядит при разных типах дальтонизма (для исследователей и близких)",
+    colorFilterNone: "Обычное", colorFilterProtan: "Протанопия", colorFilterDeutan: "Дейтеранопия", colorFilterTritan: "Тританопия",
     swipeHint: "Листайте влево-вправо, чтобы сменить раздел",
     reportOpen: "Сообщить о проблеме",
     reportWrong: "Неверная информация", reportOffensive: "Оскорбительный контент",
@@ -286,7 +290,31 @@ const STRINGS = {
     transcriptUnsupported: "Этот браузер не поддерживает распознавание речи. Попробуйте Chrome или Edge.",
     transcriptClear: "Очистить",
     transcriptCopy: "Скопировать",
-    transcriptCopied: "Расшифровка скопирована"
+    transcriptCopied: "Расшифровка скопирована",
+
+    pathHubSubtitle: "Четыре маршрута на основе исследований в классах. Каждый урок работает офлайн и с экранным диктором.",
+    lessonsWord: "уроков", minWord: "мин", completeWord: "пройдено",
+    pathStart: "Начать маршрут", pathReview: "Повторить маршрут",
+    a11yLabel: "Доступность",
+    a11yScreenReader: "Проверено с экранным диктором", a11yAltText: "Alt-текст у всех изображений",
+    a11yAdjustable: "Регулируемый размер текста", a11yTranscript: "Полная расшифровка", a11yLargePrint: "Издание крупным шрифтом",
+    removeSavedBtn: "Убрать из сохранённого", saveForLaterBtn: "Сохранить на потом",
+    readRelatedBtn: "Похожие материалы",
+    storyLabel: "История",
+    kindResearch: "Исследование", kindStory: "История", kindInterview: "Интервью",
+    charsMinWord: "символов · минимум 30",
+    publishStoryBtn: "Опубликовать историю",
+    globalSearchTitle: "Поиск по всему приложению", globalSearchPlaceholder: "Ищите в библиотеке, историях, статьях",
+    globalSearchHint: "Начните вводить — поиск идёт сразу по библиотеке, историям и статьям.",
+    tourSkip: "Пропустить", tourNext: "Далее", tourDone: "Понятно, начать",
+    tour1Title: "Добро пожаловать в MWM", tour1Body: "Быстрый тур — 5 шагов, займёт меньше минуты. Можно пропустить в любой момент.",
+    tour2Title: "Главный экран", tour2Body: "Отсюда — библиотека, обучение, ваши истории и голоса сообщества. Всё в четырёх плитках.",
+    tour3Title: "Библиотека", tour3Body: "Материалы с тегами доступности: аудио, крупный текст, брайль. У каждого — свой текст и озвучка.",
+    tour4Title: "Голосовые подсказки", tour4Body: "Если включите в профиле — появится одна большая кнопка, которая озвучивает весь экран.",
+    tour5Title: "Профиль — всё настраивается", tour5Body: "Размер текста, скорость речи, контраст, язык — всё меняется в профиле в любой момент.",
+    insightsReportsList: "Тексты жалоб",
+    insightsExportCsv: "Выгрузить в CSV",
+    insightsNoReports: "Пока нет ни одной жалобы"
   },
   uz: {
     appTagline: "ONGGA YO'L OCHAMIZ",
@@ -390,6 +418,9 @@ const STRINGS = {
     darkModeTitle: "Tungi rejim", darkModeSub: "Yorug' fon o'rniga qorong'i fon",
     readableFontTitle: "O'qish uchun shrift", readableFontSub: "Zaif ko'rish uchun Atkinson Hyperlegible shrifti",
     hapticsTitle: "Bosganda tebranish", hapticsSub: "Tugmalar va bildirishnomalarda yengil tebranish",
+    colorFilterLabel: "Rang idrokini simulyatsiya qilish",
+    colorFilterSub: "Tuzatish uchun emas — turli xil rang ko'rish farqlarida ekran qanday ko'rinishini ko'rsatadi (tadqiqotchilar va yaqinlar uchun)",
+    colorFilterNone: "Oddiy", colorFilterProtan: "Protanopiya", colorFilterDeutan: "Deyteranopiya", colorFilterTritan: "Tritanopiya",
     swipeHint: "Bo'limni almashtirish uchun chapga-o'ngga suring",
     reportOpen: "Muammo haqida xabar berish",
     reportWrong: "Noto'g'ri ma'lumot", reportOffensive: "Haqoratli kontent",
@@ -460,7 +491,31 @@ const STRINGS = {
     transcriptUnsupported: "Bu brauzer nutqni tanishni qo'llab-quvvatlamaydi. Chrome yoki Edge'ni sinab ko'ring.",
     transcriptClear: "Tozalash",
     transcriptCopy: "Nusxalash",
-    transcriptCopied: "Transkripsiya nusxalandi"
+    transcriptCopied: "Transkripsiya nusxalandi",
+
+    pathHubSubtitle: "Sinfdagi tadqiqotlar asosidagi to'rtta yo'nalish. Har bir dars oflayn va ekran diktori bilan ishlaydi.",
+    lessonsWord: "dars", minWord: "daqiqa", completeWord: "bajarildi",
+    pathStart: "Yo'nalishni boshlash", pathReview: "Yo'nalishni qayta ko'rish",
+    a11yLabel: "Qulaylik",
+    a11yScreenReader: "Ekran diktori bilan sinovdan o'tgan", a11yAltText: "Barcha rasmlarda alt-matn",
+    a11yAdjustable: "Sozlanadigan matn o'lchami", a11yTranscript: "To'liq transkripsiya", a11yLargePrint: "Katta shriftli nashr",
+    removeSavedBtn: "Saqlanganlardan olib tashlash", saveForLaterBtn: "Keyinroq uchun saqlash",
+    readRelatedBtn: "O'xshash materiallar",
+    storyLabel: "Hikoya",
+    kindResearch: "Tadqiqot", kindStory: "Hikoya", kindInterview: "Intervyu",
+    charsMinWord: "belgi · kamida 30",
+    publishStoryBtn: "Hikoyani nashr qilish",
+    globalSearchTitle: "Ilova bo'ylab qidirish", globalSearchPlaceholder: "Kutubxona, hikoyalar, maqolalardan qidiring",
+    globalSearchHint: "Yoza boshlang — qidiruv kutubxona, hikoyalar va maqolalarda birdan boradi.",
+    tourSkip: "O'tkazib yuborish", tourNext: "Keyingisi", tourDone: "Tushunarli, boshlash",
+    tour1Title: "MWM ga xush kelibsiz", tour1Body: "Tezkor tur — 5 qadam, bir daqiqadan kam vaqt oladi. Istalgan paytda o'tkazib yuborish mumkin.",
+    tour2Title: "Bosh sahifa", tour2Body: "Bu yerdan — kutubxona, ta'lim, hikoyalaringiz va jamoa ovozlari. Hammasi to'rtta blokda.",
+    tour3Title: "Kutubxona", tour3Body: "Qulaylik teglari bilan materiallar: audio, katta matn, brayl. Har birida o'z matni va ovozi bor.",
+    tour4Title: "Ovozli yordam", tour4Body: "Profilda yoqsangiz — butun ekranni ovoz bilan o'qiydigan bitta katta tugma paydo bo'ladi.",
+    tour5Title: "Profil — hammasi sozlanadi", tour5Body: "Matn o'lchami, nutq tezligi, kontrast, til — hammasi istalgan payt profilda o'zgaradi.",
+    insightsReportsList: "Xabarlar matni",
+    insightsExportCsv: "CSV formatida yuklab olish",
+    insightsNoReports: "Hali birorta ham xabar yo'q"
   },
   en: {
     appTagline: "MAKING WAY FOR MINDS",
@@ -564,6 +619,9 @@ const STRINGS = {
     darkModeTitle: "Dark mode", darkModeSub: "Dark background instead of light",
     readableFontTitle: "Readable font", readableFontSub: "Atkinson Hyperlegible, designed for low vision",
     hapticsTitle: "Vibrate on tap", hapticsSub: "A light buzz on buttons and notifications",
+    colorFilterLabel: "Colour vision simulation",
+    colorFilterSub: "Not a correction — shows how the screen looks under different colour vision differences (for researchers and family)",
+    colorFilterNone: "Normal", colorFilterProtan: "Protanopia", colorFilterDeutan: "Deuteranopia", colorFilterTritan: "Tritanopia",
     swipeHint: "Swipe left or right to switch sections",
     reportOpen: "Report a problem",
     reportWrong: "Incorrect info", reportOffensive: "Offensive content",
@@ -634,7 +692,31 @@ const STRINGS = {
     transcriptUnsupported: "This browser doesn't support speech recognition. Try Chrome or Edge.",
     transcriptClear: "Clear",
     transcriptCopy: "Copy",
-    transcriptCopied: "Transcript copied"
+    transcriptCopied: "Transcript copied",
+
+    pathHubSubtitle: "Four pathways built from classroom research. Each lesson works offline and with a screen reader.",
+    lessonsWord: "lessons", minWord: "min", completeWord: "complete",
+    pathStart: "Start pathway", pathReview: "Review pathway",
+    a11yLabel: "Accessibility",
+    a11yScreenReader: "Screen-reader tested", a11yAltText: "Alt text on all images",
+    a11yAdjustable: "Adjustable text size", a11yTranscript: "Full transcript", a11yLargePrint: "Large-print edition",
+    removeSavedBtn: "Remove from saved", saveForLaterBtn: "Save for later",
+    readRelatedBtn: "Read related resources",
+    storyLabel: "Story",
+    kindResearch: "Research", kindStory: "Story", kindInterview: "Interview",
+    charsMinWord: "characters · min 30",
+    publishStoryBtn: "Publish story",
+    globalSearchTitle: "Search everything", globalSearchPlaceholder: "Search library, stories, articles",
+    globalSearchHint: "Start typing — search covers the library, stories and articles at once.",
+    tourSkip: "Skip", tourNext: "Next", tourDone: "Got it, let's start",
+    tour1Title: "Welcome to MWM", tour1Body: "A quick tour — 5 steps, under a minute. Skip anytime.",
+    tour2Title: "Home screen", tour2Body: "From here: the library, learning, your stories, and community voices — all in four tiles.",
+    tour3Title: "Library", tour3Body: "Resources tagged for accessibility: audio, large text, braille. Each one has its own text and narration.",
+    tour4Title: "Voice guide", tour4Body: "Turn it on in your profile and one big button appears that reads the whole screen aloud.",
+    tour5Title: "Profile — everything is adjustable", tour5Body: "Text size, speech speed, contrast, language — all changeable anytime in your profile.",
+    insightsReportsList: "Report texts",
+    insightsExportCsv: "Export as CSV",
+    insightsNoReports: "No reports yet"
   }
 };
 function tFor(lang, key){
@@ -642,86 +724,209 @@ function tFor(lang, key){
 }
 
 /* ============ content ============ */
-const LIBRARY = [
-  { id:"l1", title:"Teaching Every Reader", author:"R. Okonkwo", format:"Book", category:"Book", tags:["Text","Braille"], hasAudio:false, hasRead:true, emoji:"📗", meta:"Excerpt from a 312-page guide · ~1 min read", year:2024,
-    content:["Reading aloud works when it's a choice, not a requirement. This guide collects turn-taking methods that let a student opt into reading aloud on their own terms.",
-      "Pair reading with a peer removes the spotlight while keeping the practice — both readers follow the same line, switching every paragraph.",
-      "A five-minute daily check-in — \"What's one word that tripped you up today?\" — turns mistakes into data instead of embarrassment."] },
-  { id:"l2", title:"Sound of a Classroom", author:"Narrated by M. Duarte", format:"Audio", category:"Hearing", tags:["Audio","Transcript"], hasAudio:true, hasRead:true, emoji:"🎧", meta:"Excerpt from a 4 h 12 min recording · ~1 min listen", year:2025,
-    content:["A school bell rings, and children's voices overlap in a corridor. This is Room 4B, nine in the morning, on an ordinary Tuesday.",
-      "A teacher reads instructions slowly, pausing after each sentence. Notice how the room goes quiet before every new activity — that pause is not empty, it's a signal.",
-      "Recorded over one full term, this piece lets you hear what an accessible classroom actually sounds like, pacing and all."],
-    transcript:["[0:00] A school bell rings. Children's voices overlap in a corridor.",
-      "[0:42] Narrator: \"This is Room 4B, nine in the morning, on an ordinary Tuesday.\"",
-      "[1:15] A teacher reads instructions slowly, pausing after each sentence.",
-      "[2:03] Narrator: \"Notice how the room goes quiet before every new activity — that pause is not empty, it's a signal.\""] },
-  { id:"l3", title:"Colour Contrast Field Guide", author:"MWM Research", format:"Visual", category:"Visual", tags:["Visual","Alt Text"], hasAudio:false, hasRead:true, emoji:"🎨", meta:"3 of 48 plates shown · ~1 min read", year:2025,
-    content:["Forty-eight side-by-side comparisons of classroom materials — one version as usually printed, one adjusted for contrast.",
-      "A wall painted dark navy behind a whiteboard cuts glare noticeably. A worksheet in near-black-on-cream reads faster than grey-on-white for almost every tester.",
-      "Every plate includes the exact contrast ratio used, so a teacher can match it without guesswork."],
-    altTexts:["Plate 3: a classroom wall painted dark navy behind a whiteboard, cutting glare noticeably.",
-      "Plate 11: two versions of the same worksheet — one in grey-on-white, one in near-black-on-cream — shown side by side.",
-      "Plate 27: a hallway sign using a 7:1 contrast ratio, photographed from ten metres away and still legible."] },
-  { id:"l4", title:"Dyslexia in Early Grades", author:"S. Lindqvist", format:"Book", category:"Learning", tags:["Large Text"], hasAudio:false, hasRead:true, emoji:"📘", meta:"Excerpt from a 186-page book · ~1 min read", year:2023,
-    content:["Letters that reverse, words that blur, and a clock that always seems to run out — dyslexia in early grades often gets mistaken for not trying hard enough.",
-      "This book walks through classroom-tested large-print layouts, decodable text sets, and a simple screening checklist teachers can use before a formal diagnosis.",
-      "Includes a parent letter template explaining what's changing and why, so home and classroom stay in sync."] },
-  { id:"l5", title:"Signed Stories, Vol. 2", author:"Deaf Learners Collective", format:"Visual", category:"Hearing", tags:["Video","Captions"], hasAudio:false, hasRead:true, emoji:"🤟", meta:"Overview of a 22-film series · ~1 min read", year:2026,
-    content:["Twenty-two short films, each told entirely in sign language with burned-in captions — no voiceover standing in for either.",
-      "Stories range from a grandmother's recipe to a first day at a new school, chosen because Deaf children rarely see themselves as the main character.",
-      "Each film comes with three discussion questions for classroom use, available in the same sign language as the story."] },
-  { id:"l6", title:"Listening to Learners", author:"MWM Interviews", format:"Audio", category:"Learning", tags:["Audio"], hasAudio:true, hasRead:true, emoji:"🎙️", meta:"Excerpt from an 18-episode series · ~1 min listen", year:2026,
-    content:["Eighteen unscripted conversations with students across 42 countries, recorded exactly as they happened — pauses, laughter, and all.",
-      "The episode teachers ask about most: a nine-year-old in Nairobi explaining, in her own words, what \"boring\" actually means to her.",
-      "No two episodes are edited the same way — the format follows whatever the learner wanted to talk about."] },
-  { id:"l7", title:"Maths Without Sight", author:"A. Boateng", format:"Book", category:"Visual", tags:["Braille","Tactile"], hasAudio:false, hasRead:true, emoji:"📐", meta:"Excerpt from a 240-page guide · ~1 min read", year:2024,
-    content:["Tactile diagrams replace visual ones page for page — a raised-line graph is read by hand the way a sighted student reads it by eye.",
-      "Covers arithmetic through early algebra, with a braille notation guide included for teachers who don't yet read braille themselves.",
-      "Each chapter ends with a \"build it\" exercise — recreating a diagram from raised materials at home, to reinforce spatial memory."] },
-  { id:"l8", title:"Rooms That Work", author:"MWM Research", format:"Visual", category:"Visual", tags:["Visual"], hasAudio:false, hasRead:true, emoji:"🏫", meta:"Highlights from a 60-classroom study · ~1 min read", year:2025,
-    content:["Sixty classrooms photographed exactly as teachers actually arranged them — not staged, not idealized.",
-      "Grouped by what they solve: glare, noise, wayfinding, and reach. Each photo has a one-line note on what changed and what it cost.",
-      "Most fixes in this study cost under $50 and took one weekend."] },
-  { id:"l9", title:"Seeing Differently", author:"MWM Research", format:"Visual", category:"Visual", tags:["Audio","Large Text"], hasAudio:true, hasRead:true, emoji:"👓", meta:"Visual accessibility guide", year:2026,
-    description:"Visual accessibility guide",
-    content:["A field guide to what \"low vision\" actually covers — it is rarely all-or-nothing, and this guide starts by unlearning that assumption.",
-      "Walks through practical adjustments: lighting angles, font choices, and screen settings that help before any assistive device is needed.",
-      "Written with input from students who have low vision, not just about them."] },
-  { id:"l10", title:"Sound and Learning", author:"MWM Research", format:"Audio", category:"Hearing", tags:["Audio","Braille"], hasAudio:true, hasRead:true, emoji:"🔔", meta:"Hearing support strategies", year:2026,
-    description:"Hearing support strategies",
-    content:["Strategies gathered from Deaf and hard-of-hearing students on what actually helps in a hearing classroom — not the textbook list, the real one.",
-      "Seating position matters more than most teachers realize; this guide explains why the corner seat is rarely the right one.",
-      "Includes a short script for the first day of class, asking a teacher to introduce captioning without singling anyone out."] },
-  { id:"l11", title:"Every Learner Counts", author:"MWM Research", format:"Book", category:"Learning", tags:["Text","Video"], hasAudio:false, hasRead:true, emoji:"🧩", meta:"Inclusive classroom tools", year:2026,
-    description:"Inclusive classroom tools",
-    content:["A toolkit for classrooms with a genuine mix of needs — not a single \"inclusive\" worksheet, but options within the same lesson.",
-      "Every activity in this set has three entry points: read it, hear it, or do it — chosen by the student, not assigned by diagnosis.",
-      "Field-tested across 30 classrooms before publication; the version here reflects what teachers actually kept using."] },
-  { id:"l12", title:"Pathways to Reading", author:"MWM Research", format:"Book", category:"Learning", tags:["Audio","Simplified"], hasAudio:true, hasRead:true, emoji:"🛤️", meta:"Dyslexia-friendly formats", year:2026,
-    description:"Dyslexia-friendly formats",
-    content:["Dyslexia-friendly doesn't mean simplified — this collection keeps full vocabulary while changing spacing, font, and chunking.",
-      "Each title is available in three formats from the same page: standard text, audio, and a version with syllables pre-marked.",
-      "Chosen by readers with dyslexia as the books they'd actually recommend to a friend, not just the ones assigned to them."] }
-];
-const LIBRARY_CATEGORIES = ["All","Visual","Hearing","Learning","Book"];
-const PATHS = [
-  { id:"p1", title:"Foundations of Accessible Teaching", emoji:"🧭", lessons:8, mins:95, level:"Start here" },
-  { id:"p2", title:"Designing Readable Materials", emoji:"📝", lessons:6, mins:70, level:"Practical" },
-  { id:"p3", title:"Assistive Technology in Class", emoji:"🖥️", lessons:10, mins:140, level:"Deep dive" },
-  { id:"p4", title:"Interviewing Learners with Care", emoji:"💬", lessons:5, mins:55, level:"For researchers" }
-];
 function pick(field, lang){
   if(field && typeof field === "object" && !Array.isArray(field)){
     return field[lang] || field.en || field.ru || Object.values(field)[0];
   }
   return field;
 }
-function pickArr(field, lang){
-  if(field && typeof field === "object" && !Array.isArray(field)){
-    return field[lang] || field.en || field.ru || Object.values(field)[0];
-  }
-  return field;
-}
+
+const LIBRARY = [
+  { id:"l1", author:"R. Okonkwo", format:"Book", category:"Book", tags:["Text","Braille"], hasAudio:false, hasRead:true, emoji:"📗", year:2024,
+    title:{ en:"Teaching Every Reader", ru:"Учим каждого читателя", uz:"Har bir o'quvchini o'rgatish" },
+    meta:{ en:"Excerpt from a 312-page guide · ~1 min read", ru:"Отрывок из руководства на 312 страниц · ~1 мин на чтение", uz:"312 sahifali qo'llanmadan parcha · ~1 daqiqalik o'qish" },
+    content:{
+      en:["Reading aloud works when it's a choice, not a requirement. This guide collects turn-taking methods that let a student opt into reading aloud on their own terms.",
+        "Pair reading with a peer removes the spotlight while keeping the practice — both readers follow the same line, switching every paragraph.",
+        "A five-minute daily check-in — \"What's one word that tripped you up today?\" — turns mistakes into data instead of embarrassment."],
+      ru:["Чтение вслух работает, когда это выбор, а не обязанность. В руководстве собраны способы поочерёдного чтения, которые позволяют ученику решать самому, читать вслух или нет.",
+        "Чтение в паре с одноклассником снимает напряжение, сохраняя саму практику — оба читают одну и ту же строку, меняясь местами каждый абзац.",
+        "Пятиминутный ежедневный вопрос — «Какое слово сегодня застало вас врасплох?» — превращает ошибки в данные, а не в повод для стыда."],
+      uz:["Ovoz chiqarib o'qish majburiyat emas, tanlov bo'lganda ishlaydi. Bu qo'llanmada o'quvchiga o'zi hal qilish imkonini beradigan navbat bilan o'qish usullari to'plangan.",
+        "Sinfdoshi bilan juftlikda o'qish e'tiborni kamaytiradi, amaliyotni saqlab qoladi — ikkala o'quvchi ham bir xil qatorni o'qiydi, har abzatsda almashadi.",
+        "Kunlik besh daqiqalik savol — \"Bugun qaysi so'z sizni to'xtatib qo'ydi?\" — xatolarni uyalish o'rniga ma'lumotga aylantiradi."]
+    } },
+  { id:"l2", author:"Narrated by M. Duarte", format:"Audio", category:"Hearing", tags:["Audio","Transcript"], hasAudio:true, hasRead:true, emoji:"🎧", year:2025,
+    title:{ en:"Sound of a Classroom", ru:"Звук класса", uz:"Sinfning ovozi" },
+    meta:{ en:"Excerpt from a 4 h 12 min recording · ~1 min listen", ru:"Отрывок из записи на 4 ч 12 мин · ~1 мин прослушивания", uz:"4 soat 12 daqiqalik yozuvdan parcha · ~1 daqiqalik tinglash" },
+    content:{
+      en:["A school bell rings, and children's voices overlap in a corridor. This is Room 4B, nine in the morning, on an ordinary Tuesday.",
+        "A teacher reads instructions slowly, pausing after each sentence. Notice how the room goes quiet before every new activity — that pause is not empty, it's a signal.",
+        "Recorded over one full term, this piece lets you hear what an accessible classroom actually sounds like, pacing and all."],
+      ru:["Звенит школьный звонок, в коридоре смешиваются детские голоса. Это кабинет 4B, девять утра, обычный вторник.",
+        "Учитель медленно читает инструкции, делая паузу после каждого предложения. Обратите внимание, как в классе становится тихо перед каждым новым заданием — эта пауза не пустая, это сигнал.",
+        "Запись сделана за целую четверть — она позволяет услышать, как на самом деле звучит доступный класс, вместе со всем его темпом."],
+      uz:["Maktab qo'ng'irog'i chalinadi, yo'lakda bolalar ovozi aralashadi. Bu 4B xona, ertalab soat to'qqiz, oddiy seshanba kuni.",
+        "O'qituvchi ko'rsatmalarni sekin, har jumladan keyin pauza qilib o'qiydi. Har yangi mashg'ulotdan oldin sinf qanday jim bo'lishiga e'tibor bering — bu pauza bo'sh emas, bu signal.",
+        "Butun chorak davomida yozilgan bu parcha qulay sinf haqiqatda qanday eshitilishini, barcha sur'ati bilan, eshitish imkonini beradi."]
+    },
+    transcript:["[0:00] A school bell rings. Children's voices overlap in a corridor.",
+      "[0:42] Narrator: \"This is Room 4B, nine in the morning, on an ordinary Tuesday.\"",
+      "[1:15] A teacher reads instructions slowly, pausing after each sentence.",
+      "[2:03] Narrator: \"Notice how the room goes quiet before every new activity — that pause is not empty, it's a signal.\""] },
+  { id:"l3", author:"MWM Research", format:"Visual", category:"Visual", tags:["Visual","Alt Text"], hasAudio:false, hasRead:true, emoji:"🎨", year:2025,
+    title:{ en:"Colour Contrast Field Guide", ru:"Полевой справочник по цветовому контрасту", uz:"Rang kontrasti bo'yicha qo'llanma" },
+    meta:{ en:"3 of 48 plates shown · ~1 min read", ru:"Показаны 3 из 48 иллюстраций · ~1 мин на чтение", uz:"48 tasidan 3 tasi ko'rsatilgan · ~1 daqiqalik o'qish" },
+    content:{
+      en:["Forty-eight side-by-side comparisons of classroom materials — one version as usually printed, one adjusted for contrast.",
+        "A wall painted dark navy behind a whiteboard cuts glare noticeably. A worksheet in near-black-on-cream reads faster than grey-on-white for almost every tester.",
+        "Every plate includes the exact contrast ratio used, so a teacher can match it without guesswork."],
+      ru:["Сорок восемь сравнений «до и после» учебных материалов — обычная версия и версия с усиленным контрастом рядом.",
+        "Стена, окрашенная в тёмно-синий за доской, заметно снижает блики. Рабочий лист в почти-чёрном на кремовом читается быстрее, чем серый на белом — почти у всех тестировавших.",
+        "У каждой иллюстрации указано точное соотношение контраста, чтобы учитель мог повторить его без догадок."],
+      uz:["O'quv materiallarining qirq sakkizta \"oldin va keyin\" taqqoslashi — odatdagi versiya va kontrast oshirilgan versiya yonma-yon.",
+        "Doska ortidagi to'q ko'k devor yaltirashni sezilarli darajada kamaytiradi. Deyarli qora-kremli varaq deyarli barcha sinovchilar uchun kulrang-oqdan tezroq o'qiladi.",
+        "Har bir rasmda aniq kontrast nisbati ko'rsatilgan, shunda o'qituvchi uni taxmin qilmasdan takrorlashi mumkin."]
+    },
+    altTexts:["Plate 3: a classroom wall painted dark navy behind a whiteboard, cutting glare noticeably.",
+      "Plate 11: two versions of the same worksheet — one in grey-on-white, one in near-black-on-cream — shown side by side.",
+      "Plate 27: a hallway sign using a 7:1 contrast ratio, photographed from ten metres away and still legible."] },
+  { id:"l4", author:"S. Lindqvist", format:"Book", category:"Learning", tags:["Large Text"], hasAudio:false, hasRead:true, emoji:"📘", year:2023,
+    title:{ en:"Dyslexia in Early Grades", ru:"Дислексия в начальных классах", uz:"Boshlang'ich sinflarda disleksiya" },
+    meta:{ en:"Excerpt from a 186-page book · ~1 min read", ru:"Отрывок из книги на 186 страниц · ~1 мин на чтение", uz:"186 sahifali kitobdan parcha · ~1 daqiqalik o'qish" },
+    content:{
+      en:["Letters that reverse, words that blur, and a clock that always seems to run out — dyslexia in early grades often gets mistaken for not trying hard enough.",
+        "This book walks through classroom-tested large-print layouts, decodable text sets, and a simple screening checklist teachers can use before a formal diagnosis.",
+        "Includes a parent letter template explaining what's changing and why, so home and classroom stay in sync."],
+      ru:["Буквы, которые переворачиваются, слова, которые расплываются, и часы, которых будто всегда не хватает — дислексию в начальных классах часто принимают за недостаток старания.",
+        "В книге собраны проверенные в классах макеты крупным шрифтом, наборы текстов для декодирования и простой чек-лист для скрининга, который учитель может использовать ещё до официального диагноза.",
+        "Есть шаблон письма родителям, объясняющий, что меняется и почему — чтобы дом и класс действовали согласованно."],
+      uz:["Teskari aylanadigan harflar, xiralashgan so'zlar va doim yetishmayotgandek tuyuladigan vaqt — boshlang'ich sinflarda disleksiya ko'pincha yetarlicha harakat qilmaslik deb noto'g'ri tushuniladi.",
+        "Bu kitobda sinfda sinovdan o'tgan katta shriftli maketlar, dekodlash uchun matn to'plamlari va rasmiy tashxisdan oldin o'qituvchi foydalanishi mumkin bo'lgan oddiy skrining ro'yxati bor.",
+        "Uyda va sinfda bir xil tushunish bo'lishi uchun nima o'zgarayotgani va nima uchunligini tushuntiruvchi ota-onalarga xat namunasi ham kiritilgan."]
+    } },
+  { id:"l5", author:"Deaf Learners Collective", format:"Visual", category:"Hearing", tags:["Video","Captions"], hasAudio:false, hasRead:true, emoji:"🤟", year:2026,
+    title:{ en:"Signed Stories, Vol. 2", ru:"Истории на жестовом языке, том 2", uz:"Imo-ishora tilidagi hikoyalar, 2-jild" },
+    meta:{ en:"Overview of a 22-film series · ~1 min read", ru:"Обзор серии из 22 фильмов · ~1 мин на чтение", uz:"22 ta filmdan iborat seriyaga umumiy nazar · ~1 daqiqalik o'qish" },
+    content:{
+      en:["Twenty-two short films, each told entirely in sign language with burned-in captions — no voiceover standing in for either.",
+        "Stories range from a grandmother's recipe to a first day at a new school, chosen because Deaf children rarely see themselves as the main character.",
+        "Each film comes with three discussion questions for classroom use, available in the same sign language as the story."],
+      ru:["Двадцать два коротких фильма, каждый полностью рассказан на жестовом языке со встроенными субтитрами — без закадрового голоса вместо того или другого.",
+        "Истории — от бабушкиного рецепта до первого дня в новой школе, выбраны потому, что глухие дети редко видят себя главными героями.",
+        "К каждому фильму прилагаются три вопроса для обсуждения в классе — на том же жестовом языке, что и сама история."],
+      uz:["Yigirma ikkita qisqa film, har biri to'liq imo-ishora tilida, o'rnatilgan subtitrlar bilan — hech biri o'rnida ovoz o'qish yo'q.",
+        "Hikoyalar buvining retseptidan yangi maktabdagi birinchi kungacha — Kar bolalar o'zlarini kamdan-kam bosh qahramon sifatida ko'rishlari sababli tanlangan.",
+        "Har bir film bilan sinfda muhokama uchun uchta savol keladi, xuddi hikoyaning o'zi kabi shu imo-ishora tilida."]
+    } },
+  { id:"l6", author:"MWM Interviews", format:"Audio", category:"Learning", tags:["Audio"], hasAudio:true, hasRead:true, emoji:"🎙️", year:2026,
+    title:{ en:"Listening to Learners", ru:"Слушая учеников", uz:"O'quvchilarni tinglash" },
+    meta:{ en:"Excerpt from an 18-episode series · ~1 min listen", ru:"Отрывок из серии на 18 эпизодов · ~1 мин прослушивания", uz:"18 qismli seriyadan parcha · ~1 daqiqalik tinglash" },
+    content:{
+      en:["Eighteen unscripted conversations with students across 42 countries, recorded exactly as they happened — pauses, laughter, and all.",
+        "The episode teachers ask about most: a nine-year-old in Nairobi explaining, in her own words, what \"boring\" actually means to her.",
+        "No two episodes are edited the same way — the format follows whatever the learner wanted to talk about."],
+      ru:["Восемнадцать неотрепетированных разговоров с учениками из 42 стран, записанных именно так, как они происходили — с паузами, смехом, всем.",
+        "Эпизод, о котором учителя спрашивают чаще всего: девятилетняя девочка из Найроби своими словами объясняет, что для неё на самом деле значит слово «скучно».",
+        "Ни один эпизод не смонтирован так же, как другой — формат следует за тем, о чём хотел говорить сам ученик."],
+      uz:["42 mamlakatdan o'quvchilar bilan o'n sakkizta ssenariysiz suhbat, aynan bo'lgani kabi yozilgan — pauzalar, kulgi va hammasi bilan.",
+        "O'qituvchilar eng ko'p so'raydigan qism: Nairobidan to'qqiz yoshli qiz o'z so'zlari bilan \"zerikarli\" so'zi unga aslida nimani anglatishini tushuntiradi.",
+        "Ikkita qism bir xil tahrir qilinmagan — format o'quvchi nima haqida gaplashishni xohlaganiga qarab shakllanadi."]
+    } },
+  { id:"l7", author:"A. Boateng", format:"Book", category:"Visual", tags:["Braille","Tactile"], hasAudio:false, hasRead:true, emoji:"📐", year:2024,
+    title:{ en:"Maths Without Sight", ru:"Математика без зрения", uz:"Ko'rmasdan matematika" },
+    meta:{ en:"Excerpt from a 240-page guide · ~1 min read", ru:"Отрывок из пособия на 240 страниц · ~1 мин на чтение", uz:"240 sahifali qo'llanmadan parcha · ~1 daqiqalik o'qish" },
+    content:{
+      en:["Tactile diagrams replace visual ones page for page — a raised-line graph is read by hand the way a sighted student reads it by eye.",
+        "Covers arithmetic through early algebra, with a braille notation guide included for teachers who don't yet read braille themselves.",
+        "Each chapter ends with a \"build it\" exercise — recreating a diagram from raised materials at home, to reinforce spatial memory."],
+      ru:["Тактильные диаграммы заменяют визуальные один в один — выпуклый график читается рукой так же, как зрячий ученик читает его глазами.",
+        "Охватывает арифметику вплоть до начальной алгебры, включает руководство по брайлевской нотации для учителей, которые сами ещё не читают брайль.",
+        "Каждая глава заканчивается заданием «собери сам» — воссоздать диаграмму из рельефных материалов дома, чтобы закрепить пространственную память."],
+      uz:["Taktil diagrammalar vizual diagrammalarni sahifama-sahifa almashtiradi — bo'rtma chiziqli grafik ko'zi ojiz bo'lmagan o'quvchi uni ko'z bilan o'qigani kabi qo'l bilan o'qiladi.",
+        "Arifmetikadan boshlang'ich algebragacha bo'lgan mavzularni qamrab oladi, brayl yozuvini hali o'zi o'qiy olmaydigan o'qituvchilar uchun brayl belgilari qo'llanmasi ham bor.",
+        "Har bir bob \"o'zing yasa\" mashqi bilan tugaydi — fazoviy xotirani mustahkamlash uchun uyda bo'rtma materiallardan diagrammani qayta yaratish."]
+    } },
+  { id:"l8", author:"MWM Research", format:"Visual", category:"Visual", tags:["Visual"], hasAudio:false, hasRead:true, emoji:"🏫", year:2025,
+    title:{ en:"Rooms That Work", ru:"Помещения, которые работают", uz:"Ishlaydigan xonalar" },
+    meta:{ en:"Highlights from a 60-classroom study · ~1 min read", ru:"Основное из исследования 60 классов · ~1 мин на чтение", uz:"60 ta sinf tadqiqotidan asosiylari · ~1 daqiqalik o'qish" },
+    content:{
+      en:["Sixty classrooms photographed exactly as teachers actually arranged them — not staged, not idealized.",
+        "Grouped by what they solve: glare, noise, wayfinding, and reach. Each photo has a one-line note on what changed and what it cost.",
+        "Most fixes in this study cost under $50 and took one weekend."],
+      ru:["Шестьдесят классов сфотографированы именно так, как их на самом деле расставили учителя — без постановки, без приукрашивания.",
+        "Сгруппировано по тому, что решает каждое решение: блики, шум, ориентация в пространстве, доступность. У каждого фото — короткая заметка о том, что изменили и во сколько это обошлось.",
+        "Большинство решений в этом исследовании стоили меньше 50 долларов и заняли один выходной."],
+      uz:["Oltmish sinf xonasi o'qituvchilar aslida qanday joylashtirgan bo'lsa, aynan shunday suratga olingan — sahnalashtirilmagan, idealizatsiya qilinmagan.",
+        "Nima hal qilishiga qarab guruhlangan: yaltirash, shovqin, yo'nalish topish va qo'l yetkazish. Har bir suratda nima o'zgargani va bu qanchaga tushgani haqida bir qatorlik izoh bor.",
+        "Bu tadqiqotdagi ko'pchilik yechimlar 50 dollardan arzon bo'lib, bir dam olish kunini oldi."]
+    } },
+  { id:"l9", author:"MWM Research", format:"Visual", category:"Visual", tags:["Audio","Large Text"], hasAudio:true, hasRead:true, emoji:"👓", year:2026,
+    title:{ en:"Seeing Differently", ru:"Видеть иначе", uz:"Boshqacha ko'rish" },
+    meta:{ en:"Guide excerpt · ~1 min read", ru:"Отрывок из руководства · ~1 мин на чтение", uz:"Qo'llanmadan parcha · ~1 daqiqalik o'qish" },
+    description:{ en:"Visual accessibility guide", ru:"Руководство по визуальной доступности", uz:"Vizual qulaylik bo'yicha qo'llanma" },
+    content:{
+      en:["A field guide to what \"low vision\" actually covers — it is rarely all-or-nothing, and this guide starts by unlearning that assumption.",
+        "Walks through practical adjustments: lighting angles, font choices, and screen settings that help before any assistive device is needed.",
+        "Written with input from students who have low vision, not just about them."],
+      ru:["Полевой справочник о том, что на самом деле означает «слабое зрение» — оно редко бывает «всё или ничего», и это руководство начинается с отказа от этого предположения.",
+        "Рассказывает о практических изменениях: угол освещения, выбор шрифта и настройки экрана, которые помогают ещё до того, как понадобится вспомогательное устройство.",
+        "Написано с участием студентов со слабым зрением, а не просто о них."],
+      uz:["\"Zaif ko'rish\" aslida nimani qamrab olishi haqidagi qo'llanma — bu kamdan-kam \"hammasi yoki hech narsa\" bo'ladi, va bu qo'llanma shu taxminni unutishdan boshlanadi.",
+        "Amaliy o'zgarishlarni ko'rsatadi: yoritish burchagi, shrift tanlovi va har qanday yordamchi qurilma kerak bo'lishidan oldin yordam beradigan ekran sozlamalari.",
+        "Zaif ko'ruvchi talabalar ishtirokida yozilgan, ular haqida emas, ular bilan birga."]
+    } },
+  { id:"l10", author:"MWM Research", format:"Audio", category:"Hearing", tags:["Audio","Braille"], hasAudio:true, hasRead:true, emoji:"🔔", year:2026,
+    title:{ en:"Sound and Learning", ru:"Звук и обучение", uz:"Ovoz va ta'lim" },
+    meta:{ en:"Guide excerpt · ~1 min read", ru:"Отрывок из руководства · ~1 мин на чтение", uz:"Qo'llanmadan parcha · ~1 daqiqalik o'qish" },
+    description:{ en:"Hearing support strategies", ru:"Стратегии поддержки слуха", uz:"Eshitishni qo'llab-quvvatlash strategiyalari" },
+    content:{
+      en:["Strategies gathered from Deaf and hard-of-hearing students on what actually helps in a hearing classroom — not the textbook list, the real one.",
+        "Seating position matters more than most teachers realize; this guide explains why the corner seat is rarely the right one.",
+        "Includes a short script for the first day of class, asking a teacher to introduce captioning without singling anyone out."],
+      ru:["Стратегии, собранные от глухих и слабослышащих учеников о том, что на самом деле помогает в обычном классе — не учебничный список, а настоящий.",
+        "Место, где сидит ученик, значит больше, чем думает большинство учителей; в руководстве объясняется, почему угловое место почти никогда не подходит.",
+        "Есть короткий сценарий для первого дня занятий — как учителю ввести субтитры, никого не выделяя."],
+      uz:["Kar va zaif eshituvchi o'quvchilardan to'plangan, eshituvchilar sinfida haqiqatan yordam beradigan strategiyalar — darslikdagi ro'yxat emas, haqiqiy ro'yxat.",
+        "O'tirish joyi ko'pchilik o'qituvchilar o'ylagandan ko'ra muhimroq; bu qo'llanma nima uchun burchakdagi joy deyarli hech qachon to'g'ri emasligini tushuntiradi.",
+        "Darsning birinchi kuni uchun qisqa skript bor — o'qituvchi hech kimni ajratib ko'rsatmasdan subtitrlarni qanday kiritishi haqida."]
+    } },
+  { id:"l11", author:"MWM Research", format:"Book", category:"Learning", tags:["Text","Video"], hasAudio:false, hasRead:true, emoji:"🧩", year:2026,
+    title:{ en:"Every Learner Counts", ru:"Каждый ученик важен", uz:"Har bir o'quvchi muhim" },
+    meta:{ en:"Toolkit excerpt · ~1 min read", ru:"Отрывок из набора инструментов · ~1 мин на чтение", uz:"Vositalar to'plamidan parcha · ~1 daqiqalik o'qish" },
+    description:{ en:"Inclusive classroom tools", ru:"Инструменты инклюзивного класса", uz:"Inklyuziv sinf vositalari" },
+    content:{
+      en:["A toolkit for classrooms with a genuine mix of needs — not a single \"inclusive\" worksheet, but options within the same lesson.",
+        "Every activity in this set has three entry points: read it, hear it, or do it — chosen by the student, not assigned by diagnosis.",
+        "Field-tested across 30 classrooms before publication; the version here reflects what teachers actually kept using."],
+      ru:["Набор инструментов для классов с по-настоящему разными потребностями — не один «инклюзивный» рабочий лист, а варианты внутри одного и того же урока.",
+        "У каждого задания в наборе три входа: прочитать, услышать или сделать — выбирает ученик, а не диагноз.",
+        "Опробовано в 30 классах перед публикацией; версия здесь отражает то, чем учителя действительно продолжили пользоваться."],
+      uz:["Haqiqiy xilma-xil ehtiyojlari bo'lgan sinflar uchun vositalar to'plami — bitta \"inklyuziv\" varaq emas, bir xil dars ichida tanlovlar.",
+        "Ushbu to'plamdagi har bir mashq uchta kirish nuqtasiga ega: o'qish, eshitish yoki bajarish — tashxis emas, o'quvchi tanlaydi.",
+        "Nashrdan oldin 30 ta sinfda sinovdan o'tkazilgan; bu yerdagi versiya o'qituvchilar haqiqatda foydalanishda davom etgan narsani aks ettiradi."]
+    } },
+  { id:"l12", author:"MWM Research", format:"Book", category:"Learning", tags:["Audio","Simplified"], hasAudio:true, hasRead:true, emoji:"🛤️", year:2026,
+    title:{ en:"Pathways to Reading", ru:"Пути к чтению", uz:"O'qishga yo'llar" },
+    meta:{ en:"Guide excerpt · ~1 min read", ru:"Отрывок из руководства · ~1 мин на чтение", uz:"Qo'llanmadan parcha · ~1 daqiqalik o'qish" },
+    description:{ en:"Dyslexia-friendly formats", ru:"Форматы для людей с дислексией", uz:"Disleksiyaga qulay formatlar" },
+    content:{
+      en:["Dyslexia-friendly doesn't mean simplified — this collection keeps full vocabulary while changing spacing, font, and chunking.",
+        "Each title is available in three formats from the same page: standard text, audio, and a version with syllables pre-marked.",
+        "Chosen by readers with dyslexia as the books they'd actually recommend to a friend, not just the ones assigned to them."],
+      ru:["«Удобно для дислексии» не значит «упрощено» — в этой подборке сохранён полный словарный запас, меняются только интервалы, шрифт и разбивка текста.",
+        "Каждое название доступно в трёх форматах с одной и той же страницы: обычный текст, аудио и версия с заранее размеченными слогами.",
+        "Выбрано самими читателями с дислексией как книги, которые они бы правда порекомендовали другу, а не просто те, что им задали."],
+      uz:["\"Disleksiyaga qulay\" soddalashtirilgan degani emas — bu to'plamda to'liq lug'at saqlanadi, faqat oraliq, shrift va matn bo'linishi o'zgaradi.",
+        "Har bir nom bitta sahifadan uchta formatda mavjud: oddiy matn, audio va bo'g'inlari oldindan belgilangan versiya.",
+        "Disleksiyasi bor o'quvchilarning o'zlari do'stiga haqiqatan tavsiya qiladigan kitoblar sifatida tanlangan, shunchaki ularga topshirilgan kitoblar emas."]
+    } }
+];
+const LIBRARY_CATEGORIES = ["All","Visual","Hearing","Learning","Book"];
+const PATHS = [
+  { id:"p1", emoji:"🧭", lessons:8, mins:95,
+    title:{ en:"Foundations of Accessible Teaching", ru:"Основы доступного преподавания", uz:"Qulay o'qitish asoslari" },
+    level:{ en:"Start here", ru:"Начните отсюда", uz:"Shu yerdan boshlang" } },
+  { id:"p2", emoji:"📝", lessons:6, mins:70,
+    title:{ en:"Designing Readable Materials", ru:"Создание читаемых материалов", uz:"O'qish uchun qulay materiallar yaratish" },
+    level:{ en:"Practical", ru:"Практика", uz:"Amaliyot" } },
+  { id:"p3", emoji:"🖥️", lessons:10, mins:140,
+    title:{ en:"Assistive Technology in Class", ru:"Вспомогательные технологии в классе", uz:"Sinfda yordamchi texnologiyalar" },
+    level:{ en:"Deep dive", ru:"Глубокое погружение", uz:"Chuqur o'rganish" } },
+  { id:"p4", emoji:"💬", lessons:5, mins:55,
+    title:{ en:"Interviewing Learners with Care", ru:"Бережное интервьюирование учеников", uz:"O'quvchilar bilan ehtiyotkorlik bilan intervyu" },
+    level:{ en:"For researchers", ru:"Для исследователей", uz:"Tadqiqotchilar uchun" } }
+];
 
 const STORIES = [
   { id:"s1", author:"Amara O.", country:"Kenya", ago:"5h ago", likes:212,
@@ -1094,7 +1299,10 @@ function Home({ go, t, lang, greeting, simplified }){
           <div className="eyebrow">{greeting}</div>
           <h1 style={{fontSize:"calc(27px * var(--fs))", marginTop:6}}>{t("welcomeTitle")}</h1>
         </div>
-        <button className="avatar" onClick={()=>go({ tab:"profile" }, t("navProfile"))} aria-label={t("navProfile")}>M</button>
+        <div style={{display:"flex", alignItems:"center", gap:10}}>
+          <button className="icon-btn" onClick={()=>go({ view:{ type:"search" } }, t("globalSearchTitle"))} aria-label={t("globalSearchTitle")}><I.search/></button>
+          <button className="avatar" onClick={()=>go({ tab:"profile" }, t("navProfile"))} aria-label={t("navProfile")}>M</button>
+        </div>
       </div>
 
       <section className="mission">
@@ -1134,7 +1342,7 @@ function Home({ go, t, lang, greeting, simplified }){
             <span className="row-icon"><I.doc/></span>
             <span style={{flex:1}}>
               <b>{title}</b>
-              <small>{a.kind} · {a.ago}</small>
+              <small>{t(KIND_KEYS[a.kind] || "kindResearch")} · {a.ago}</small>
             </span>
             <I.chevron style={{color:"var(--muted)"}}/>
           </button>
@@ -1146,19 +1354,34 @@ function Home({ go, t, lang, greeting, simplified }){
 
 /* ============ library ============ */
 const FILTER_KEYS = { All:"filterAll", Visual:"filterVisual", Hearing:"filterHearing", Learning:"filterLearning", Book:"filterBook", Saved:"filterSaved" };
+const TAG_LABELS = {
+  "Text": { en:"Text", ru:"Текст", uz:"Matn" },
+  "Braille": { en:"Braille", ru:"Брайль", uz:"Brayl" },
+  "Audio": { en:"Audio", ru:"Аудио", uz:"Audio" },
+  "Transcript": { en:"Transcript", ru:"Расшифровка", uz:"Transkripsiya" },
+  "Visual": { en:"Visual", ru:"Визуал", uz:"Vizual" },
+  "Alt Text": { en:"Alt Text", ru:"Alt-текст", uz:"Alt-matn" },
+  "Large Text": { en:"Large Text", ru:"Крупный текст", uz:"Katta matn" },
+  "Video": { en:"Video", ru:"Видео", uz:"Video" },
+  "Captions": { en:"Captions", ru:"Субтитры", uz:"Subtitr" },
+  "Tactile": { en:"Tactile", ru:"Тактильно", uz:"Taktil" },
+  "Simplified": { en:"Simplified", ru:"Упрощённо", uz:"Soddalashtirilgan" }
+};
 function Library({ go, saved, toggleSave, t, lang }){
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("All");
   const filters = [...LIBRARY_CATEGORIES, "Saved"];
   const items = useMemo(()=>LIBRARY.filter(it=>{
     const okF = filter === "All" ? true : filter === "Saved" ? saved.includes(it.id) : it.category === filter;
-    const okQ = (it.title + " " + it.author).toLowerCase().includes(q.trim().toLowerCase());
+    const title = pick(it.title, lang);
+    const okQ = (title + " " + it.author).toLowerCase().includes(q.trim().toLowerCase());
     return okF && okQ;
-  }), [q, filter, saved]);
+  }), [q, filter, saved, lang]);
 
   const readAloud = (it)=>{
-    const body = (it.content && it.content.join(" ")) || it.description || it.meta || "";
-    speakText(it.title + ". " + body);
+    const c = pick(it.content, lang);
+    const body = (c && c.join(" ")) || pick(it.description, lang) || pick(it.meta, lang) || "";
+    speakText(pick(it.title, lang) + ". " + body);
   };
 
   return (
@@ -1181,36 +1404,40 @@ function Library({ go, saved, toggleSave, t, lang }){
           <div className="emoji">🔍</div>
           <p className="muted" style={{fontSize:13}}>{t("libraryEmpty")}</p>
         </div>
-      ) : items.map((it,i)=>(
-        <div key={it.id} className="lib-card">
-          <div className="lib-card-top">
-            <button className={"lib-thumb" + (i % 2 ? " navy" : "")} onClick={()=>go({ view:{ type:"resource", id:it.id } }, it.title)} aria-label={"Open " + it.title}>{it.emoji}</button>
-            <button style={{flex:1, textAlign:"left"}} onClick={()=>go({ view:{ type:"resource", id:it.id } }, it.title)}>
-              <b>{it.title}</b>
-              <div className="meta">{it.description || it.meta}</div>
-            </button>
-            <button
-              onClick={()=>toggleSave(it.id)}
-              aria-label={saved.includes(it.id) ? "Remove from saved" : "Save for later"}
-              style={{color: saved.includes(it.id) ? "var(--green)" : "var(--muted)"}}>
-              <I.bookmark fill={saved.includes(it.id) ? "currentColor" : "none"}/>
-            </button>
-          </div>
-          <div className="lib-tags">
-            {it.tags.map(tag=><span key={tag} className="lib-tag">{tag}</span>)}
-          </div>
-          <div className="lib-actions">
-            {it.hasAudio && (
-              <button className="lib-btn audio" onClick={()=>readAloud(it)}>
-                <I.play/> {t("libraryAudioBtn")}
+      ) : items.map((it,i)=>{
+        const title = pick(it.title, lang);
+        const desc = pick(it.description, lang) || pick(it.meta, lang);
+        return (
+          <div key={it.id} className="lib-card">
+            <div className="lib-card-top">
+              <button className={"lib-thumb" + (i % 2 ? " navy" : "")} onClick={()=>go({ view:{ type:"resource", id:it.id } }, title)} aria-label={"Open " + title}>{it.emoji}</button>
+              <button style={{flex:1, textAlign:"left"}} onClick={()=>go({ view:{ type:"resource", id:it.id } }, title)}>
+                <b>{title}</b>
+                <div className="meta">{desc}</div>
               </button>
-            )}
-            <button className="lib-btn read" onClick={()=>go({ view:{ type:"resource", id:it.id } }, it.title)}>
-              {t("libraryReadBtn")}
-            </button>
+              <button
+                onClick={()=>toggleSave(it.id)}
+                aria-label={saved.includes(it.id) ? t("removeSavedBtn") : t("saveForLaterBtn")}
+                style={{color: saved.includes(it.id) ? "var(--green)" : "var(--muted)"}}>
+                <I.bookmark fill={saved.includes(it.id) ? "currentColor" : "none"}/>
+              </button>
+            </div>
+            <div className="lib-tags">
+              {it.tags.map(tag=><span key={tag} className="lib-tag">{TAG_LABELS[tag] ? pick(TAG_LABELS[tag], lang) : tag}</span>)}
+            </div>
+            <div className="lib-actions">
+              {it.hasAudio && (
+                <button className="lib-btn audio" onClick={()=>readAloud(it)}>
+                  <I.play/> {t("libraryAudioBtn")}
+                </button>
+              )}
+              <button className="lib-btn read" onClick={()=>go({ view:{ type:"resource", id:it.id } }, title)}>
+                {t("libraryReadBtn")}
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -1320,6 +1547,14 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
       <Row title={t("readableFontTitle")} sub={t("readableFontSub")} on={s.readableFont} onToggle={()=>upd("readableFont", !s.readableFont)}/>
       <Row title={t("hapticsTitle")} sub={t("hapticsSub")} on={s.haptics} onToggle={()=>upd("haptics", !s.haptics)}/>
 
+      <div className="eyebrow section-label">{t("colorFilterLabel")}</div>
+      <p className="muted" style={{fontSize:"calc(11px * var(--fs))", marginTop:0, marginBottom:10, lineHeight:1.5}}>{t("colorFilterSub")}</p>
+      <div className="seg" role="group" aria-label={t("colorFilterLabel")}>
+        {[["colorFilterNone","none"],["colorFilterProtan","protanopia"],["colorFilterDeutan","deuteranopia"],["colorFilterTritan","tritanopia"]].map(([key,val])=>(
+          <button key={val} className={(s.colorFilter||"none") === val ? "on" : ""} onClick={()=>upd("colorFilter", val)}>{t(key)}</button>
+        ))}
+      </div>
+
       <div className="eyebrow section-label">{t("accessibilityProfileLabel")}</div>
       <button className="row-item" onClick={onRerunSetup}>
         <span className="row-icon"><I.sparkle/></span>
@@ -1425,13 +1660,14 @@ function ReportBox({ t, onSubmit }){
   );
 }
 
+const KIND_KEYS = { Research:"kindResearch", Story:"kindStory", Interview:"kindInterview" };
 function ArticleView({ id, onBack, go, t, lang, onReport }){
   const a = ARTICLES.find(x=>x.id===id);
   if(a.storyId) return <StoryView id={a.storyId} onBack={onBack} t={t} lang={lang} onReport={onReport}/>;
   const body = pick(a.body, lang);
   const quote = pick(a.quote, lang);
   return (
-    <Detail title={a.kind} onBack={onBack} onSwipeBack={onBack}>
+    <Detail title={t(KIND_KEYS[a.kind] || "kindResearch")} onBack={onBack} onSwipeBack={onBack}>
       <article className="article">
         <div className="eyebrow kicker">{a.author} · {a.read}</div>
         <h1>{pick(a.title, lang)}</h1>
@@ -1442,7 +1678,7 @@ function ArticleView({ id, onBack, go, t, lang, onReport }){
           </React.Fragment>
         ))}
         <button className="cta" style={{marginTop:14}} onClick={()=>go({ tab:"library" })}>
-          Read related resources <I.arrow/>
+          {t("readRelatedBtn")} <I.arrow/>
         </button>
         <ReportBox t={t} onSubmit={(r)=>onReport({ type:"article", id:a.id, ...r })}/>
       </article>
@@ -1456,7 +1692,7 @@ function StoryView({ id, onBack, liked, toggleLike, myStories, t, lang, onReport
   const on = (liked||[]).includes(s.id);
   const body = pick(s.body, lang) || [];
   return (
-    <Detail title="Story" onBack={onBack} onSwipeBack={onBack}
+    <Detail title={t ? t("storyLabel") : "Story"} onBack={onBack} onSwipeBack={onBack}
       action={toggleLike ? (
         <button className={"icon-btn like" + (on ? " on" : "")} onClick={()=>toggleLike(s.id)} aria-label="Like this story">
           <I.heart fill={on ? "currentColor" : "none"}/>
@@ -1473,16 +1709,19 @@ function StoryView({ id, onBack, liked, toggleLike, myStories, t, lang, onReport
   );
 }
 
-function ResourceView({ id, onBack, saved, toggleSave, notify, t, onReport }){
+function ResourceView({ id, onBack, saved, toggleSave, notify, t, lang, onReport }){
   const r = LIBRARY.find(x=>x.id===id);
   const isSaved = saved.includes(r.id);
   const [showText, setShowText] = useState(false);
   const [showExtra, setShowExtra] = useState(false);
-  const content = r.content || [];
+  const title = pick(r.title, lang);
+  const meta = pick(r.meta, lang);
+  const description = pick(r.description, lang);
+  const content = pick(r.content, lang) || [];
 
   const playAudio = ()=>{
-    const body = content.length ? content.join(" ") : (r.description || r.meta || "");
-    speakText(r.title + ". " + body);
+    const body = content.length ? content.join(" ") : (description || meta || "");
+    speakText(title + ". " + body);
   };
 
   return (
@@ -1490,14 +1729,14 @@ function ResourceView({ id, onBack, saved, toggleSave, notify, t, onReport }){
       <div style={{display:"flex", gap:14, alignItems:"center", marginBottom:18}}>
         <div className="thumb" style={{width:64, height:64, fontSize:28, borderRadius:16, background:"var(--cream-2)", display:"grid", placeItems:"center"}}>{r.emoji}</div>
         <div>
-          <h1 style={{fontSize:"calc(20px * var(--fs))", lineHeight:1.25}}>{r.title}</h1>
+          <h1 style={{fontSize:"calc(20px * var(--fs))", lineHeight:1.25}}>{title}</h1>
           <div className="muted" style={{fontSize:"calc(12px * var(--fs))", marginTop:4}}>{r.author} · {r.year}</div>
         </div>
       </div>
-      <p className="muted" style={{fontSize:"calc(13px * var(--fs))", lineHeight:1.6}}>{r.meta}</p>
+      <p className="muted" style={{fontSize:"calc(13px * var(--fs))", lineHeight:1.6}}>{meta}</p>
       <div className="card" style={{display:"block"}}>
-        <b style={{marginBottom:8}}>Accessibility</b>
-        {["Screen-reader tested","Alt text on all images","Adjustable text size", r.format==="Audio" ? "Full transcript" : "Large-print edition"].map(x=>(
+        <b style={{marginBottom:8}}>{t("a11yLabel")}</b>
+        {[t("a11yScreenReader"), t("a11yAltText"), t("a11yAdjustable"), r.format==="Audio" ? t("a11yTranscript") : t("a11yLargePrint")].map(x=>(
           <div key={x} style={{display:"flex", gap:9, alignItems:"center", padding:"5px 0", fontSize:"calc(12.5px * var(--fs))"}}>
             <span style={{color:"var(--green)"}}><I.check/></span> {x}
           </div>
@@ -1507,12 +1746,12 @@ function ResourceView({ id, onBack, saved, toggleSave, notify, t, onReport }){
       <div style={{display:"flex", gap:8, marginTop:6}}>
         {r.hasAudio && (
           <button className="lib-btn audio" style={{flex:1, justifyContent:"center", padding:"13px 14px"}} onClick={playAudio}>
-            <I.play/> {t ? t("libraryAudioBtn") : "Play"}
+            <I.play/> {t("libraryAudioBtn")}
           </button>
         )}
         {r.hasRead && content.length > 0 && (
           <button className="lib-btn read" style={{flex:1, justifyContent:"center", padding:"13px 14px"}} onClick={()=>setShowText(v=>!v)}>
-            {t ? t("libraryReadBtn") : "Read"}
+            {t("libraryReadBtn")}
           </button>
         )}
       </div>
@@ -1520,13 +1759,13 @@ function ResourceView({ id, onBack, saved, toggleSave, notify, t, onReport }){
       {showText && content.length > 0 && (
         <div className="card" style={{display:"block", marginTop:14}}>
           {content.map((p,i)=>(
-            <p key={i} style={{fontSize:"calc(14.5px * var(--fs))", lineHeight:1.75, margin:"9px 0", color:"#3A465E"}}>{p}</p>
+            <p key={i} style={{fontSize:"calc(14.5px * var(--fs))", lineHeight:1.75, margin:"9px 0", color:"var(--body-text)"}}>{p}</p>
           ))}
         </div>
       )}
 
       <button className="cta" style={{marginTop:14, background:"var(--cream-2)", color:"var(--navy)"}} onClick={()=>toggleSave(r.id)}>
-        {isSaved ? "Remove from saved" : "Save for later"}
+        {isSaved ? t("removeSavedBtn") : t("saveForLaterBtn")}
       </button>
 
       {(r.transcript || r.altTexts) && (
@@ -1545,6 +1784,128 @@ function ResourceView({ id, onBack, saved, toggleSave, notify, t, onReport }){
       )}
       {t ? <ReportBox t={t} onSubmit={(rep)=>onReport && onReport({ type:"resource", id:r.id, ...rep })}/> : null}
     </Detail>
+  );
+}
+
+function GlobalSearch({ onBack, go, t, lang }){
+  const [q, setQ] = useState("");
+  const query = q.trim().toLowerCase();
+
+  const libResults = useMemo(()=>{
+    if(!query) return [];
+    return LIBRARY.filter(it=>{
+      const title = pick(it.title, lang).toLowerCase();
+      const desc = (pick(it.description, lang) || pick(it.meta, lang) || "").toLowerCase();
+      const content = (pick(it.content, lang) || []).join(" ").toLowerCase();
+      return title.includes(query) || desc.includes(query) || content.includes(query) || it.author.toLowerCase().includes(query);
+    });
+  }, [query, lang]);
+
+  const storyResults = useMemo(()=>{
+    if(!query) return [];
+    return STORIES.filter(s=>{
+      const title = pick(s.title, lang).toLowerCase();
+      const body = (pick(s.body, lang) || []).join(" ").toLowerCase();
+      return title.includes(query) || body.includes(query) || s.author.toLowerCase().includes(query) || s.country.toLowerCase().includes(query);
+    });
+  }, [query, lang]);
+
+  const articleResults = useMemo(()=>{
+    if(!query) return [];
+    return ARTICLES.filter(a=>{
+      const title = pick(a.title, lang).toLowerCase();
+      const body = (pick(a.body, lang) || []).join(" ").toLowerCase();
+      return title.includes(query) || body.includes(query);
+    });
+  }, [query, lang]);
+
+  const total = libResults.length + storyResults.length + articleResults.length;
+
+  return (
+    <Detail title={t("globalSearchTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <div className="search" style={{marginBottom:16}}>
+        <I.search style={{color:"var(--muted)"}}/>
+        <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder={t("globalSearchPlaceholder")} aria-label={t("globalSearchPlaceholder")}/>
+      </div>
+
+      {!query ? (
+        <p className="muted" style={{fontSize:"calc(13px * var(--fs))", lineHeight:1.6}}>{t("globalSearchHint")}</p>
+      ) : total === 0 ? (
+        <div className="empty">
+          <div className="emoji">🔍</div>
+          <p className="muted" style={{fontSize:13}}>{t("libraryEmpty")}</p>
+        </div>
+      ) : (
+        <React.Fragment>
+          {libResults.length > 0 && (
+            <React.Fragment>
+              <div className="eyebrow section-label">{t("tileLibraryTitle")}</div>
+              {libResults.map(it=>(
+                <button key={it.id} className="row-item" onClick={()=>go({ view:{ type:"resource", id:it.id } }, pick(it.title, lang))}>
+                  <span className="row-icon">{it.emoji}</span>
+                  <span style={{flex:1}}><b>{pick(it.title, lang)}</b><small>{pick(it.description, lang) || pick(it.meta, lang)}</small></span>
+                  <I.chevron style={{color:"var(--muted)"}}/>
+                </button>
+              ))}
+            </React.Fragment>
+          )}
+          {storyResults.length > 0 && (
+            <React.Fragment>
+              <div className="eyebrow section-label">{t("navStories")}</div>
+              {storyResults.map(s=>(
+                <button key={s.id} className="row-item" onClick={()=>go({ view:{ type:"story", id:s.id } }, pick(s.title, lang))}>
+                  <span className="row-icon"><I.stories/></span>
+                  <span style={{flex:1}}><b>{pick(s.title, lang)}</b><small>{s.author} · {s.country}</small></span>
+                  <I.chevron style={{color:"var(--muted)"}}/>
+                </button>
+              ))}
+            </React.Fragment>
+          )}
+          {articleResults.length > 0 && (
+            <React.Fragment>
+              <div className="eyebrow section-label">{t("recentLabel")}</div>
+              {articleResults.map(a=>(
+                <button key={a.id} className="row-item" onClick={()=>go({ view:{ type:"article", id:a.id } }, pick(a.title, lang))}>
+                  <span className="row-icon"><I.doc/></span>
+                  <span style={{flex:1}}><b>{pick(a.title, lang)}</b><small>{t(KIND_KEYS[a.kind] || "kindResearch")}</small></span>
+                  <I.chevron style={{color:"var(--muted)"}}/>
+                </button>
+              ))}
+            </React.Fragment>
+          )}
+        </React.Fragment>
+      )}
+    </Detail>
+  );
+}
+
+function OnboardTour({ t, onDone }){
+  const [step, setStep] = useState(0);
+  const steps = [
+    { titleKey:"tour1Title", bodyKey:"tour1Body" },
+    { titleKey:"tour2Title", bodyKey:"tour2Body" },
+    { titleKey:"tour3Title", bodyKey:"tour3Body" },
+    { titleKey:"tour4Title", bodyKey:"tour4Body" },
+    { titleKey:"tour5Title", bodyKey:"tour5Body" }
+  ];
+  const s = steps[step];
+  const isLast = step === steps.length - 1;
+  return (
+    <div className="tour-overlay">
+      <div className="tour-card">
+        <h2 className="serif" style={{fontSize:"calc(19px * var(--fs))", margin:0}}>{t(s.titleKey)}</h2>
+        <p style={{fontSize:"calc(13.5px * var(--fs))", lineHeight:1.6, marginTop:10, color:"var(--body-text)"}}>{t(s.bodyKey)}</p>
+        <div className="tour-dots">
+          {steps.map((_,i)=><span key={i} className={"tour-dot" + (i===step ? " on" : "")}/>)}
+        </div>
+        <div style={{display:"flex", gap:10, marginTop:18}}>
+          <button className="link-btn muted" onClick={onDone}>{t("tourSkip")}</button>
+          <button className="cta" style={{flex:1}} onClick={()=>{ if(isLast) onDone(); else setStep(step+1); }}>
+            {isLast ? t("tourDone") : t("tourNext")}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1591,39 +1952,74 @@ function InsightsView({ onBack, accounts, reports, t }){
         <b>{t("insightsReports")}</b>
         <div style={{fontSize:"calc(22px * var(--fs))", fontFamily:"Fraunces,serif", fontWeight:700}}>{(reports||[]).length}</div>
       </div>
+
+      <div className="insight-card">
+        <b>{t("insightsReportsList")}</b>
+        {(reports||[]).length === 0 ? (
+          <p className="muted" style={{fontSize:"calc(12px * var(--fs))"}}>{t("insightsNoReports")}</p>
+        ) : (
+          <React.Fragment>
+            {reports.map(r=>(
+              <div key={r.id} style={{padding:"9px 0", borderBottom:"1px solid var(--line)"}}>
+                <div style={{display:"flex", justifyContent:"space-between", gap:8}}>
+                  <b style={{fontSize:"calc(12px * var(--fs))"}}>{r.type} · {r.reason}</b>
+                  <span className="muted" style={{fontSize:"calc(10.5px * var(--fs))", flex:"none"}}>{new Date(r.at).toLocaleDateString()}</span>
+                </div>
+                {r.note ? <p style={{fontSize:"calc(12px * var(--fs))", margin:"4px 0 0", color:"var(--body-text)"}}>{r.note}</p> : null}
+              </div>
+            ))}
+            <button className="lib-btn read" style={{marginTop:12}} onClick={()=>{
+              const rows = [["id","type","targetId","reason","note","lang","at"]].concat(
+                reports.map(r=>[r.id, r.type, r.targetId, r.reason, (r.note||"").replace(/[\n,"]/g," "), r.lang, r.at])
+              );
+              const csv = rows.map(row=>row.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(",")).join("\n");
+              const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url; link.download = "mwm-reports.csv";
+              document.body.appendChild(link); link.click(); document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }}>
+              <I.upload/> {t("insightsExportCsv")}
+            </button>
+          </React.Fragment>
+        )}
+      </div>
       <p className="muted" style={{fontSize:"calc(11.5px * var(--fs))", lineHeight:1.5}}>{t("insightsNote")}</p>
     </Detail>
   );
 }
 
-function PathsView({ onBack, progress, setProgress, notify }){
+function PathsView({ onBack, progress, setProgress, notify, t, lang }){
   return (
-    <Detail title="Learning Hub" onBack={onBack}>
+    <Detail title={t("tileHubTitle")} onBack={onBack} onSwipeBack={onBack}>
       <p className="muted" style={{fontSize:"calc(13px * var(--fs))", marginTop:0, lineHeight:1.6}}>
-        Four pathways built from classroom research. Each lesson works offline and with a screen reader.
+        {t("pathHubSubtitle")}
       </p>
       {PATHS.map(p=>{
         const v = progress[p.id];
+        const title = pick(p.title, lang);
+        const level = pick(p.level, lang);
         return (
           <div key={p.id} className="card" style={{display:"block"}}>
             <div style={{display:"flex", gap:12, alignItems:"flex-start"}}>
               <span className="thumb">{p.emoji}</span>
               <span style={{flex:1}}>
-                <b>{p.title}</b>
-                <div className="meta">{p.lessons} lessons · {p.mins} min · {p.level}</div>
+                <b>{title}</b>
+                <div className="meta">{p.lessons} {t("lessonsWord")} · {p.mins} {t("minWord")} · {level}</div>
               </span>
             </div>
             <div className="progress"><i style={{width:v + "%"}}/></div>
             <div style={{display:"flex", alignItems:"center", gap:10, marginTop:10}}>
-              <span className="muted" style={{fontSize:"calc(11.5px * var(--fs))"}}>{v}% complete</span>
+              <span className="muted" style={{fontSize:"calc(11.5px * var(--fs))"}}>{v}% {t("completeWord")}</span>
               <button
                 style={{marginLeft:"auto", fontWeight:600, color:"var(--green)", fontSize:"calc(12.5px * var(--fs))"}}
                 onClick={()=>{
                   const next = Math.min(100, v + Math.ceil(100/p.lessons));
                   setProgress(p.id, next);
-                  notify(next===100 ? "Pathway finished" : "Lesson marked done");
+                  notify(next===100 ? t("pathwayDone") : t("lessonDone"));
                 }}>
-                {v===100 ? "Review pathway" : v===0 ? "Start pathway" : "Continue"}
+                {v===100 ? t("pathReview") : v===0 ? t("pathStart") : t("continueCta")}
               </button>
             </div>
           </div>
@@ -1951,7 +2347,7 @@ function Compose({ onBack, onSubmit, t }){
         <div className="field">
           <label htmlFor="c-body">{t("formatWrite")}</label>
           <textarea id="c-body" rows={8} value={body} onChange={e=>setBody(e.target.value)} placeholder={t("formatWriteSub")}/>
-          <div className="hint">{body.trim().length} characters · min 30</div>
+          <div className="hint">{body.trim().length} {t("charsMinWord")}</div>
         </div>
       )}
 
@@ -2000,7 +2396,7 @@ function Compose({ onBack, onSubmit, t }){
 
       <button className="cta" disabled={!canPublish} style={{opacity: canPublish ? 1 : .45, marginTop:16}}
         onClick={()=>{ if(!canPublish) return; onSubmit({ title, country, body, format, audioUrl, videoUrl }); }}>
-        Publish story <I.arrow/>
+        {t("publishStoryBtn")} <I.arrow/>
       </button>
     </Detail>
   );
@@ -2260,6 +2656,11 @@ function App(){
     lineHeight: s.dyslexic ? 1.75 : 1.5
   };
   const simplified = !!account && (account.profile === "low-vision" || account.profile === "blind");
+  const tourVisible = stage === "app" && !!account && !account.tourSeen;
+  const dismissTour = ()=>{
+    if(!session) return;
+    updateAccount(session.email, p=>({ ...p, tourSeen: true }));
+  };
 
   if(stage === "splash"){
     return (
@@ -2296,14 +2697,15 @@ function App(){
 
   const screenTitle =
     view?.type === "article" ? pick(ARTICLES.find(a=>a.id===view.id)?.title, lang) :
-    view?.type === "story" ? "Story" :
-    view?.type === "resource" ? (LIBRARY.find(r=>r.id===view.id)?.title || "") :
+    view?.type === "story" ? t("storyLabel") :
+    view?.type === "resource" ? pick(LIBRARY.find(r=>r.id===view.id)?.title, lang) :
     view?.type === "paths" ? t("tileHubTitle") :
     view?.type === "learn" ? t("tileHubTitle") :
     view?.type === "scan" ? t("scanTitle") :
     view?.type === "transcript" ? t("transcriptTitle") :
     view?.type === "compose" ? t("tileShareTitle") :
     view?.type === "insights" ? t("insightsTitle") :
+    view?.type === "search" ? t("globalSearchTitle") :
     tab === "home" ? t("welcomeTitle") : tab === "library" ? t("libraryTitle") :
     tab === "stories" ? t("storiesTitle") : t("profileTitle");
 
@@ -2342,14 +2744,15 @@ function App(){
     const back = ()=>setView(null);
     if(view.type==="article") body = <ArticleView id={view.id} onBack={back} go={go} t={t} lang={lang} onReport={submitReport}/>;
     else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang} onReport={submitReport}/>;
-    else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} onReport={submitReport}/>;
-    else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify}/>;
+    else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} lang={lang} onReport={submitReport}/>;
+    else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}/>;
     else if(view.type==="learn") body = <LearnUpload onBack={back} onApply={handleLearnApply} onBrowsePaths={()=>setView({ type:"paths" })}
                                                        onOpenScan={()=>setView({ type:"scan" })} onOpenTranscript={()=>setView({ type:"transcript" })} t={t}/>;
     else if(view.type==="scan") body = <ScanText onBack={back} t={t} lang={lang} notify={notify}/>;
     else if(view.type==="transcript") body = <LiveTranscript onBack={back} t={t} lang={lang} notify={notify}/>;
     else if(view.type==="compose") body = <Compose onBack={back} onSubmit={publish} t={t}/>;
     else if(view.type==="insights") body = <InsightsView onBack={back} accounts={accounts} reports={reports} t={t}/>;
+    else if(view.type==="search") body = <GlobalSearch onBack={back} go={go} t={t} lang={lang}/>;
   } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified}/>;
   else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t} lang={lang}/>;
   else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang}/>;
@@ -2359,14 +2762,23 @@ function App(){
                         onReset={handleReset} onOpenInsights={()=>go({ view:{ type:"insights" } })}/>;
 
   return (
-    <div className="device">
+    <React.Fragment>
+      <svg width="0" height="0" style={{position:"absolute"}} aria-hidden="true">
+        <defs>
+          <filter id="mwm-protanopia"><feColorMatrix type="matrix" values="0.567,0.433,0,0,0 0.558,0.442,0,0,0 0,0.242,0.758,0,0 0,0,0,1,0"/></filter>
+          <filter id="mwm-deuteranopia"><feColorMatrix type="matrix" values="0.625,0.375,0,0,0 0.7,0.3,0,0,0 0,0.3,0.7,0,0 0,0,0,1,0"/></filter>
+          <filter id="mwm-tritanopia"><feColorMatrix type="matrix" values="0.95,0.05,0,0,0 0,0.433,0.567,0,0 0,0.475,0.525,0,0 0,0,0,1,0"/></filter>
+        </defs>
+      </svg>
+      <div className="device">
       <div className="device-screen" ref={deviceScreenRef} style={{ "--ds": String(ds) }}>
         <div className="island"/>
         <div className="screen" style={screenStyle}
              data-contrast={s.contrast ? "on" : "off"}
              data-motion={s.motion ? "on" : "off"}
              data-dark={s.darkMode ? "on" : "off"}
-             data-readable={s.readableFont ? "on" : "off"}>
+             data-readable={s.readableFont ? "on" : "off"}
+             data-colorfilter={s.colorFilter || "none"}>
           <StatusBar dark={s.darkMode}/>
           <div className="sr-only" aria-live="polite">{screenTitle}</div>
           <div ref={scrollRef} className="body-wrap" key={view ? view.type + (view.id||"") : tab}
@@ -2389,7 +2801,9 @@ function App(){
           )}
         </div>
       </div>
-    </div>
+      </div>
+      {tourVisible && <OnboardTour t={t} onDone={dismissTour}/>}
+    </React.Fragment>
   );
 }
 
