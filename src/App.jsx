@@ -53,8 +53,8 @@ function makeAccount({ name, email, lang }){
     name, email, lang: lang || "ru",
     onboarded: false, profile: null,
     saved: [], liked: [], myStories: [],
-    progress: { p1: 60, p2: 25, p3: 0, p4: 100 },
-    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false, darkMode: false, readableFont: false, haptics: true }
+    progress: { p1: 0, p2: 0, p3: 0, p4: 0 },
+    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false, darkMode: false, readableFont: false, haptics: true, speechRate: 1 }
   };
 }
 
@@ -88,13 +88,20 @@ function migrateLegacy(){
 const MIGRATED = (typeof window !== "undefined") ? migrateLegacy() : null;
 
 /* ============ speech (voice guide) ============ */
-function speakText(text){
+let CURRENT_TTS_LANG = "ru-RU";
+let CURRENT_TTS_RATE = 0.98;
+const TTS_LANG_MAP = { ru:"ru-RU", uz:"uz-UZ", en:"en-US" };
+function setSpeechPrefs(lang, rate){
+  if(lang) CURRENT_TTS_LANG = TTS_LANG_MAP[lang] || "ru-RU";
+  if(rate) CURRENT_TTS_RATE = rate;
+}
+function speakText(text, opts){
   if(typeof window === "undefined" || !("speechSynthesis" in window)) return;
   try{
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ru-RU";
-    u.rate = 0.98;
+    u.lang = (opts && opts.lang) || CURRENT_TTS_LANG;
+    u.rate = (opts && opts.rate) || CURRENT_TTS_RATE;
     window.speechSynthesis.speak(u);
   }catch(e){}
 }
@@ -256,7 +263,30 @@ const STRINGS = {
     videoChoose: "Выбрать видеофайл", videoRetake: "Выбрать другое видео",
     attachTitleLabel: "Название", attachCountryLabel: "Страна",
     mediaNote: "Аудио и видео сохраняются только в этой сессии — после перезагрузки страницы файл нужно будет прикрепить заново.",
-    continueAsTelegram: "Продолжить как {name}", orLabel: "или"
+    continueAsTelegram: "Продолжить как {name}", orLabel: "или",
+
+    speechRateLabel: "Скорость озвучивания",
+    speedSlow: "Медленно", speedNormal: "Обычно", speedFast: "Быстро", speedFaster: "Очень быстро",
+
+    scanTitle: "Съёмка текста",
+    scanSub: "Наведите камеру на страницу, доску или документ — текст распознается прямо в браузере",
+    scanTakePhoto: "Сделать снимок или выбрать фото",
+    scanProcessing: "Распознаём текст…",
+    scanEmpty: "Текст не найден. Попробуйте снимок при более ярком свете, ближе к тексту.",
+    scanRetake: "Другое фото",
+    scanRead: "Озвучить",
+    scanCopy: "Скопировать текст",
+    scanCopied: "Текст скопирован",
+
+    transcriptTitle: "Живая расшифровка",
+    transcriptSub: "Говорите — текст появится на экране. Хорошо подходит для лекций и уроков.",
+    transcriptStart: "Начать расшифровку",
+    transcriptStop: "Остановить",
+    transcriptEmpty: "Здесь появится текст, как только начнёте говорить",
+    transcriptUnsupported: "Этот браузер не поддерживает распознавание речи. Попробуйте Chrome или Edge.",
+    transcriptClear: "Очистить",
+    transcriptCopy: "Скопировать",
+    transcriptCopied: "Расшифровка скопирована"
   },
   uz: {
     appTagline: "ONGGA YO'L OCHAMIZ",
@@ -407,7 +437,30 @@ const STRINGS = {
     videoChoose: "Video fayl tanlash", videoRetake: "Boshqa video tanlash",
     attachTitleLabel: "Sarlavha", attachCountryLabel: "Davlat",
     mediaNote: "Audio va video faqat shu seansda saqlanadi — sahifa yangilangach faylni qayta biriktirish kerak bo'ladi.",
-    continueAsTelegram: "{name} sifatida davom etish", orLabel: "yoki"
+    continueAsTelegram: "{name} sifatida davom etish", orLabel: "yoki",
+
+    speechRateLabel: "Ovoz tezligi",
+    speedSlow: "Sekin", speedNormal: "Oddiy", speedFast: "Tez", speedFaster: "Juda tez",
+
+    scanTitle: "Matnni suratga olish",
+    scanSub: "Kamerani sahifa, doska yoki hujjatga qarating — matn brauzerning o'zida taniladi",
+    scanTakePhoto: "Surat olish yoki foto tanlash",
+    scanProcessing: "Matn tanilmoqda…",
+    scanEmpty: "Matn topilmadi. Yorug'roq joyda, matnga yaqinroq suratga oling.",
+    scanRetake: "Boshqa surat",
+    scanRead: "Ovoz bilan o'qish",
+    scanCopy: "Matnni nusxalash",
+    scanCopied: "Matn nusxalandi",
+
+    transcriptTitle: "Jonli transkripsiya",
+    transcriptSub: "Gapiring — matn ekranda paydo bo'ladi. Ma'ruza va darslar uchun qulay.",
+    transcriptStart: "Yozib olishni boshlash",
+    transcriptStop: "To'xtatish",
+    transcriptEmpty: "Gapira boshlaganingizda shu yerda matn paydo bo'ladi",
+    transcriptUnsupported: "Bu brauzer nutqni tanishni qo'llab-quvvatlamaydi. Chrome yoki Edge'ni sinab ko'ring.",
+    transcriptClear: "Tozalash",
+    transcriptCopy: "Nusxalash",
+    transcriptCopied: "Transkripsiya nusxalandi"
   },
   en: {
     appTagline: "MAKING WAY FOR MINDS",
@@ -558,7 +611,30 @@ const STRINGS = {
     videoChoose: "Choose a video file", videoRetake: "Choose a different video",
     attachTitleLabel: "Title", attachCountryLabel: "Country",
     mediaNote: "Audio and video only last for this session — after a page reload you'll need to attach the file again.",
-    continueAsTelegram: "Continue as {name}", orLabel: "or"
+    continueAsTelegram: "Continue as {name}", orLabel: "or",
+
+    speechRateLabel: "Reading speed",
+    speedSlow: "Slow", speedNormal: "Normal", speedFast: "Fast", speedFaster: "Faster",
+
+    scanTitle: "Scan Text",
+    scanSub: "Point a camera at a page, board or document — text is recognized right in the browser",
+    scanTakePhoto: "Take a photo or choose one",
+    scanProcessing: "Recognizing text…",
+    scanEmpty: "No text found. Try a brighter, closer shot.",
+    scanRetake: "Different photo",
+    scanRead: "Read aloud",
+    scanCopy: "Copy text",
+    scanCopied: "Text copied",
+
+    transcriptTitle: "Live Transcript",
+    transcriptSub: "Speak — the text appears on screen. Good for lectures and lessons.",
+    transcriptStart: "Start transcribing",
+    transcriptStop: "Stop",
+    transcriptEmpty: "Text will appear here once you start speaking",
+    transcriptUnsupported: "This browser doesn't support speech recognition. Try Chrome or Edge.",
+    transcriptClear: "Clear",
+    transcriptCopy: "Copy",
+    transcriptCopied: "Transcript copied"
   }
 };
 function tFor(lang, key){
@@ -567,29 +643,65 @@ function tFor(lang, key){
 
 /* ============ content ============ */
 const LIBRARY = [
-  { id:"l1", title:"Teaching Every Reader", author:"R. Okonkwo", format:"Book", category:"Book", tags:["Text","Braille"], hasAudio:false, hasRead:true, emoji:"📗", meta:"312 pages · EPUB, Braille-ready", year:2024 },
+  { id:"l1", title:"Teaching Every Reader", author:"R. Okonkwo", format:"Book", category:"Book", tags:["Text","Braille"], hasAudio:false, hasRead:true, emoji:"📗", meta:"312 pages · EPUB, Braille-ready", year:2024,
+    content:["Reading aloud works when it's a choice, not a requirement. This guide collects turn-taking methods that let a student opt into reading aloud on their own terms.",
+      "Pair reading with a peer removes the spotlight while keeping the practice — both readers follow the same line, switching every paragraph.",
+      "A five-minute daily check-in — \"What's one word that tripped you up today?\" — turns mistakes into data instead of embarrassment."] },
   { id:"l2", title:"Sound of a Classroom", author:"Narrated by M. Duarte", format:"Audio", category:"Hearing", tags:["Audio","Transcript"], hasAudio:true, hasRead:true, emoji:"🎧", meta:"4 h 12 min · Transcript included", year:2025,
+    content:["A school bell rings, and children's voices overlap in a corridor. This is Room 4B, nine in the morning, on an ordinary Tuesday.",
+      "A teacher reads instructions slowly, pausing after each sentence. Notice how the room goes quiet before every new activity — that pause is not empty, it's a signal.",
+      "Recorded over one full term, this piece lets you hear what an accessible classroom actually sounds like, pacing and all."],
     transcript:["[0:00] A school bell rings. Children's voices overlap in a corridor.",
       "[0:42] Narrator: \"This is Room 4B, nine in the morning, on an ordinary Tuesday.\"",
       "[1:15] A teacher reads instructions slowly, pausing after each sentence.",
       "[2:03] Narrator: \"Notice how the room goes quiet before every new activity — that pause is not empty, it's a signal.\""] },
   { id:"l3", title:"Colour Contrast Field Guide", author:"MWM Research", format:"Visual", category:"Visual", tags:["Visual","Alt Text"], hasAudio:false, hasRead:true, emoji:"🎨", meta:"48 plates · Alt-text on every image", year:2025,
+    content:["Forty-eight side-by-side comparisons of classroom materials — one version as usually printed, one adjusted for contrast.",
+      "A wall painted dark navy behind a whiteboard cuts glare noticeably. A worksheet in near-black-on-cream reads faster than grey-on-white for almost every tester.",
+      "Every plate includes the exact contrast ratio used, so a teacher can match it without guesswork."],
     altTexts:["Plate 3: a classroom wall painted dark navy behind a whiteboard, cutting glare noticeably.",
       "Plate 11: two versions of the same worksheet — one in grey-on-white, one in near-black-on-cream — shown side by side.",
       "Plate 27: a hallway sign using a 7:1 contrast ratio, photographed from ten metres away and still legible."] },
-  { id:"l4", title:"Dyslexia in Early Grades", author:"S. Lindqvist", format:"Book", category:"Learning", tags:["Large Text"], hasAudio:false, hasRead:true, emoji:"📘", meta:"186 pages · Large-print edition", year:2023 },
-  { id:"l5", title:"Signed Stories, Vol. 2", author:"Deaf Learners Collective", format:"Visual", category:"Hearing", tags:["Video","Captions"], hasAudio:false, hasRead:true, emoji:"🤟", meta:"22 films · Sign language + captions", year:2026 },
-  { id:"l6", title:"Listening to Learners", author:"MWM Interviews", format:"Audio", category:"Learning", tags:["Audio"], hasAudio:true, hasRead:true, emoji:"🎙️", meta:"18 episodes · 42 countries", year:2026 },
-  { id:"l7", title:"Maths Without Sight", author:"A. Boateng", format:"Book", category:"Visual", tags:["Braille","Tactile"], hasAudio:false, hasRead:true, emoji:"📐", meta:"240 pages · Tactile diagrams", year:2024 },
-  { id:"l8", title:"Rooms That Work", author:"MWM Research", format:"Visual", category:"Visual", tags:["Visual"], hasAudio:false, hasRead:true, emoji:"🏫", meta:"Photo study · 60 classrooms", year:2025 },
+  { id:"l4", title:"Dyslexia in Early Grades", author:"S. Lindqvist", format:"Book", category:"Learning", tags:["Large Text"], hasAudio:false, hasRead:true, emoji:"📘", meta:"186 pages · Large-print edition", year:2023,
+    content:["Letters that reverse, words that blur, and a clock that always seems to run out — dyslexia in early grades often gets mistaken for not trying hard enough.",
+      "This book walks through classroom-tested large-print layouts, decodable text sets, and a simple screening checklist teachers can use before a formal diagnosis.",
+      "Includes a parent letter template explaining what's changing and why, so home and classroom stay in sync."] },
+  { id:"l5", title:"Signed Stories, Vol. 2", author:"Deaf Learners Collective", format:"Visual", category:"Hearing", tags:["Video","Captions"], hasAudio:false, hasRead:true, emoji:"🤟", meta:"22 films · Sign language + captions", year:2026,
+    content:["Twenty-two short films, each told entirely in sign language with burned-in captions — no voiceover standing in for either.",
+      "Stories range from a grandmother's recipe to a first day at a new school, chosen because Deaf children rarely see themselves as the main character.",
+      "Each film comes with three discussion questions for classroom use, available in the same sign language as the story."] },
+  { id:"l6", title:"Listening to Learners", author:"MWM Interviews", format:"Audio", category:"Learning", tags:["Audio"], hasAudio:true, hasRead:true, emoji:"🎙️", meta:"18 episodes · 42 countries", year:2026,
+    content:["Eighteen unscripted conversations with students across 42 countries, recorded exactly as they happened — pauses, laughter, and all.",
+      "The episode teachers ask about most: a nine-year-old in Nairobi explaining, in her own words, what \"boring\" actually means to her.",
+      "No two episodes are edited the same way — the format follows whatever the learner wanted to talk about."] },
+  { id:"l7", title:"Maths Without Sight", author:"A. Boateng", format:"Book", category:"Visual", tags:["Braille","Tactile"], hasAudio:false, hasRead:true, emoji:"📐", meta:"240 pages · Tactile diagrams", year:2024,
+    content:["Tactile diagrams replace visual ones page for page — a raised-line graph is read by hand the way a sighted student reads it by eye.",
+      "Covers arithmetic through early algebra, with a braille notation guide included for teachers who don't yet read braille themselves.",
+      "Each chapter ends with a \"build it\" exercise — recreating a diagram from raised materials at home, to reinforce spatial memory."] },
+  { id:"l8", title:"Rooms That Work", author:"MWM Research", format:"Visual", category:"Visual", tags:["Visual"], hasAudio:false, hasRead:true, emoji:"🏫", meta:"Photo study · 60 classrooms", year:2025,
+    content:["Sixty classrooms photographed exactly as teachers actually arranged them — not staged, not idealized.",
+      "Grouped by what they solve: glare, noise, wayfinding, and reach. Each photo has a one-line note on what changed and what it cost.",
+      "Most fixes in this study cost under $50 and took one weekend."] },
   { id:"l9", title:"Seeing Differently", author:"MWM Research", format:"Visual", category:"Visual", tags:["Audio","Large Text"], hasAudio:true, hasRead:true, emoji:"👓", meta:"Visual accessibility guide", year:2026,
-    description:"Visual accessibility guide" },
+    description:"Visual accessibility guide",
+    content:["A field guide to what \"low vision\" actually covers — it is rarely all-or-nothing, and this guide starts by unlearning that assumption.",
+      "Walks through practical adjustments: lighting angles, font choices, and screen settings that help before any assistive device is needed.",
+      "Written with input from students who have low vision, not just about them."] },
   { id:"l10", title:"Sound and Learning", author:"MWM Research", format:"Audio", category:"Hearing", tags:["Audio","Braille"], hasAudio:true, hasRead:true, emoji:"🔔", meta:"Hearing support strategies", year:2026,
-    description:"Hearing support strategies" },
+    description:"Hearing support strategies",
+    content:["Strategies gathered from Deaf and hard-of-hearing students on what actually helps in a hearing classroom — not the textbook list, the real one.",
+      "Seating position matters more than most teachers realize; this guide explains why the corner seat is rarely the right one.",
+      "Includes a short script for the first day of class, asking a teacher to introduce captioning without singling anyone out."] },
   { id:"l11", title:"Every Learner Counts", author:"MWM Research", format:"Book", category:"Learning", tags:["Text","Video"], hasAudio:false, hasRead:true, emoji:"🧩", meta:"Inclusive classroom tools", year:2026,
-    description:"Inclusive classroom tools" },
+    description:"Inclusive classroom tools",
+    content:["A toolkit for classrooms with a genuine mix of needs — not a single \"inclusive\" worksheet, but options within the same lesson.",
+      "Every activity in this set has three entry points: read it, hear it, or do it — chosen by the student, not assigned by diagnosis.",
+      "Field-tested across 30 classrooms before publication; the version here reflects what teachers actually kept using."] },
   { id:"l12", title:"Pathways to Reading", author:"MWM Research", format:"Book", category:"Learning", tags:["Audio","Simplified"], hasAudio:true, hasRead:true, emoji:"🛤️", meta:"Dyslexia-friendly formats", year:2026,
-    description:"Dyslexia-friendly formats" }
+    description:"Dyslexia-friendly formats",
+    content:["Dyslexia-friendly doesn't mean simplified — this collection keeps full vocabulary while changing spacing, font, and chunking.",
+      "Each title is available in three formats from the same page: standard text, audio, and a version with syllables pre-marked.",
+      "Chosen by readers with dyslexia as the books they'd actually recommend to a friend, not just the ones assigned to them."] }
 ];
 const LIBRARY_CATEGORIES = ["All","Visual","Hearing","Learning","Book"];
 const PATHS = [
@@ -995,7 +1107,7 @@ function Home({ go, t, lang, greeting, simplified }){
           <div className="stats">
             <div className="stat gold"><b>2,400+</b><span>{t("statsStories")}</span></div>
             <div className="stat"><b>18</b><span>{t("statsCountries")}</span></div>
-            <div className="stat green"><b>94%</b><span>{t("statsFree")}</span></div>
+            <div className="stat green"><b>100%</b><span>{t("statsFree")}</span></div>
           </div>
         )}
       </section>
@@ -1045,16 +1157,8 @@ function Library({ go, saved, toggleSave, t, lang }){
   }), [q, filter, saved]);
 
   const readAloud = (it)=>{
-    const text = it.title + ". " + (it.description || it.meta || "");
-    if(typeof window !== "undefined" && "speechSynthesis" in window){
-      try{
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = lang === "uz" ? "uz-UZ" : lang === "en" ? "en-US" : "ru-RU";
-        u.rate = 0.98;
-        window.speechSynthesis.speak(u);
-      }catch(e){}
-    }
+    const body = (it.content && it.content.join(" ")) || it.description || it.meta || "";
+    speakText(it.title + ". " + body);
   };
 
   return (
@@ -1195,6 +1299,14 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
       <div className="seg" role="group" aria-label={t("readingComfort")}>
         {[["sizeStandard",1],["sizeLarge",1.14],["sizeLargest",1.3]].map(([key,val])=>(
           <button key={key} className={s.textSize === val ? "on" : ""} onClick={()=>upd("textSize", val)}>{t(key)}</button>
+        ))}
+      </div>
+
+      <div className="eyebrow section-label">{t("speechRateLabel")}</div>
+      <div className="seg" role="group" aria-label={t("speechRateLabel")}>
+        {[["speedSlow",0.75],["speedNormal",1],["speedFast",1.25],["speedFaster",1.5]].map(([key,val])=>(
+          <button key={key} className={s.speechRate === val ? "on" : ""}
+                  onClick={()=>{ upd("speechRate", val); speakText(t(key), { rate: val }); }}>{t(key)}</button>
         ))}
       </div>
 
@@ -1364,7 +1476,15 @@ function StoryView({ id, onBack, liked, toggleLike, myStories, t, lang, onReport
 function ResourceView({ id, onBack, saved, toggleSave, notify, t, onReport }){
   const r = LIBRARY.find(x=>x.id===id);
   const isSaved = saved.includes(r.id);
+  const [showText, setShowText] = useState(false);
   const [showExtra, setShowExtra] = useState(false);
+  const content = r.content || [];
+
+  const playAudio = ()=>{
+    const body = content.length ? content.join(" ") : (r.description || r.meta || "");
+    speakText(r.title + ". " + body);
+  };
+
   return (
     <Detail title={r.format} onBack={onBack} onSwipeBack={onBack}>
       <div style={{display:"flex", gap:14, alignItems:"center", marginBottom:18}}>
@@ -1383,10 +1503,29 @@ function ResourceView({ id, onBack, saved, toggleSave, notify, t, onReport }){
           </div>
         ))}
       </div>
-      <button className="cta" style={{marginTop:6}} onClick={()=>notify(r.format==="Audio" ? "Playing sample" : "Opening reader")}>
-        {r.format==="Audio" ? "Play sample" : r.format==="Visual" ? "View collection" : "Read now"} <I.arrow/>
-      </button>
-      <button className="cta" style={{marginTop:10, background:"var(--cream-2)", color:"var(--navy)"}} onClick={()=>toggleSave(r.id)}>
+
+      <div style={{display:"flex", gap:8, marginTop:6}}>
+        {r.hasAudio && (
+          <button className="lib-btn audio" style={{flex:1, justifyContent:"center", padding:"13px 14px"}} onClick={playAudio}>
+            <I.play/> {t ? t("libraryAudioBtn") : "Play"}
+          </button>
+        )}
+        {r.hasRead && content.length > 0 && (
+          <button className="lib-btn read" style={{flex:1, justifyContent:"center", padding:"13px 14px"}} onClick={()=>setShowText(v=>!v)}>
+            {t ? t("libraryReadBtn") : "Read"}
+          </button>
+        )}
+      </div>
+
+      {showText && content.length > 0 && (
+        <div className="card" style={{display:"block", marginTop:14}}>
+          {content.map((p,i)=>(
+            <p key={i} style={{fontSize:"calc(14.5px * var(--fs))", lineHeight:1.75, margin:"9px 0", color:"#3A465E"}}>{p}</p>
+          ))}
+        </div>
+      )}
+
+      <button className="cta" style={{marginTop:14, background:"var(--cream-2)", color:"var(--navy)"}} onClick={()=>toggleSave(r.id)}>
         {isSaved ? "Remove from saved" : "Save for later"}
       </button>
 
@@ -1494,7 +1633,152 @@ function PathsView({ onBack, progress, setProgress, notify }){
   );
 }
 
-function LearnUpload({ onBack, onApply, onBrowsePaths, t }){
+/* ============ scan text (client-side OCR, no server) ============ */
+const OCR_LANG_MAP = { ru:"rus", uz:"uzb", en:"eng" };
+function ScanText({ onBack, t, lang, notify }){
+  const [imgSrc, setImgSrc] = useState(null);
+  const [text, setText] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | processing | done | empty
+  const fileRef = useRef(null);
+
+  const runOcr = async (file)=>{
+    setStatus("processing");
+    setText("");
+    const url = URL.createObjectURL(file);
+    setImgSrc(url);
+    try{
+      const { createWorker } = await import("tesseract.js");
+      const worker = await createWorker(OCR_LANG_MAP[lang] || "eng");
+      const { data } = await worker.recognize(url);
+      await worker.terminate();
+      const cleaned = (data.text || "").trim();
+      setText(cleaned);
+      setStatus(cleaned ? "done" : "empty");
+    }catch(e){
+      setStatus("empty");
+    }
+  };
+  const onPick = (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if(f) runOcr(f);
+  };
+  const copyText = ()=>{
+    try{ navigator.clipboard.writeText(text); notify(t("scanCopied")); }catch(e){}
+  };
+
+  return (
+    <Detail title={t("scanTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <p className="choice-quote" style={{fontSize:"calc(15px * var(--fs))"}}>{t("scanSub")}</p>
+
+      <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={onPick}/>
+
+      {imgSrc && (
+        <img src={imgSrc} alt="" style={{width:"100%", borderRadius:14, marginTop:14, maxHeight:180, objectFit:"cover"}}/>
+      )}
+
+      <button className="cta" style={{marginTop:14}} onClick={()=>fileRef.current && fileRef.current.click()}>
+        <I.upload/> {imgSrc ? t("scanRetake") : t("scanTakePhoto")}
+      </button>
+
+      {status === "processing" && (
+        <div className="rec-box" style={{marginTop:16}}>
+          <div className="rec-timer" style={{fontSize:"calc(16px * var(--fs))"}}><span className="rec-dot"/>{t("scanProcessing")}</div>
+        </div>
+      )}
+
+      {status === "empty" && (
+        <p className="muted" style={{marginTop:16, fontSize:"calc(13px * var(--fs))"}}>{t("scanEmpty")}</p>
+      )}
+
+      {status === "done" && (
+        <div className="card" style={{display:"block", marginTop:16}}>
+          <p style={{fontSize:"calc(16px * var(--fs))", lineHeight:1.65, whiteSpace:"pre-wrap"}}>{text}</p>
+          <div style={{display:"flex", gap:8, marginTop:14}}>
+            <button className="lib-btn audio" onClick={()=>speakText(text)}><I.play/> {t("scanRead")}</button>
+            <button className="lib-btn read" onClick={copyText}>{t("scanCopy")}</button>
+          </div>
+        </div>
+      )}
+    </Detail>
+  );
+}
+
+/* ============ live transcript (Web Speech API, no server) ============ */
+const STT_LANG_MAP = { ru:"ru-RU", uz:"uz-UZ", en:"en-US" };
+function LiveTranscript({ onBack, t, lang, notify }){
+  const [supported] = useState(()=> typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition));
+  const [listening, setListening] = useState(false);
+  const [finalText, setFinalText] = useState("");
+  const [interim, setInterim] = useState("");
+  const recRef = useRef(null);
+
+  const start = ()=>{
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR) return;
+    const rec = new SR();
+    rec.lang = STT_LANG_MAP[lang] || "ru-RU";
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = (e)=>{
+      let finalChunk = "", interimChunk = "";
+      for(let i = e.resultIndex; i < e.results.length; i++){
+        const r = e.results[i];
+        if(r.isFinal) finalChunk += r[0].transcript + " ";
+        else interimChunk += r[0].transcript;
+      }
+      if(finalChunk) setFinalText(prev=>prev + finalChunk);
+      setInterim(interimChunk);
+    };
+    rec.onerror = ()=>setListening(false);
+    rec.onend = ()=>setListening(false);
+    recRef.current = rec;
+    rec.start();
+    setListening(true);
+  };
+  const stop = ()=>{ if(recRef.current) recRef.current.stop(); setListening(false); };
+  useEffect(()=>()=>{ if(recRef.current) recRef.current.stop(); }, []);
+
+  const fullText = (finalText + interim).trim();
+  const copyText = ()=>{ try{ navigator.clipboard.writeText(finalText.trim()); notify(t("transcriptCopied")); }catch(e){} };
+
+  return (
+    <Detail title={t("transcriptTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <p className="choice-quote" style={{fontSize:"calc(15px * var(--fs))"}}>{t("transcriptSub")}</p>
+
+      {!supported ? (
+        <p style={{color:"var(--danger)", marginTop:16, fontSize:"calc(13px * var(--fs))"}}>{t("transcriptUnsupported")}</p>
+      ) : (
+        <React.Fragment>
+          <div className="rec-box" style={{marginTop:16}}>
+            {listening ? (
+              <React.Fragment>
+                <div className="rec-timer" style={{fontSize:"calc(15px * var(--fs))"}}><span className="rec-dot"/> REC</div>
+                <button className="rec-btn stop" onClick={stop}><I.stop/> {t("transcriptStop")}</button>
+              </React.Fragment>
+            ) : (
+              <button className="rec-btn" onClick={start}><I.mic/> {t("transcriptStart")}</button>
+            )}
+          </div>
+
+          <div className="card" style={{display:"block", minHeight:120}}>
+            <p style={{fontSize:"calc(15px * var(--fs))", lineHeight:1.65, whiteSpace:"pre-wrap"}}>
+              {fullText ? fullText : <span className="muted">{t("transcriptEmpty")}</span>}
+            </p>
+          </div>
+
+          {finalText.trim() && (
+            <div style={{display:"flex", gap:8, marginTop:10}}>
+              <button className="lib-btn read" onClick={copyText}>{t("transcriptCopy")}</button>
+              <button className="lib-btn audio" onClick={()=>{ setFinalText(""); setInterim(""); }}>{t("transcriptClear")}</button>
+            </div>
+          )}
+        </React.Fragment>
+      )}
+    </Detail>
+  );
+}
+
+function LearnUpload({ onBack, onApply, onBrowsePaths, onOpenScan, onOpenTranscript, t }){
   const [file, setFile] = useState(null);
   const [opts, setOpts] = useState({ audio:false, simplify:false, summarize:false, largeText:false, screenReader:false });
   const [processing, setProcessing] = useState(false);
@@ -1545,6 +1829,19 @@ function LearnUpload({ onBack, onApply, onBrowsePaths, t }){
       <button className="cta" style={{marginTop:20, opacity: ready ? 1 : .5}} disabled={!ready || processing} onClick={submit}>
         {processing ? t("uploadProcessing") : ready ? t("uploadCtaReady") : t("uploadCtaDisabled")}
       </button>
+
+      <div className="eyebrow section-label">{t("exploreLabel")}</div>
+      <button className="row-item" onClick={onOpenScan}>
+        <span className="row-icon">📷</span>
+        <span style={{flex:1}}><b>{t("scanTitle")}</b><small>{t("scanSub")}</small></span>
+        <I.chevron style={{color:"var(--muted)"}}/>
+      </button>
+      <button className="row-item" onClick={onOpenTranscript}>
+        <span className="row-icon"><I.mic/></span>
+        <span style={{flex:1}}><b>{t("transcriptTitle")}</b><small>{t("transcriptSub")}</small></span>
+        <I.chevron style={{color:"var(--muted)"}}/>
+      </button>
+
       <button className="link-btn" style={{marginTop:14}} onClick={onBrowsePaths}>{t("browsePathwaysLink")}</button>
     </Detail>
   );
@@ -1799,6 +2096,7 @@ function App(){
   const t = useCallback((key)=> tFor(lang, key), [lang]);
   const notify = useCallback((text)=>setToast(text), []);
   useEffect(()=>{ try{ document.documentElement.lang = lang; }catch(e){} }, [lang]);
+  useEffect(()=>{ setSpeechPrefs(lang, account ? account.settings.speechRate : 1); }, [lang, account && account.settings.speechRate]);
 
   const submitReport = ({ type, id, reason, note })=>{
     const entry = { id:"r"+Date.now(), type, targetId:id, reason, note, lang, at:new Date().toISOString() };
@@ -2002,6 +2300,8 @@ function App(){
     view?.type === "resource" ? (LIBRARY.find(r=>r.id===view.id)?.title || "") :
     view?.type === "paths" ? t("tileHubTitle") :
     view?.type === "learn" ? t("tileHubTitle") :
+    view?.type === "scan" ? t("scanTitle") :
+    view?.type === "transcript" ? t("transcriptTitle") :
     view?.type === "compose" ? t("tileShareTitle") :
     view?.type === "insights" ? t("insightsTitle") :
     tab === "home" ? t("welcomeTitle") : tab === "library" ? t("libraryTitle") :
@@ -2044,7 +2344,10 @@ function App(){
     else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang} onReport={submitReport}/>;
     else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} onReport={submitReport}/>;
     else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify}/>;
-    else if(view.type==="learn") body = <LearnUpload onBack={back} onApply={handleLearnApply} onBrowsePaths={()=>setView({ type:"paths" })} t={t}/>;
+    else if(view.type==="learn") body = <LearnUpload onBack={back} onApply={handleLearnApply} onBrowsePaths={()=>setView({ type:"paths" })}
+                                                       onOpenScan={()=>setView({ type:"scan" })} onOpenTranscript={()=>setView({ type:"transcript" })} t={t}/>;
+    else if(view.type==="scan") body = <ScanText onBack={back} t={t} lang={lang} notify={notify}/>;
+    else if(view.type==="transcript") body = <LiveTranscript onBack={back} t={t} lang={lang} notify={notify}/>;
     else if(view.type==="compose") body = <Compose onBack={back} onSubmit={publish} t={t}/>;
     else if(view.type==="insights") body = <InsightsView onBack={back} accounts={accounts} reports={reports} t={t}/>;
   } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified}/>;
