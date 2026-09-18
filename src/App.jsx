@@ -169,7 +169,7 @@ const STRINGS = {
     statsStories: "Историй", statsCountries: "Стран", statsFree: "Бесплатно",
     exploreLabel: "Разделы",
     tileLibraryTitle: "Библиотека", tileLibrarySub: "Книги, аудио и видео",
-    tileHubTitle: "Learning Hub", tileHubSub: "Обучающие маршруты",
+    tileHubTitle: "Учебный центр", tileHubSub: "Обучающие маршруты",
     tileShareTitle: "Поделиться историей", tileShareSub: "Ваш опыт важен",
     tileCommunityTitle: "Голоса сообщества", tileCommunitySub: "Истории со всего мира",
     recentLabel: "Недавнее",
@@ -370,7 +370,7 @@ const STRINGS = {
     statsStories: "Hikoyalar", statsCountries: "Davlatlar", statsFree: "Bepul",
     exploreLabel: "Bo'limlar",
     tileLibraryTitle: "Kutubxona", tileLibrarySub: "Kitoblar, audio va video",
-    tileHubTitle: "Learning Hub", tileHubSub: "Ta'lim yo'nalishlari",
+    tileHubTitle: "Ta'lim markazi", tileHubSub: "Ta'lim yo'nalishlari",
     tileShareTitle: "Hikoyangizni ulashing", tileShareSub: "Sizning tajribangiz muhim",
     tileCommunityTitle: "Jamoa ovozlari", tileCommunitySub: "Dunyo bo'ylab hikoyalar",
     recentLabel: "So'nggi",
@@ -1353,7 +1353,7 @@ function Home({ go, t, lang, greeting, simplified }){
 }
 
 /* ============ library ============ */
-const FILTER_KEYS = { All:"filterAll", Visual:"filterVisual", Hearing:"filterHearing", Learning:"filterLearning", Book:"filterBook", Saved:"filterSaved" };
+const FILTER_KEYS = { All:"filterAll", Book:"filterBook", Audio:"filterAudio", Visual:"filterVisual", Saved:"filterSaved" };
 const TAG_LABELS = {
   "Text": { en:"Text", ru:"Текст", uz:"Matn" },
   "Braille": { en:"Braille", ru:"Брайль", uz:"Brayl" },
@@ -1370,19 +1370,13 @@ const TAG_LABELS = {
 function Library({ go, saved, toggleSave, t, lang }){
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("All");
-  const filters = [...LIBRARY_CATEGORIES, "Saved"];
+  const filters = ["All","Book","Audio","Visual","Saved"];
   const items = useMemo(()=>LIBRARY.filter(it=>{
-    const okF = filter === "All" ? true : filter === "Saved" ? saved.includes(it.id) : it.category === filter;
+    const okF = filter === "All" ? true : filter === "Saved" ? saved.includes(it.id) : it.format === filter;
     const title = pick(it.title, lang);
     const okQ = (title + " " + it.author).toLowerCase().includes(q.trim().toLowerCase());
     return okF && okQ;
   }), [q, filter, saved, lang]);
-
-  const readAloud = (it)=>{
-    const c = pick(it.content, lang);
-    const body = (c && c.join(" ")) || pick(it.description, lang) || pick(it.meta, lang) || "";
-    speakText(pick(it.title, lang) + ". " + body);
-  };
 
   return (
     <div className="scroll with-tabs anim-fade">
@@ -1404,37 +1398,22 @@ function Library({ go, saved, toggleSave, t, lang }){
           <div className="emoji">🔍</div>
           <p className="muted" style={{fontSize:13}}>{t("libraryEmpty")}</p>
         </div>
-      ) : items.map((it,i)=>{
+      ) : items.map(it=>{
         const title = pick(it.title, lang);
-        const desc = pick(it.description, lang) || pick(it.meta, lang);
         return (
-          <div key={it.id} className="lib-card">
-            <div className="lib-card-top">
-              <button className={"lib-thumb" + (i % 2 ? " navy" : "")} onClick={()=>go({ view:{ type:"resource", id:it.id } }, title)} aria-label={"Open " + title}>{it.emoji}</button>
-              <button style={{flex:1, textAlign:"left"}} onClick={()=>go({ view:{ type:"resource", id:it.id } }, title)}>
-                <b>{title}</b>
-                <div className="meta">{desc}</div>
-              </button>
-              <button
-                onClick={()=>toggleSave(it.id)}
-                aria-label={saved.includes(it.id) ? t("removeSavedBtn") : t("saveForLaterBtn")}
-                style={{color: saved.includes(it.id) ? "var(--green)" : "var(--muted)"}}>
-                <I.bookmark fill={saved.includes(it.id) ? "currentColor" : "none"}/>
-              </button>
-            </div>
-            <div className="lib-tags">
-              {it.tags.map(tag=><span key={tag} className="lib-tag">{TAG_LABELS[tag] ? pick(TAG_LABELS[tag], lang) : tag}</span>)}
-            </div>
-            <div className="lib-actions">
-              {it.hasAudio && (
-                <button className="lib-btn audio" onClick={()=>readAloud(it)}>
-                  <I.play/> {t("libraryAudioBtn")}
-                </button>
-              )}
-              <button className="lib-btn read" onClick={()=>go({ view:{ type:"resource", id:it.id } }, title)}>
-                {t("libraryReadBtn")}
-              </button>
-            </div>
+          <div key={it.id} className="card">
+            <button className="thumb" onClick={()=>go({ view:{ type:"resource", id:it.id } }, title)} aria-label={"Open " + title}>{it.emoji}</button>
+            <button style={{flex:1, textAlign:"left"}} onClick={()=>go({ view:{ type:"resource", id:it.id } }, title)}>
+              <b>{title}</b>
+              <div className="meta">{it.author} · {it.year}</div>
+              <span className={"pill " + it.format.toLowerCase()}>{t(FILTER_KEYS[it.format] || it.format)}</span>
+            </button>
+            <button
+              onClick={()=>toggleSave(it.id)}
+              aria-label={saved.includes(it.id) ? t("removeSavedBtn") : t("saveForLaterBtn")}
+              style={{color: saved.includes(it.id) ? "var(--green)" : "var(--muted)"}}>
+              <I.bookmark fill={saved.includes(it.id) ? "currentColor" : "none"}/>
+            </button>
           </div>
         );
       })}
