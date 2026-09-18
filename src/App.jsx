@@ -314,7 +314,8 @@ const STRINGS = {
     tour5Title: "Профиль — всё настраивается", tour5Body: "Размер текста, скорость речи, контраст, язык — всё меняется в профиле в любой момент.",
     insightsReportsList: "Тексты жалоб",
     insightsExportCsv: "Выгрузить в CSV",
-    insightsNoReports: "Пока нет ни одной жалобы"
+    insightsNoReports: "Пока нет ни одной жалобы",
+    lessonWord: "Урок", markDoneBtn: "Отметить пройденным"
   },
   uz: {
     appTagline: "ONGGA YO'L OCHAMIZ",
@@ -515,7 +516,8 @@ const STRINGS = {
     tour5Title: "Profil — hammasi sozlanadi", tour5Body: "Matn o'lchami, nutq tezligi, kontrast, til — hammasi istalgan payt profilda o'zgaradi.",
     insightsReportsList: "Xabarlar matni",
     insightsExportCsv: "CSV formatida yuklab olish",
-    insightsNoReports: "Hali birorta ham xabar yo'q"
+    insightsNoReports: "Hali birorta ham xabar yo'q",
+    lessonWord: "Dars", markDoneBtn: "Bajarildi deb belgilash"
   },
   en: {
     appTagline: "MAKING WAY FOR MINDS",
@@ -716,7 +718,8 @@ const STRINGS = {
     tour5Title: "Profile — everything is adjustable", tour5Body: "Text size, speech speed, contrast, language — all changeable anytime in your profile.",
     insightsReportsList: "Report texts",
     insightsExportCsv: "Export as CSV",
-    insightsNoReports: "No reports yet"
+    insightsNoReports: "No reports yet",
+    lessonWord: "Lesson", markDoneBtn: "Mark as done"
   }
 };
 function tFor(lang, key){
@@ -914,18 +917,98 @@ const LIBRARY = [
 ];
 const LIBRARY_CATEGORIES = ["All","Visual","Hearing","Learning","Book"];
 const PATHS = [
-  { id:"p1", emoji:"🧭", lessons:8, mins:95,
+  { id:"p1", emoji:"🧭", mins:60,
     title:{ en:"Foundations of Accessible Teaching", ru:"Основы доступного преподавания", uz:"Qulay o'qitish asoslari" },
-    level:{ en:"Start here", ru:"Начните отсюда", uz:"Shu yerdan boshlang" } },
-  { id:"p2", emoji:"📝", lessons:6, mins:70,
+    level:{ en:"Start here", ru:"Начните отсюда", uz:"Shu yerdan boshlang" },
+    lessons:[
+      { title:{ en:"Start with the room, not the student", ru:"Начните с помещения, не с ученика", uz:"Xonadan boshlang, o'quvchidan emas" },
+        body:{ en:"Before adjusting anything for one learner, look at the room itself — lighting, noise, seating. Most accessibility problems are architectural before they're personal.",
+          ru:"Прежде чем что-то менять под одного ученика, посмотрите на само помещение — свет, шум, рассадку. Большинство проблем доступности — архитектурные, а не личные.",
+          uz:"Bitta o'quvchi uchun biror narsani o'zgartirishdan oldin xonaning o'ziga qarang — yorug'lik, shovqin, o'tirish joyi. Ko'pchilik qulaylik muammolari shaxsiy emas, arxitektura muammosi." } },
+      { title:{ en:"One question beats one label", ru:"Один вопрос лучше одного диагноза", uz:"Bitta savol bitta tashxisdan ustun" },
+        body:{ en:"Instead of asking what a diagnosis means, ask the student directly: what makes a lesson easier or harder for you? Their answer is usually more useful than any file.",
+          ru:"Вместо того чтобы гадать, что значит диагноз, спросите ученика напрямую: что делает урок легче или труднее? Его ответ обычно полезнее любой карточки.",
+          uz:"Tashxis nimani anglatishini taxmin qilish o'rniga o'quvchidan to'g'ridan-to'g'ri so'rang: nima darsni osonroq yoki qiyinroq qiladi? Uning javobi odatda har qanday hujjatdan foydaliroq." } },
+      { title:{ en:"Multiple ways in", ru:"Несколько входов в урок", uz:"Darsga bir nechta kirish nuqtasi" },
+        body:{ en:"Give every lesson at least two entry points — read it, hear it, or do it. Let students choose, don't assign the format by assumption.",
+          ru:"Дайте каждому уроку минимум два входа — прочитать, услышать или сделать. Пусть ученик выбирает сам, не назначайте формат по предположению.",
+          uz:"Har bir darsga kamida ikkita kirish nuqtasi bering — o'qish, eshitish yoki bajarish. O'quvchi o'zi tanlasin, formatni taxmin bilan belgilamang." } },
+      { title:{ en:"Small, visible changes first", ru:"Сначала — маленькие заметные изменения", uz:"Avval kichik, ko'rinadigan o'zgarishlar" },
+        body:{ en:"Bigger print, more pause time, a seat away from glare — these cost nothing and often help before you know exactly what's needed.",
+          ru:"Крупнее шрифт, больше времени на паузу, место подальше от бликов — это ничего не стоит и часто помогает ещё до того, как понятно, что именно нужно.",
+          uz:"Kattaroq shrift, ko'proq pauza vaqti, yaltirashdan uzoqroq joy — bularning narxi yo'q va ko'pincha aniq nima kerakligini bilishdan oldin ham yordam beradi." } },
+      { title:{ en:"Ask, don't guess", ru:"Спрашивайте, не догадывайтесь", uz:"So'rang, taxmin qilmang" },
+        body:{ en:"The fastest way to get accessibility wrong is to guess on someone's behalf. A two-minute conversation usually beats an hour of assumptions.",
+          ru:"Быстрее всего ошибиться в доступности — решить за человека. Двухминутный разговор обычно полезнее часа предположений.",
+          uz:"Qulaylikda eng tez xato qilish yo'li — kimningdir o'rniga qaror qabul qilish. Ikki daqiqalik suhbat odatda bir soatlik taxmindan foydaliroq." } }
+    ] },
+  { id:"p2", emoji:"📝", mins:45,
     title:{ en:"Designing Readable Materials", ru:"Создание читаемых материалов", uz:"O'qish uchun qulay materiallar yaratish" },
-    level:{ en:"Practical", ru:"Практика", uz:"Amaliyot" } },
-  { id:"p3", emoji:"🖥️", lessons:10, mins:140,
+    level:{ en:"Practical", ru:"Практика", uz:"Amaliyot" },
+    lessons:[
+      { title:{ en:"Font over decoration", ru:"Шрифт важнее оформления", uz:"Shrift bezakdan muhimroq" },
+        body:{ en:"A plain, well-spaced sans-serif font beats a stylish one every time text needs to be read quickly and accurately.",
+          ru:"Простой, хорошо разнесённый шрифт без засечек побеждает стильный каждый раз, когда текст нужно прочитать быстро и точно.",
+          uz:"Matnni tez va aniq o'qish kerak bo'lganda oddiy, yaxshi oralig'i bor serif-siz shrift har doim chiroyli shriftdan ustun keladi." } },
+      { title:{ en:"Contrast is not optional", ru:"Контраст — не опция", uz:"Kontrast ixtiyoriy emas" },
+        body:{ en:"Light grey text on white looks modern and is nearly unreadable for many people. Aim for strong, simple contrast by default.",
+          ru:"Светло-серый текст на белом выглядит современно и почти нечитаем для многих. По умолчанию стремитесь к сильному, простому контрасту.",
+          uz:"Oq fondagi och kulrang matn zamonaviy ko'rinadi, lekin ko'pchilik uchun deyarli o'qib bo'lmaydi. Odatiy holatda kuchli, oddiy kontrastga intiling." } },
+      { title:{ en:"Shorter lines, more white space", ru:"Короче строки, больше пустого места", uz:"Qisqaroq qatorlar, ko'proq bo'sh joy" },
+        body:{ en:"Long unbroken lines of text are tiring to track. Shorter lines with real margins are easier to follow, especially for dyslexic readers.",
+          ru:"Длинные сплошные строки текста утомляют взгляд. Более короткие строки с реальными полями легче отслеживать — особенно при дислексии.",
+          uz:"Uzun, uzluksiz matn qatorlarini kuzatish charchatadi. Haqiqiy chekkalari bor qisqaroq qatorlarni kuzatish osonroq — ayniqsa disleksiyada." } },
+      { title:{ en:"One idea per paragraph", ru:"Одна мысль на абзац", uz:"Har abzatsda bitta fikr" },
+        body:{ en:"Dense paragraphs hide their point. One idea, then a break, makes a worksheet far easier to navigate — for everyone, not only accessibility needs.",
+          ru:"Плотные абзацы прячут свою суть. Одна мысль, затем пауза — рабочий лист становится намного проще для навигации, причём для всех, не только с особыми потребностями.",
+          uz:"Zich abzatslar o'z mohiyatini yashiradi. Bitta fikr, keyin tanaffus — ish varag'ini navigatsiya qilish ancha osonlashadi, va bu faqat qulaylik ehtiyoji borlar uchun emas, hamma uchun." } }
+    ] },
+  { id:"p3", emoji:"🖥️", mins:70,
     title:{ en:"Assistive Technology in Class", ru:"Вспомогательные технологии в классе", uz:"Sinfda yordamchi texnologiyalar" },
-    level:{ en:"Deep dive", ru:"Глубокое погружение", uz:"Chuqur o'rganish" } },
-  { id:"p4", emoji:"💬", lessons:5, mins:55,
+    level:{ en:"Deep dive", ru:"Глубокое погружение", uz:"Chuqur o'rganish" },
+    lessons:[
+      { title:{ en:"Screen readers read structure, not just words", ru:"Экранный диктор читает структуру, не просто слова", uz:"Ekran diktori tuzilmani o'qiydi, shunchaki so'zlarni emas" },
+        body:{ en:"A screen reader announces headings, lists and buttons by their structure. Materials built with proper headings are far easier to navigate than ones that just look organized.",
+          ru:"Экранный диктор объявляет заголовки, списки и кнопки по их структуре. Материалы с правильной разметкой заголовков читаются намного проще, чем просто аккуратно оформленные на вид.",
+          uz:"Ekran diktori sarlavhalar, ro'yxatlar va tugmalarni ularning tuzilmasiga qarab e'lon qiladi. To'g'ri sarlavha bilan tuzilgan materiallar shunchaki tartibli ko'ringan materiallardan ancha oson navigatsiya qilinadi." } },
+      { title:{ en:"Captions help more people than expected", ru:"Субтитры помогают шире, чем кажется", uz:"Subtitrlar kutilganidan ko'proq odamga yordam beradi" },
+        body:{ en:"Captions are used far beyond deaf and hard-of-hearing students — in noisy rooms, for second-language learners, for anyone who processes text better than speech.",
+          ru:"Субтитрами пользуются далеко не только глухие и слабослышащие — в шумном помещении, при изучении второго языка, всем, кому текст даётся легче речи.",
+          uz:"Subtitrlardan nafaqat kar va zaif eshituvchi o'quvchilar foydalanadi — shovqinli xonada, ikkinchi tilni o'rganishda, matnni nutqdan yaxshiroq qabul qiladigan har kim uchun ham." } },
+      { title:{ en:"Text-to-speech is a reading tool, not a shortcut", ru:"Text-to-speech — инструмент чтения, не обход", uz:"Text-to-speech o'qish vositasi, aylanib o'tish emas" },
+        body:{ en:"Letting a student listen while following the text builds reading skill, it doesn't replace it. Treat it as a support, not a workaround.",
+          ru:"Слушать текст, следя за ним глазами, развивает навык чтения, а не заменяет его. Относитесь к этому как к поддержке, а не как к обходному пути.",
+          uz:"Matnni kuzatib turib tinglash o'qish ko'nikmasini rivojlantiradi, uni almashtirmaydi. Buni qo'llab-quvvatlash sifatida ko'ring, aylanib o'tish yo'li sifatida emas." } },
+      { title:{ en:"Low-tech counts as assistive technology too", ru:"Простые средства — тоже вспомогательные технологии", uz:"Oddiy vositalar ham yordamchi texnologiya hisoblanadi" },
+        body:{ en:"A pencil grip, a slant board, a highlighter strip — assistive technology doesn't have to be digital to matter.",
+          ru:"Насадка на карандаш, наклонная доска, полоска-выделитель — вспомогательная технология не обязана быть цифровой, чтобы иметь значение.",
+          uz:"Qalam tutqichi, qiyshiq taxta, ajratuvchi chiziq — yordamchi texnologiya ahamiyatli bo'lishi uchun raqamli bo'lishi shart emas." } },
+      { title:{ en:"Test it with the student, not for them", ru:"Проверяйте вместе с учеником, а не вместо него", uz:"O'quvchi bilan birga sinab ko'ring, u uchun emas" },
+        body:{ en:"The only way to know if a tool actually helps is to watch the student use it — not to assume it will work because it worked for someone else.",
+          ru:"Единственный способ узнать, помогает ли инструмент на самом деле — понаблюдать, как ученик им пользуется, а не решить, что сработает, потому что сработало у кого-то другого.",
+          uz:"Vosita haqiqatan yordam berayotganini bilishning yagona yo'li — o'quvchi undan qanday foydalanayotganini kuzatish, boshqa birov uchun ishlagani uchun ishlaydi deb taxmin qilish emas." } }
+    ] },
+  { id:"p4", emoji:"💬", mins:40,
     title:{ en:"Interviewing Learners with Care", ru:"Бережное интервьюирование учеников", uz:"O'quvchilar bilan ehtiyotkorlik bilan intervyu" },
-    level:{ en:"For researchers", ru:"Для исследователей", uz:"Tadqiqotchilar uchun" } }
+    level:{ en:"For researchers", ru:"Для исследователей", uz:"Tadqiqotchilar uchun" },
+    lessons:[
+      { title:{ en:"Ask what a good day looks like", ru:"Спросите, как выглядит хороший день", uz:"Yaxshi kun qanday ko'rinishini so'rang" },
+        body:{ en:"Open with something concrete and positive — \"what makes a good day of learning?\" — before asking about anything difficult.",
+          ru:"Начните с чего-то конкретного и позитивного — «что делает день учёбы хорошим?» — прежде чем переходить к трудному.",
+          uz:"Qiyin narsalar haqida so'rashdan oldin aniq va ijobiy narsadan boshlang — \"yaxshi o'quv kunini nima qiladi?\"" } },
+      { title:{ en:"Let silence sit", ru:"Дайте тишине побыть", uz:"Sukunatga joy bering" },
+        body:{ en:"A pause after a question is not a problem to fix. Some of the most honest answers come after several seconds of quiet.",
+          ru:"Пауза после вопроса — это не проблема, которую нужно исправлять. Самые честные ответы часто приходят после нескольких секунд молчания.",
+          uz:"Savoldan keyingi pauza tuzatish kerak bo'lgan muammo emas. Eng samimiy javoblar ko'pincha bir necha soniyalik sukunatdan keyin keladi." } },
+      { title:{ en:"Their words, not your summary", ru:"Их слова, а не ваш пересказ", uz:"Ularning so'zlari, sizning bayoningiz emas" },
+        body:{ en:"Write down what a student actually said, not your paraphrase of it. The exact wording often carries more than the general idea.",
+          ru:"Записывайте то, что ученик действительно сказал, а не ваш пересказ этого. Точная формулировка часто несёт больше, чем общий смысл.",
+          uz:"O'quvchi aslida nima deganini yozing, uning bayoningizni emas. Aniq so'zlar ko'pincha umumiy g'oyadan ko'proq narsani ifodalaydi." } },
+      { title:{ en:"Always ask what to leave out", ru:"Всегда спрашивайте, что не включать", uz:"Har doim nimani kiritmaslikni so'rang" },
+        body:{ en:"Before publishing anything from an interview, ask the person what they'd rather you not include. Consent isn't a one-time checkbox.",
+          ru:"Прежде чем публиковать что-либо из интервью, спросите человека, что он предпочёл бы не включать. Согласие — не разовая галочка.",
+          uz:"Intervyudan biror narsa nashr qilishdan oldin, odamdan nimani kiritmaslikni xohlashini so'rang. Rozilik bir martalik belgi emas." } }
+    ] }
 ];
 
 const STORIES = [
@@ -1766,6 +1849,37 @@ function ResourceView({ id, onBack, saved, toggleSave, notify, t, lang, onReport
   );
 }
 
+function LessonView({ pathId, onBack, progress, setProgress, notify, t, lang }){
+  const path = PATHS.find(p=>p.id===pathId);
+  const total = path.lessons.length;
+  const v = progress[pathId];
+  const doneCount = Math.min(total, Math.round(v / 100 * total));
+  const idx = Math.min(doneCount, total - 1);
+  const lesson = path.lessons[idx];
+  const isReviewing = v >= 100;
+
+  return (
+    <Detail title={pick(path.title, lang)} onBack={onBack} onSwipeBack={onBack}>
+      <div className="eyebrow">{t("lessonWord")} {idx + 1} / {total}</div>
+      <h1 style={{fontSize:"calc(21px * var(--fs))", marginTop:8, lineHeight:1.3}}>{pick(lesson.title, lang)}</h1>
+      <p style={{fontSize:"calc(14.5px * var(--fs))", lineHeight:1.75, marginTop:14, color:"var(--body-text)"}}>{pick(lesson.body, lang)}</p>
+
+      <div className="progress" style={{marginTop:22}}><i style={{width:v + "%"}}/></div>
+      <div className="muted" style={{fontSize:"calc(11.5px * var(--fs))", marginTop:6}}>{v}% {t("completeWord")}</div>
+
+      <button className="cta" style={{marginTop:16}} onClick={()=>{
+        if(isReviewing){ onBack(); return; }
+        const next = Math.min(100, v + Math.ceil(100 / total));
+        setProgress(pathId, next);
+        notify(next >= 100 ? t("pathwayDone") : t("lessonDone"));
+        if(next >= 100) onBack();
+      }}>
+        {isReviewing ? t("continueCta") : t("markDoneBtn")} <I.arrow/>
+      </button>
+    </Detail>
+  );
+}
+
 function GlobalSearch({ onBack, go, t, lang }){
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
@@ -1969,7 +2083,7 @@ function InsightsView({ onBack, accounts, reports, t }){
   );
 }
 
-function PathsView({ onBack, progress, setProgress, notify, t, lang }){
+function PathsView({ onBack, progress, setProgress, notify, t, lang, onOpenLesson }){
   return (
     <Detail title={t("tileHubTitle")} onBack={onBack} onSwipeBack={onBack}>
       <p className="muted" style={{fontSize:"calc(13px * var(--fs))", marginTop:0, lineHeight:1.6}}>
@@ -1979,13 +2093,14 @@ function PathsView({ onBack, progress, setProgress, notify, t, lang }){
         const v = progress[p.id];
         const title = pick(p.title, lang);
         const level = pick(p.level, lang);
+        const total = p.lessons.length;
         return (
           <div key={p.id} className="card" style={{display:"block"}}>
             <div style={{display:"flex", gap:12, alignItems:"flex-start"}}>
               <span className="thumb">{p.emoji}</span>
               <span style={{flex:1}}>
                 <b>{title}</b>
-                <div className="meta">{p.lessons} {t("lessonsWord")} · {p.mins} {t("minWord")} · {level}</div>
+                <div className="meta">{total} {t("lessonsWord")} · {p.mins} {t("minWord")} · {level}</div>
               </span>
             </div>
             <div className="progress"><i style={{width:v + "%"}}/></div>
@@ -1993,12 +2108,8 @@ function PathsView({ onBack, progress, setProgress, notify, t, lang }){
               <span className="muted" style={{fontSize:"calc(11.5px * var(--fs))"}}>{v}% {t("completeWord")}</span>
               <button
                 style={{marginLeft:"auto", fontWeight:600, color:"var(--green)", fontSize:"calc(12.5px * var(--fs))"}}
-                onClick={()=>{
-                  const next = Math.min(100, v + Math.ceil(100/p.lessons));
-                  setProgress(p.id, next);
-                  notify(next===100 ? t("pathwayDone") : t("lessonDone"));
-                }}>
-                {v===100 ? t("pathReview") : v===0 ? t("pathStart") : t("continueCta")}
+                onClick={()=>onOpenLesson(p.id)}>
+                {v>=100 ? t("pathReview") : v===0 ? t("pathStart") : t("continueCta")}
               </button>
             </div>
           </div>
@@ -2679,6 +2790,7 @@ function App(){
     view?.type === "story" ? t("storyLabel") :
     view?.type === "resource" ? pick(LIBRARY.find(r=>r.id===view.id)?.title, lang) :
     view?.type === "paths" ? t("tileHubTitle") :
+    view?.type === "lesson" ? pick(PATHS.find(p=>p.id===view.id)?.title, lang) :
     view?.type === "learn" ? t("tileHubTitle") :
     view?.type === "scan" ? t("scanTitle") :
     view?.type === "transcript" ? t("transcriptTitle") :
@@ -2724,7 +2836,9 @@ function App(){
     if(view.type==="article") body = <ArticleView id={view.id} onBack={back} go={go} t={t} lang={lang} onReport={submitReport}/>;
     else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang} onReport={submitReport}/>;
     else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} lang={lang} onReport={submitReport}/>;
-    else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}/>;
+    else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}
+                                                     onOpenLesson={(pathId)=>setView({ type:"lesson", id:pathId })}/>;
+    else if(view.type==="lesson") body = <LessonView pathId={view.id} onBack={()=>setView({ type:"paths" })} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}/>;
     else if(view.type==="learn") body = <LearnUpload onBack={back} onApply={handleLearnApply} onBrowsePaths={()=>setView({ type:"paths" })}
                                                        onOpenScan={()=>setView({ type:"scan" })} onOpenTranscript={()=>setView({ type:"transcript" })} t={t}/>;
     else if(view.type==="scan") body = <ScanText onBack={back} t={t} lang={lang} notify={notify}/>;
