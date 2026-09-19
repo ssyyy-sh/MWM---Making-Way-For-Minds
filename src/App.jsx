@@ -52,11 +52,44 @@ function makeAccount({ name, email, lang }){
   return {
     name, email, lang: lang || "ru",
     onboarded: false, profile: null,
-    saved: [], liked: [], myStories: [],
+    saved: [], liked: [], myStories: [], myRatings: {},
     progress: { p1: 0, p2: 0, p3: 0, p4: 0 },
-    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false, darkMode: false, readableFont: false, haptics: true, speechRate: 1, colorFilter: "none" },
-    tourSeen: false
+    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false, darkMode: "off", readableFont: false, haptics: true, speechRate: 1, colorFilter: "none", showActivity: true },
+    tourSeen: false,
+    activityDates: []
   };
+}
+function normalizeDarkMode(v){
+  if(v === true) return "on";
+  if(v === false || v === undefined || v === null) return "off";
+  return v;
+}
+
+const RATINGS_KEY = "mwm:ratings:v1";
+function loadRatings(){
+  try{ const raw = localStorage.getItem(RATINGS_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
+}
+function saveRatings(r){ try{ localStorage.setItem(RATINGS_KEY, JSON.stringify(r)); }catch(e){} }
+
+function logActivityDate(dates){
+  const key = new Date().toISOString().slice(0, 10);
+  const list = (dates || []).includes(key) ? (dates || []) : [...(dates || []), key];
+  return list.slice(-60);
+}
+function computeStreak(dates){
+  const set = new Set(dates || []);
+  let streak = 0;
+  const d = new Date();
+  while(true){
+    const key = d.toISOString().slice(0, 10);
+    if(set.has(key)){ streak++; d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
+function computeWeekCount(dates){
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 6);
+  return (dates || []).filter(k => new Date(k) >= cutoff).length;
 }
 
 // One-time migration from the old single-account version, so early testers keep their data.
@@ -200,6 +233,25 @@ const STRINGS = {
     learningPathsTitle: "Обучающие маршруты",
     learningPathsSub: "Продолжить с места остановки",
     appLabel: "Приложение",
+    resetProgressTitle: "Сбросить прогресс обучения",
+    resetProgressSub: "Обнулит проценты по всем маршрутам, остальное не тронет",
+    resetProgressDone: "Прогресс обучения сброшен",
+
+    ratingHelpful: "Полезно", ratingNotHelpful: "Не очень",
+
+    darkModeOff: "Светлая", darkModeOn: "Тёмная", darkModeSystem: "Как в системе",
+
+    aboutRow: "О приложении",
+    aboutTitle: "О приложении",
+    aboutIntro: "MWM — исследовательский проект о доступности образования. Мы собираем истории, интервью и данные, чтобы понять, какие барьеры мешают учиться, и делимся материалами бесплатно.",
+    aboutFeaturesLabel: "Что умеет приложение",
+    aboutFeatureVoice: "Голосовые подсказки: одна кнопка озвучивает весь экран",
+    aboutFeatureScan: "Съёмка текста камерой с распознаванием прямо в браузере",
+    aboutFeatureTranscript: "Живая расшифровка речи в текст",
+    aboutFeatureOffline: "Материалы библиотеки доступны офлайн после первого захода",
+    aboutFeatureLangs: "Интерфейс на русском, o'zbekcha и English",
+    aboutVersionLabel: "Версия",
+    aboutFooter: "Исследования · Инклюзия · Равенство",
     resetTitle: "Сбросить данные",
     resetSub: "Удалит сохранённое, лайки и ваши истории",
     logoutTitle: "Выйти из аккаунта",
@@ -315,7 +367,25 @@ const STRINGS = {
     insightsReportsList: "Тексты жалоб",
     insightsExportCsv: "Выгрузить в CSV",
     insightsNoReports: "Пока нет ни одной жалобы",
-    lessonWord: "Урок", markDoneBtn: "Отметить пройденным"
+    lessonWord: "Урок", markDoneBtn: "Отметить пройденным",
+
+    certificateTitle: "Сертификат", certificateBtn: "Посмотреть сертификат",
+    certificateHeading: "Сертификат о прохождении",
+    certificateCompletedText: "успешно завершил(а) маршрут",
+    certificateDatePrefix: "Дата завершения",
+    certificateDownload: "Скачать",
+    certificateFooter: "MWM — Making Way for Minds",
+
+    switchAccountTitle: "Сменить аккаунт", switchAccountRow: "Сменить аккаунт",
+    switchAccountSub: "Другие аккаунты на этом устройстве",
+    switchAccountAddNew: "Добавить другой аккаунт",
+    switchAccountCurrent: "Текущий",
+
+    activityLabel: "Активность",
+    activityStreakSuffix: "дней подряд",
+    activityWeekSuffix: "активных дней за неделю",
+    activityToggleTitle: "Показывать активность", activityToggleSub: "Дни подряд и активность за неделю в профиле",
+    activityNoneYet: "Пока нет активности — пройдите урок или опубликуйте историю"
   },
   uz: {
     appTagline: "ONGGA YO'L OCHAMIZ",
@@ -402,6 +472,25 @@ const STRINGS = {
     learningPathsTitle: "Ta'lim yo'nalishlari",
     learningPathsSub: "To'xtagan joyingizdan davom eting",
     appLabel: "Ilova",
+    resetProgressTitle: "O'quv jarayonini tozalash",
+    resetProgressSub: "Barcha yo'nalishlar foizini nolga tushiradi, qolganiga tegmaydi",
+    resetProgressDone: "O'quv jarayoni tozalandi",
+
+    ratingHelpful: "Foydali", ratingNotHelpful: "Unchalik emas",
+
+    darkModeOff: "Yorug'", darkModeOn: "Tungi", darkModeSystem: "Tizim kabi",
+
+    aboutRow: "Ilova haqida",
+    aboutTitle: "Ilova haqida",
+    aboutIntro: "MWM — ta'lim qulayligi haqidagi tadqiqot loyihasi. Biz o'rganishga to'sqinlik qiladigan to'siqlarni tushunish uchun hikoyalar, intervyular va ma'lumotlar to'playmiz va materiallarni bepul ulashamiz.",
+    aboutFeaturesLabel: "Ilova nimalarni bila oladi",
+    aboutFeatureVoice: "Ovozli yordam: bitta tugma butun ekranni ovoz bilan o'qiydi",
+    aboutFeatureScan: "Kamera bilan matnni suratga olib, brauzerning o'zida tanish",
+    aboutFeatureTranscript: "Nutqni jonli matnga aylantirish",
+    aboutFeatureOffline: "Birinchi kirishdan keyin kutubxona materiallari oflayn ishlaydi",
+    aboutFeatureLangs: "Interfeys ruscha, o'zbekcha va inglizcha",
+    aboutVersionLabel: "Versiya",
+    aboutFooter: "Tadqiqot · Inklyuziya · Tenglik",
     resetTitle: "Ma'lumotlarni tozalash",
     resetSub: "Saqlanganlar, layklar va hikoyalaringiz o'chadi",
     logoutTitle: "Hisobdan chiqish",
@@ -517,7 +606,25 @@ const STRINGS = {
     insightsReportsList: "Xabarlar matni",
     insightsExportCsv: "CSV formatida yuklab olish",
     insightsNoReports: "Hali birorta ham xabar yo'q",
-    lessonWord: "Dars", markDoneBtn: "Bajarildi deb belgilash"
+    lessonWord: "Dars", markDoneBtn: "Bajarildi deb belgilash",
+
+    certificateTitle: "Sertifikat", certificateBtn: "Sertifikatni ko'rish",
+    certificateHeading: "Bitirish sertifikati",
+    certificateCompletedText: "yo'nalishni muvaffaqiyatli tugatdi",
+    certificateDatePrefix: "Tugatilgan sana",
+    certificateDownload: "Yuklab olish",
+    certificateFooter: "MWM — Making Way for Minds",
+
+    switchAccountTitle: "Hisobni almashtirish", switchAccountRow: "Hisobni almashtirish",
+    switchAccountSub: "Shu qurilmadagi boshqa hisoblar",
+    switchAccountAddNew: "Boshqa hisob qo'shish",
+    switchAccountCurrent: "Joriy",
+
+    activityLabel: "Faollik",
+    activityStreakSuffix: "kun ketma-ket",
+    activityWeekSuffix: "faol kun shu hafta",
+    activityToggleTitle: "Faollikni ko'rsatish", activityToggleSub: "Profilda ketma-ket kunlar va haftalik faollik",
+    activityNoneYet: "Hali faollik yo'q — dars o'ting yoki hikoya nashr qiling"
   },
   en: {
     appTagline: "MAKING WAY FOR MINDS",
@@ -604,6 +711,25 @@ const STRINGS = {
     learningPathsTitle: "Learning pathways",
     learningPathsSub: "Continue where you stopped",
     appLabel: "App",
+    resetProgressTitle: "Reset learning progress",
+    resetProgressSub: "Zeroes every pathway's percentage, leaves everything else alone",
+    resetProgressDone: "Learning progress reset",
+
+    ratingHelpful: "Helpful", ratingNotHelpful: "Not helpful",
+
+    darkModeOff: "Light", darkModeOn: "Dark", darkModeSystem: "Match system",
+
+    aboutRow: "About",
+    aboutTitle: "About",
+    aboutIntro: "MWM is a research project on educational accessibility. We gather stories, interviews and data to understand what gets in the way of learning, and share materials for free.",
+    aboutFeaturesLabel: "What this app can do",
+    aboutFeatureVoice: "Voice guide: one button reads the whole screen aloud",
+    aboutFeatureScan: "Camera text scan, recognized right in the browser",
+    aboutFeatureTranscript: "Live speech-to-text transcription",
+    aboutFeatureOffline: "Library materials work offline after the first visit",
+    aboutFeatureLangs: "Interface in Russian, o'zbekcha and English",
+    aboutVersionLabel: "Version",
+    aboutFooter: "Research · Inclusion · Equity",
     resetTitle: "Reset app data",
     resetSub: "Clears saves, likes and your stories",
     logoutTitle: "Log out",
@@ -719,7 +845,25 @@ const STRINGS = {
     insightsReportsList: "Report texts",
     insightsExportCsv: "Export as CSV",
     insightsNoReports: "No reports yet",
-    lessonWord: "Lesson", markDoneBtn: "Mark as done"
+    lessonWord: "Lesson", markDoneBtn: "Mark as done",
+
+    certificateTitle: "Certificate", certificateBtn: "View certificate",
+    certificateHeading: "Certificate of Completion",
+    certificateCompletedText: "has successfully completed the pathway",
+    certificateDatePrefix: "Completed on",
+    certificateDownload: "Download",
+    certificateFooter: "MWM — Making Way for Minds",
+
+    switchAccountTitle: "Switch account", switchAccountRow: "Switch account",
+    switchAccountSub: "Other accounts on this device",
+    switchAccountAddNew: "Add another account",
+    switchAccountCurrent: "Current",
+
+    activityLabel: "Activity",
+    activityStreakSuffix: "day streak",
+    activityWeekSuffix: "active days this week",
+    activityToggleTitle: "Show activity", activityToggleSub: "Streak and weekly activity in your profile",
+    activityNoneYet: "No activity yet — finish a lesson or publish a story"
   }
 };
 function tFor(lang, key){
@@ -1141,6 +1285,13 @@ const I = {
   moon:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>,
   aa:(p)=><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 17 7.5 6l4.5 11"/><path d="M4.3 13.5h6.4"/><path d="M14 17c0-2.5 2-4 4-4s3.5 1.3 3.5 3v4M21.5 15.2c-.8-.5-1.7-.7-2.8-.4-1.6.4-2.2 2.6-.7 3.4 1 .5 2.2.2 3.1-.5"/></svg>,
   chart:(p)=><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 20V10M11 20V4M18 20v-7"/><path d="M3 20h18"/></svg>,
+  award:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="8" r="5.5"/><path d="m8.5 12.8-1.7 7.2 5.2-2.8 5.2 2.8-1.7-7.2"/></svg>,
+  users:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3.3 2.9-5 5.5-5s4.7 1.7 5.5 5"/><circle cx="17" cy="8.5" r="2.4"/><path d="M15.8 14.2c2.1.4 3.5 2 4.1 4.8"/></svg>,
+  flame:(p)=><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 22c4 0 6.5-2.6 6.5-6.2 0-3-1.8-4.9-3-7.1-.4 1.6-1.2 2.6-2 3.2C13.8 9 13 6.5 13 4c-3.5 2.2-6.5 6-6.5 10 0 4 2.9 6 5.5 6Z"/></svg>,
+  download:(p)=><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 4v11M7 11l5 5 5-5"/><path d="M4 19h16"/></svg>,
+  thumbsUp:(p)=><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M7 10v11H4V10h3Zm0 0 5-7c1 0 2 1 2 2.4V9h5.2c1 0 1.8.9 1.6 1.9l-1.4 7A2 2 0 0 1 17.5 19H10a3 3 0 0 1-3-3v-6Z"/></svg>,
+  thumbsDown:(p)=><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M17 14V3h3v11h-3Zm0 0-5 7c-1 0-2-1-2-2.4V15H4.8c-1 0-1.8-.9-1.6-1.9l1.4-7A2 2 0 0 1 6.5 5H14a3 3 0 0 1 3 3v6Z"/></svg>,
+  info:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>,
   upload:(p)=><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>,
   volume:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>,
   wand:(p)=><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m15 4 1.5 3L20 8.5 16.5 10 15 13l-1.5-3L10 8.5 13.5 7Z"/><path d="m4 20 8-8"/></svg>,
@@ -1548,7 +1699,7 @@ function Stories({ go, liked, toggleLike, myStories, t, lang }){
 }
 
 /* ============ profile ============ */
-function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, onLogout, onChangeLang, onReset, onOpenInsights }){
+function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, onLogout, onChangeLang, onReset, onResetProgress, onOpenInsights }){
   const s = account.settings;
   const upd = (k,v)=>{ set(p=>({ ...p, settings:{ ...p.settings, [k]:v } })); vibrate(s.haptics ? 12 : 0); };
   const Row = ({ title, sub, on, onToggle }) => (
@@ -1580,9 +1731,30 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
         <div className="stats" style={{borderTop:0, paddingTop:0, marginTop:0}}>
           <div className="stat gold"><b>{myStories.length}</b><span>{t("statMyStories")}</span></div>
           <div className="stat"><b>{saved.length}</b><span>{t("statSaved")}</span></div>
-          <div className="stat green"><b>{Math.round(Object.values(account.progress).reduce((a,b)=>a+b,0)/4)}%</b><span>{t("statProgress")}</span></div>
+          <div className="stat green"><b>{Math.round(Object.values(account.progress).reduce((a,b)=>a+b,0)/PATHS.length)}%</b><span>{t("statProgress")}</span></div>
         </div>
       </div>
+
+      {s.showActivity !== false && (
+        <div className="insight-card" style={{marginTop:12}}>
+          <b>{t("activityLabel")}</b>
+          {(account.activityDates || []).length === 0 ? (
+            <p className="muted" style={{fontSize:"calc(12px * var(--fs))", marginTop:6}}>{t("activityNoneYet")}</p>
+          ) : (
+            <div style={{display:"flex", gap:18, marginTop:8}}>
+              <div style={{display:"flex", alignItems:"center", gap:6}}>
+                <I.flame style={{color:"var(--gold)"}}/>
+                <span style={{fontFamily:"Fraunces,serif", fontWeight:700, fontSize:"calc(18px * var(--fs))"}}>{computeStreak(account.activityDates)}</span>
+                <span className="muted" style={{fontSize:"calc(11.5px * var(--fs))"}}>{t("activityStreakSuffix")}</span>
+              </div>
+              <div style={{display:"flex", alignItems:"center", gap:6}}>
+                <span style={{fontFamily:"Fraunces,serif", fontWeight:700, fontSize:"calc(18px * var(--fs))"}}>{computeWeekCount(account.activityDates)}</span>
+                <span className="muted" style={{fontSize:"calc(11.5px * var(--fs))"}}>{t("activityWeekSuffix")}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="eyebrow section-label">{t("readingComfort")}</div>
       <div className="seg" role="group" aria-label={t("readingComfort")}>
@@ -1605,7 +1777,14 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
       <Row title={t("rowCaptionsTitle")} sub={t("rowCaptionsSub")} on={s.captions} onToggle={()=>upd("captions", !s.captions)}/>
       <Row title={t("rowDyslexicTitle")} sub={t("rowDyslexicSub")} on={s.dyslexic} onToggle={()=>upd("dyslexic", !s.dyslexic)}/>
       <Row title={t("rowVoiceTitle")} sub={t("rowVoiceSub")} on={s.voiceGuide} onToggle={()=>upd("voiceGuide", !s.voiceGuide)}/>
-      <Row title={t("darkModeTitle")} sub={t("darkModeSub")} on={s.darkMode} onToggle={()=>upd("darkMode", !s.darkMode)}/>
+      <div className="setting" style={{alignItems:"center"}}>
+        <span style={{flex:1}}><b>{t("darkModeTitle")}</b><small>{t("darkModeSub")}</small></span>
+        <div className="seg" style={{width:"auto"}}>
+          {[["darkModeOff","off"],["darkModeOn","on"],["darkModeSystem","system"]].map(([key,val])=>(
+            <button key={val} className={normalizeDarkMode(s.darkMode) === val ? "on" : ""} onClick={()=>upd("darkMode", val)}>{t(key)}</button>
+          ))}
+        </div>
+      </div>
       <Row title={t("readableFontTitle")} sub={t("readableFontSub")} on={s.readableFont} onToggle={()=>upd("readableFont", !s.readableFont)}/>
       <Row title={t("hapticsTitle")} sub={t("hapticsSub")} on={s.haptics} onToggle={()=>upd("haptics", !s.haptics)}/>
 
@@ -1616,6 +1795,8 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
           <button key={val} className={(s.colorFilter||"none") === val ? "on" : ""} onClick={()=>upd("colorFilter", val)}>{t(key)}</button>
         ))}
       </div>
+
+      <Row title={t("activityToggleTitle")} sub={t("activityToggleSub")} on={s.showActivity !== false} onToggle={()=>upd("showActivity", s.showActivity === false)}/>
 
       <div className="eyebrow section-label">{t("accessibilityProfileLabel")}</div>
       <button className="row-item" onClick={onRerunSetup}>
@@ -1644,14 +1825,28 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
       </button>
 
       <div className="eyebrow section-label">{t("appLabel")}</div>
+      <button className="row-item" onClick={()=>go({ view:{ type:"about" } }, t("aboutRow"))}>
+        <span className="row-icon"><I.info/></span>
+        <span style={{flex:1}}><b>{t("aboutRow")}</b></span>
+        <I.chevron style={{color:"var(--muted)"}}/>
+      </button>
       <button className="row-item" onClick={onOpenInsights}>
         <span className="row-icon"><I.chart/></span>
         <span style={{flex:1}}><b>{t("insightsRow")}</b><small>{t("insightsSub")}</small></span>
         <I.chevron style={{color:"var(--muted)"}}/>
       </button>
+      <button className="row-item" onClick={onResetProgress}>
+        <span className="row-icon" style={{color:"var(--danger)"}}>↺</span>
+        <span style={{flex:1}}><b>{t("resetProgressTitle")}</b><small>{t("resetProgressSub")}</small></span>
+      </button>
       <button className="row-item" onClick={onReset}>
         <span className="row-icon" style={{color:"var(--danger)"}}>↺</span>
         <span style={{flex:1}}><b>{t("resetTitle")}</b><small>{t("resetSub")}</small></span>
+      </button>
+      <button className="row-item" onClick={()=>go({ view:{ type:"switchAccount" } }, t("switchAccountRow"))}>
+        <span className="row-icon"><I.users/></span>
+        <span style={{flex:1}}><b>{t("switchAccountRow")}</b><small>{t("switchAccountSub")}</small></span>
+        <I.chevron style={{color:"var(--muted)"}}/>
       </button>
       <button className="row-item" onClick={onLogout}>
         <span className="row-icon"><I.logout/></span>
@@ -1771,7 +1966,7 @@ function StoryView({ id, onBack, liked, toggleLike, myStories, t, lang, onReport
   );
 }
 
-function ResourceView({ id, onBack, saved, toggleSave, notify, t, lang, onReport }){
+function ResourceView({ id, onBack, saved, toggleSave, notify, t, lang, onReport, myVote, rating, onRate }){
   const r = LIBRARY.find(x=>x.id===id);
   const isSaved = saved.includes(r.id);
   const [showText, setShowText] = useState(false);
@@ -1780,6 +1975,8 @@ function ResourceView({ id, onBack, saved, toggleSave, notify, t, lang, onReport
   const meta = pick(r.meta, lang);
   const description = pick(r.description, lang);
   const content = pick(r.content, lang) || [];
+  const rHelpful = (rating && rating.helpful) || 0;
+  const rNot = (rating && rating.notHelpful) || 0;
 
   const playAudio = ()=>{
     const body = content.length ? content.join(" ") : (description || meta || "");
@@ -1823,6 +2020,17 @@ function ResourceView({ id, onBack, saved, toggleSave, notify, t, lang, onReport
           {content.map((p,i)=>(
             <p key={i} style={{fontSize:"calc(14.5px * var(--fs))", lineHeight:1.75, margin:"9px 0", color:"var(--body-text)"}}>{p}</p>
           ))}
+        </div>
+      )}
+
+      {onRate && (
+        <div style={{display:"flex", gap:8, marginTop:14}}>
+          <button className={"chip" + (myVote === "helpful" ? " on" : "")} style={{display:"flex", alignItems:"center", gap:6}} onClick={()=>onRate(r.id, "helpful")}>
+            <I.thumbsUp/> {t("ratingHelpful")} · {rHelpful}
+          </button>
+          <button className={"chip" + (myVote === "not" ? " on" : "")} style={{display:"flex", alignItems:"center", gap:6}} onClick={()=>onRate(r.id, "not")}>
+            <I.thumbsDown/> {t("ratingNotHelpful")} · {rNot}
+          </button>
         </div>
       )}
 
@@ -1875,6 +2083,137 @@ function LessonView({ pathId, onBack, progress, setProgress, notify, t, lang }){
         if(next >= 100) onBack();
       }}>
         {isReviewing ? t("continueCta") : t("markDoneBtn")} <I.arrow/>
+      </button>
+    </Detail>
+  );
+}
+
+function CertificateView({ pathId, onBack, accountName, t, lang }){
+  const canvasRef = useRef(null);
+  const path = PATHS.find(p=>p.id===pathId);
+  const title = pick(path.title, lang);
+  const dateStr = new Date().toLocaleDateString(lang === "ru" ? "ru-RU" : lang === "uz" ? "uz-UZ" : "en-US", { year:"numeric", month:"long", day:"numeric" });
+
+  useEffect(()=>{
+    const canvas = canvasRef.current;
+    if(!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = 900, H = 640;
+    canvas.width = W; canvas.height = H;
+
+    const draw = ()=>{
+      ctx.fillStyle = "#F7F4EA";
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.strokeStyle = "#16243F";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(28, 28, W - 56, H - 56);
+      ctx.strokeStyle = "#D8A340";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(40, 40, W - 80, H - 80);
+
+      ctx.fillStyle = "#16243F";
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(W/2 - 30, 68, 60, 60, 16) : ctx.rect(W/2 - 30, 68, 60, 60);
+      ctx.fill();
+      ctx.fillStyle = "#D8A340";
+      ctx.font = "700 30px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText("M", W/2, 108);
+
+      ctx.fillStyle = "#16243F";
+      ctx.font = "italic 700 40px Georgia, 'Times New Roman', serif";
+      ctx.fillText(t("certificateHeading"), W/2, 195);
+
+      ctx.strokeStyle = "#D8A340";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(W/2 - 90, 215); ctx.lineTo(W/2 + 90, 215); ctx.stroke();
+
+      ctx.fillStyle = "#3A465E";
+      ctx.font = "16px Georgia, serif";
+      ctx.fillText(t("certificateTitle"), W/2, 250);
+
+      ctx.fillStyle = "#16243F";
+      ctx.font = "700 44px Georgia, serif";
+      ctx.fillText(accountName || "—", W/2, 320);
+
+      ctx.fillStyle = "#3A465E";
+      ctx.font = "17px Georgia, serif";
+      ctx.fillText(t("certificateCompletedText"), W/2, 360);
+
+      ctx.fillStyle = "#16243F";
+      ctx.font = "italic 600 26px Georgia, serif";
+      wrapText(ctx, title, W/2, 410, W - 220, 32);
+
+      ctx.fillStyle = "#8C8778";
+      ctx.font = "14px Georgia, serif";
+      ctx.fillText(t("certificateDatePrefix") + ": " + dateStr, W/2, 500);
+
+      ctx.fillStyle = "#8C8778";
+      ctx.font = "12px Georgia, serif";
+      ctx.fillText(t("certificateFooter"), W/2, H - 60);
+    };
+
+    function wrapText(context, text, x, y, maxWidth, lineHeight){
+      const words = text.split(" ");
+      let line = "", lines = [];
+      for(let i=0;i<words.length;i++){
+        const test = line + words[i] + " ";
+        if(context.measureText(test).width > maxWidth && i > 0){ lines.push(line); line = words[i] + " "; }
+        else line = test;
+      }
+      lines.push(line);
+      const startY = y - (lines.length - 1) * lineHeight / 2;
+      lines.forEach((l, i)=> context.fillText(l.trim(), x, startY + i * lineHeight));
+    }
+
+    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(draw); } else { draw(); }
+    draw();
+  }, [pathId, lang, accountName]);
+
+  const download = ()=>{
+    const canvas = canvasRef.current;
+    if(!canvas) return;
+    const url = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = url; link.download = "mwm-certificate.png";
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  };
+
+  return (
+    <Detail title={t("certificateTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <div style={{borderRadius:16, overflow:"hidden", boxShadow:"0 8px 30px rgba(0,0,0,.15)"}}>
+        <canvas ref={canvasRef} style={{width:"100%", display:"block"}}/>
+      </div>
+      <button className="cta" style={{marginTop:16}} onClick={download}>
+        <I.download/> {t("certificateDownload")}
+      </button>
+    </Detail>
+  );
+}
+
+function SwitchAccountView({ onBack, accounts, currentEmail, onSwitch, onAddNew, t }){
+  const others = Object.values(accounts).filter(a=>a.email !== currentEmail);
+  const current = accounts[currentEmail];
+  return (
+    <Detail title={t("switchAccountTitle")} onBack={onBack} onSwipeBack={onBack}>
+      {current && (
+        <div className="row-item" style={{background:"var(--cream-2)", borderRadius:14, marginBottom:14}}>
+          <span className="avatar" style={{width:38, height:38, fontSize:15}}>{(current.name || "?").slice(0,1).toUpperCase()}</span>
+          <span style={{flex:1}}><b>{current.name}</b><small>{current.email}</small></span>
+          <span className="lib-tag">{t("switchAccountCurrent")}</span>
+        </div>
+      )}
+      {others.length > 0 && <div className="eyebrow section-label">{t("switchAccountSub")}</div>}
+      {others.map(a=>(
+        <button key={a.email} className="row-item" onClick={()=>onSwitch(a.email)}>
+          <span className="avatar" style={{width:38, height:38, fontSize:15}}>{(a.name || "?").slice(0,1).toUpperCase()}</span>
+          <span style={{flex:1}}><b>{a.name}</b><small>{a.email}</small></span>
+          <I.chevron style={{color:"var(--muted)"}}/>
+        </button>
+      ))}
+      <button className="cta" style={{marginTop:16, background:"var(--cream-2)", color:"var(--navy)"}} onClick={onAddNew}>
+        <I.plus/> {t("switchAccountAddNew")}
       </button>
     </Detail>
   );
@@ -2002,6 +2341,33 @@ function OnboardTour({ t, onDone }){
   );
 }
 
+function AboutView({ onBack, t }){
+  const features = ["aboutFeatureVoice","aboutFeatureScan","aboutFeatureTranscript","aboutFeatureOffline","aboutFeatureLangs"];
+  return (
+    <Detail title={t("aboutTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <div style={{textAlign:"center", margin:"6px 0 20px"}}>
+        <div className="logo-tile" style={{margin:"0 auto"}}>M</div>
+        <div className="wordmark serif" style={{fontSize:30, marginTop:12}}>M<span className="g">W</span>M</div>
+      </div>
+      <p style={{fontSize:"calc(14px * var(--fs))", lineHeight:1.7, color:"var(--body-text)"}}>{t("aboutIntro")}</p>
+
+      <div className="eyebrow section-label">{t("aboutFeaturesLabel")}</div>
+      {features.map(k=>(
+        <div key={k} style={{display:"flex", gap:9, alignItems:"flex-start", padding:"6px 0", fontSize:"calc(13px * var(--fs))"}}>
+          <span style={{color:"var(--green)", marginTop:2}}><I.check/></span> {t(k)}
+        </div>
+      ))}
+
+      <div className="eyebrow section-label">{t("aboutVersionLabel")}</div>
+      <p className="muted" style={{fontSize:"calc(12.5px * var(--fs))"}}>MWM 1.0</p>
+
+      <p className="muted" style={{fontSize:11, textAlign:"center", margin:"28px 0 6px", letterSpacing:".06em"}}>
+        {t("aboutFooter")}
+      </p>
+    </Detail>
+  );
+}
+
 function InsightsView({ onBack, accounts, reports, t }){
   const list = Object.values(accounts || {});
   const total = list.length;
@@ -2083,7 +2449,7 @@ function InsightsView({ onBack, accounts, reports, t }){
   );
 }
 
-function PathsView({ onBack, progress, setProgress, notify, t, lang, onOpenLesson }){
+function PathsView({ onBack, progress, setProgress, notify, t, lang, onOpenLesson, onOpenCertificate }){
   return (
     <Detail title={t("tileHubTitle")} onBack={onBack} onSwipeBack={onBack}>
       <p className="muted" style={{fontSize:"calc(13px * var(--fs))", marginTop:0, lineHeight:1.6}}>
@@ -2104,8 +2470,15 @@ function PathsView({ onBack, progress, setProgress, notify, t, lang, onOpenLesso
               </span>
             </div>
             <div className="progress"><i style={{width:v + "%"}}/></div>
-            <div style={{display:"flex", alignItems:"center", gap:10, marginTop:10}}>
+            <div style={{display:"flex", alignItems:"center", gap:10, marginTop:10, flexWrap:"wrap"}}>
               <span className="muted" style={{fontSize:"calc(11.5px * var(--fs))"}}>{v}% {t("completeWord")}</span>
+              {v>=100 && (
+                <button
+                  style={{fontWeight:600, color:"var(--gold)", fontSize:"calc(12.5px * var(--fs))", display:"flex", alignItems:"center", gap:5}}
+                  onClick={()=>onOpenCertificate(p.id)}>
+                  <I.award/> {t("certificateBtn")}
+                </button>
+              )}
               <button
                 style={{marginLeft:"auto", fontWeight:600, color:"var(--green)", fontSize:"calc(12.5px * var(--fs))"}}
                 onClick={()=>onOpenLesson(p.id)}>
@@ -2530,6 +2903,8 @@ function App(){
     return (sess && accs[sess.email]) ? "app" : "splash";
   });
   const [reports, setReports] = useState(loadReports);
+  const [ratings, setRatings] = useState(loadRatings);
+  const [systemDark, setSystemDark] = useState(()=> typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const [tgUser, setTgUser] = useState(null);
   const scrollRef = useRef(null);
   const deviceScreenRef = useRef(null);
@@ -2537,6 +2912,14 @@ function App(){
 
   const account = session ? accounts[session.email] : null;
 
+  useEffect(()=>{
+    if(typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e)=>setSystemDark(e.matches);
+    if(mq.addEventListener) mq.addEventListener("change", handler); else mq.addListener(handler);
+    return ()=>{ if(mq.removeEventListener) mq.removeEventListener("change", handler); else mq.removeListener(handler); };
+  }, []);
+  useEffect(()=>{ saveRatings(ratings); }, [ratings]);
   // Telegram Mini App bootstrap: no-ops outside Telegram (window.Telegram is undefined).
   useEffect(()=>{
     const tg = getTelegram();
@@ -2627,7 +3010,31 @@ function App(){
       return { ...p, liked: has ? p.liked.filter(x=>x!==id) : [id, ...p.liked] };
     });
   };
-  const setProgress = (id, v)=>{ if(session) updateAccount(session.email, p=>({ ...p, progress:{ ...p.progress, [id]:v } })); };
+  const rateResource = (resourceId, vote)=>{
+    if(!session || !account) return;
+    const prevVote = account.myRatings ? account.myRatings[resourceId] : undefined;
+    setRatings(prev=>{
+      const cur = prev[resourceId] || { helpful:0, notHelpful:0 };
+      const next = { ...cur };
+      if(prevVote === "helpful") next.helpful = Math.max(0, next.helpful - 1);
+      if(prevVote === "not") next.notHelpful = Math.max(0, next.notHelpful - 1);
+      if(prevVote !== vote){
+        if(vote === "helpful") next.helpful += 1; else next.notHelpful += 1;
+      }
+      return { ...prev, [resourceId]: next };
+    });
+    updateAccount(session.email, p=>{
+      const myRatings = { ...(p.myRatings || {}) };
+      if(prevVote === vote) delete myRatings[resourceId]; else myRatings[resourceId] = vote;
+      return { ...p, myRatings };
+    });
+    if(account.settings.haptics) vibrate(10);
+  };
+  const setProgress = (id, v)=>{
+    if(session) updateAccount(session.email, p=>({
+      ...p, progress:{ ...p.progress, [id]:v }, activityDates: logActivityDate(p.activityDates)
+    }));
+  };
   const publish = (f)=>{
     if(!session || !account) return;
     const story = {
@@ -2638,7 +3045,7 @@ function App(){
       audioUrl: f.audioUrl || null,
       videoUrl: f.videoUrl || null
     };
-    updateAccount(session.email, p=>({ ...p, myStories:[story, ...p.myStories] }));
+    updateAccount(session.email, p=>({ ...p, myStories:[story, ...p.myStories], activityDates: logActivityDate(p.activityDates) }));
     setView(null); setTab("stories"); notify(t("storyPublished"));
   };
   const handleLearnApply = (opts, fileName)=>{
@@ -2675,10 +3082,23 @@ function App(){
     setStage("setup");
     notify(t("resetDone"));
   };
+  const handleResetProgress = ()=>{
+    if(!session || !account) return;
+    const zeroed = {};
+    PATHS.forEach(p=>{ zeroed[p.id] = 0; });
+    updateAccount(session.email, p=>({ ...p, progress: zeroed }));
+    notify(t("resetProgressDone"));
+  };
   const logout = ()=>{
     setSession(null);
     setTab("home"); setView(null);
     setStage("auth");
+  };
+  const switchAccount = (email)=>{
+    if(!accounts[email]) return;
+    setSession({ email });
+    setTab("home"); setView(null);
+    notify(tFor(accounts[email].lang, "welcomeBack"));
   };
   const handleAuth = ({ mode, name, email, password, lang: chosenLang })=>{
     setAuthError("");
@@ -2721,7 +3141,7 @@ function App(){
     const existing = accounts[info.email];
     if(!existing){
       const acc = makeAccount({ name: info.name, email: info.email, lang: info.lang });
-      if(info.dark) acc.settings.darkMode = true;
+      if(info.dark) acc.settings.darkMode = "on";
       setAccounts(prev=>({ ...prev, [info.email]: acc }));
       setSession({ email: info.email });
       setStage("setup");
@@ -2739,6 +3159,8 @@ function App(){
   }, [t]);
 
   const s = account ? account.settings : { textSize:1, contrast:false, motion:true, dyslexic:false };
+  const dmMode = normalizeDarkMode(s.darkMode);
+  const isDark = dmMode === "system" ? systemDark : dmMode === "on";
   const screenStyle = {
     "--user-fs": s.textSize,
     "--ds": String(ds),
@@ -2791,11 +3213,14 @@ function App(){
     view?.type === "resource" ? pick(LIBRARY.find(r=>r.id===view.id)?.title, lang) :
     view?.type === "paths" ? t("tileHubTitle") :
     view?.type === "lesson" ? pick(PATHS.find(p=>p.id===view.id)?.title, lang) :
+    view?.type === "certificate" ? t("certificateTitle") :
+    view?.type === "switchAccount" ? t("switchAccountTitle") :
     view?.type === "learn" ? t("tileHubTitle") :
     view?.type === "scan" ? t("scanTitle") :
     view?.type === "transcript" ? t("transcriptTitle") :
     view?.type === "compose" ? t("tileShareTitle") :
     view?.type === "insights" ? t("insightsTitle") :
+    view?.type === "about" ? t("aboutTitle") :
     view?.type === "search" ? t("globalSearchTitle") :
     tab === "home" ? t("welcomeTitle") : tab === "library" ? t("libraryTitle") :
     tab === "stories" ? t("storiesTitle") : t("profileTitle");
@@ -2835,16 +3260,22 @@ function App(){
     const back = ()=>setView(null);
     if(view.type==="article") body = <ArticleView id={view.id} onBack={back} go={go} t={t} lang={lang} onReport={submitReport}/>;
     else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang} onReport={submitReport}/>;
-    else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} lang={lang} onReport={submitReport}/>;
+    else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} lang={lang} onReport={submitReport}
+                                                           rating={ratings[view.id]} myVote={account.myRatings ? account.myRatings[view.id] : undefined} onRate={rateResource}/>;
     else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}
-                                                     onOpenLesson={(pathId)=>setView({ type:"lesson", id:pathId })}/>;
+                                                     onOpenLesson={(pathId)=>setView({ type:"lesson", id:pathId })}
+                                                     onOpenCertificate={(pathId)=>setView({ type:"certificate", id:pathId })}/>;
     else if(view.type==="lesson") body = <LessonView pathId={view.id} onBack={()=>setView({ type:"paths" })} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}/>;
+    else if(view.type==="certificate") body = <CertificateView pathId={view.id} onBack={()=>setView({ type:"paths" })} accountName={account.name} t={t} lang={lang}/>;
+    else if(view.type==="switchAccount") body = <SwitchAccountView onBack={back} accounts={accounts} currentEmail={session.email}
+                                                                     onSwitch={switchAccount} onAddNew={logout} t={t}/>;
     else if(view.type==="learn") body = <LearnUpload onBack={back} onApply={handleLearnApply} onBrowsePaths={()=>setView({ type:"paths" })}
                                                        onOpenScan={()=>setView({ type:"scan" })} onOpenTranscript={()=>setView({ type:"transcript" })} t={t}/>;
     else if(view.type==="scan") body = <ScanText onBack={back} t={t} lang={lang} notify={notify}/>;
     else if(view.type==="transcript") body = <LiveTranscript onBack={back} t={t} lang={lang} notify={notify}/>;
     else if(view.type==="compose") body = <Compose onBack={back} onSubmit={publish} t={t}/>;
     else if(view.type==="insights") body = <InsightsView onBack={back} accounts={accounts} reports={reports} t={t}/>;
+    else if(view.type==="about") body = <AboutView onBack={back} t={t}/>;
     else if(view.type==="search") body = <GlobalSearch onBack={back} go={go} t={t} lang={lang}/>;
   } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified}/>;
   else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t} lang={lang}/>;
@@ -2852,7 +3283,7 @@ function App(){
   else body = <Profile account={account} set={(u)=>updateAccount(session.email, u)} saved={account.saved} myStories={account.myStories} go={go} notify={notify}
                         onRerunSetup={()=>setStage("setup")} t={t} onLogout={logout}
                         onChangeLang={(code)=>updateAccount(session.email, p=>({ ...p, lang:code }))}
-                        onReset={handleReset} onOpenInsights={()=>go({ view:{ type:"insights" } })}/>;
+                        onReset={handleReset} onResetProgress={handleResetProgress} onOpenInsights={()=>go({ view:{ type:"insights" } })}/>;
 
   return (
     <React.Fragment>
@@ -2869,10 +3300,10 @@ function App(){
         <div className="screen" style={screenStyle}
              data-contrast={s.contrast ? "on" : "off"}
              data-motion={s.motion ? "on" : "off"}
-             data-dark={s.darkMode ? "on" : "off"}
+             data-dark={isDark ? "on" : "off"}
              data-readable={s.readableFont ? "on" : "off"}
              data-colorfilter={s.colorFilter || "none"}>
-          <StatusBar dark={s.darkMode}/>
+          <StatusBar dark={isDark}/>
           <div className="sr-only" aria-live="polite">{screenTitle}</div>
           <div ref={scrollRef} className="body-wrap" key={view ? view.type + (view.id||"") : tab}
                onTouchStart={!view ? onTabTouchStart : undefined}
