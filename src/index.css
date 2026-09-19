@@ -17,6 +17,8 @@
     --line:rgba(22,36,63,.12);
     --danger:#B4543F;
     --body-text:#3A465E;
+    --surface-dark:#16243F;
+    --surface-dark-text:#F7F4EA;
     --fs:1;
     --dur:.28s;
   }

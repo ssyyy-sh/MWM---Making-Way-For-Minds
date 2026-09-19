@@ -218,7 +218,7 @@ const STRINGS = {
     profileTitle: "Профиль",
     statMyStories: "Ваши истории", statSaved: "Сохранено", statProgress: "Обучение",
     readingComfort: "Комфорт чтения",
-    sizeStandard: "Обычный", sizeLarge: "Крупный", sizeLargest: "Очень крупный",
+    sizeStandard: "Обычный", sizeLarge: "Крупный", sizeLargest: "Очень крупный", sizeHuge: "Огромный",
     accessibilityLabel: "Доступность",
     rowContrastTitle: "Высокий контраст", rowContrastSub: "Сильнее границы и темнее текст",
     rowAnimationTitle: "Анимация", rowAnimationSub: "Переходы между экранами",
@@ -333,6 +333,10 @@ const STRINGS = {
     scanRead: "Озвучить",
     scanCopy: "Скопировать текст",
     scanCopied: "Текст скопирован",
+    scanLangLabel: "Язык текста на фото",
+    scanLangHint: "Распознавание работает точнее, если выбрать язык, на котором написан текст — не обязательно язык интерфейса.",
+    scanLangRu: "Русский", scanLangUk: "Українська", scanLangUz: "O'zbekcha", scanLangEn: "English",
+    scanScreenTip: "Фото с бумаги или книги распознаётся лучше, чем фото экрана телефона или монитора — это общее ограничение любого распознавания текста.",
 
     transcriptTitle: "Живая расшифровка",
     transcriptSub: "Говорите — текст появится на экране. Хорошо подходит для лекций и уроков.",
@@ -350,6 +354,7 @@ const STRINGS = {
     a11yLabel: "Доступность",
     a11yScreenReader: "Проверено с экранным диктором", a11yAltText: "Alt-текст у всех изображений",
     a11yAdjustable: "Регулируемый размер текста", a11yTranscript: "Полная расшифровка", a11yLargePrint: "Издание крупным шрифтом",
+    showTranscriptBtn: "Показать расшифровку", showAltTextBtn: "Показать описания изображений",
     removeSavedBtn: "Убрать из сохранённого", saveForLaterBtn: "Сохранить на потом",
     readRelatedBtn: "Похожие материалы",
     storyLabel: "История",
@@ -457,7 +462,7 @@ const STRINGS = {
     profileTitle: "Profil",
     statMyStories: "Hikoyalaringiz", statSaved: "Saqlangan", statProgress: "O'quv",
     readingComfort: "O'qish qulayligi",
-    sizeStandard: "Oddiy", sizeLarge: "Katta", sizeLargest: "Juda katta",
+    sizeStandard: "Oddiy", sizeLarge: "Katta", sizeLargest: "Juda katta", sizeHuge: "Ulkan",
     accessibilityLabel: "Qulaylik",
     rowContrastTitle: "Yuqori kontrast", rowContrastSub: "Chegaralar qalinroq, matn to'qroq",
     rowAnimationTitle: "Animatsiya", rowAnimationSub: "Ekranlar orasidagi o'tishlar",
@@ -572,6 +577,10 @@ const STRINGS = {
     scanRead: "Ovoz bilan o'qish",
     scanCopy: "Matnni nusxalash",
     scanCopied: "Matn nusxalandi",
+    scanLangLabel: "Suratdagi matn tili",
+    scanLangHint: "Matn qaysi tilda yozilgan bo'lsa, o'sha tilni tanlasangiz, tanish aniqroq bo'ladi — bu interfeys tili bilan bir xil bo'lishi shart emas.",
+    scanLangRu: "Ruscha", scanLangUk: "Ukraincha", scanLangUz: "O'zbekcha", scanLangEn: "Inglizcha",
+    scanScreenTip: "Qog'oz yoki kitobdan olingan surat telefon yoki monitor ekranidan olingan suratdan yaxshiroq tanib olinadi — bu har qanday matn tanish texnologiyasining umumiy cheklovi.",
 
     transcriptTitle: "Jonli transkripsiya",
     transcriptSub: "Gapiring — matn ekranda paydo bo'ladi. Ma'ruza va darslar uchun qulay.",
@@ -589,6 +598,7 @@ const STRINGS = {
     a11yLabel: "Qulaylik",
     a11yScreenReader: "Ekran diktori bilan sinovdan o'tgan", a11yAltText: "Barcha rasmlarda alt-matn",
     a11yAdjustable: "Sozlanadigan matn o'lchami", a11yTranscript: "To'liq transkripsiya", a11yLargePrint: "Katta shriftli nashr",
+    showTranscriptBtn: "Transkripsiyani ko'rsatish", showAltTextBtn: "Rasm tavsiflarini ko'rsatish",
     removeSavedBtn: "Saqlanganlardan olib tashlash", saveForLaterBtn: "Keyinroq uchun saqlash",
     readRelatedBtn: "O'xshash materiallar",
     storyLabel: "Hikoya",
@@ -696,7 +706,7 @@ const STRINGS = {
     profileTitle: "Profile",
     statMyStories: "Your stories", statSaved: "Saved", statProgress: "Learning done",
     readingComfort: "Reading comfort",
-    sizeStandard: "Standard", sizeLarge: "Large", sizeLargest: "Largest",
+    sizeStandard: "Standard", sizeLarge: "Large", sizeLargest: "Largest", sizeHuge: "Huge",
     accessibilityLabel: "Accessibility",
     rowContrastTitle: "High contrast", rowContrastSub: "Stronger borders and darker text",
     rowAnimationTitle: "Animation", rowAnimationSub: "Screen transitions and motion",
@@ -811,6 +821,10 @@ const STRINGS = {
     scanRead: "Read aloud",
     scanCopy: "Copy text",
     scanCopied: "Text copied",
+    scanLangLabel: "Language of the text in the photo",
+    scanLangHint: "Recognition works better when you pick the language the text is actually written in — it doesn't have to match the interface language.",
+    scanLangRu: "Russian", scanLangUk: "Ukrainian", scanLangUz: "Uzbek", scanLangEn: "English",
+    scanScreenTip: "A photo of paper or a book is recognized better than a photo of a phone or monitor screen — that's a general limitation of any text recognition, not specific to this app.",
 
     transcriptTitle: "Live Transcript",
     transcriptSub: "Speak — the text appears on screen. Good for lectures and lessons.",
@@ -828,6 +842,7 @@ const STRINGS = {
     a11yLabel: "Accessibility",
     a11yScreenReader: "Screen-reader tested", a11yAltText: "Alt text on all images",
     a11yAdjustable: "Adjustable text size", a11yTranscript: "Full transcript", a11yLargePrint: "Large-print edition",
+    showTranscriptBtn: "Show transcript", showAltTextBtn: "Show image descriptions",
     removeSavedBtn: "Remove from saved", saveForLaterBtn: "Save for later",
     readRelatedBtn: "Read related resources",
     storyLabel: "Story",
@@ -1758,7 +1773,7 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
 
       <div className="eyebrow section-label">{t("readingComfort")}</div>
       <div className="seg" role="group" aria-label={t("readingComfort")}>
-        {[["sizeStandard",1],["sizeLarge",1.14],["sizeLargest",1.3]].map(([key,val])=>(
+        {[["sizeStandard",1],["sizeLarge",1.14],["sizeLargest",1.3],["sizeHuge",1.8]].map(([key,val])=>(
           <button key={key} className={s.textSize === val ? "on" : ""} onClick={()=>upd("textSize", val)}>{t(key)}</button>
         ))}
       </div>
@@ -1785,7 +1800,11 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
           ))}
         </div>
       </div>
-      <Row title={t("readableFontTitle")} sub={t("readableFontSub")} on={s.readableFont} onToggle={()=>upd("readableFont", !s.readableFont)}/>
+      <Row title={t("readableFontTitle")} sub={t("readableFontSub")} on={s.readableFont} onToggle={()=>{
+        const turningOn = !s.readableFont;
+        upd("readableFont", turningOn);
+        if(turningOn) upd("textSize", 1.8);
+      }}/>
       <Row title={t("hapticsTitle")} sub={t("hapticsSub")} on={s.haptics} onToggle={()=>upd("haptics", !s.haptics)}/>
 
       <div className="eyebrow section-label">{t("colorFilterLabel")}</div>
@@ -2041,7 +2060,7 @@ function ResourceView({ id, onBack, saved, toggleSave, notify, t, lang, onReport
       {(r.transcript || r.altTexts) && (
         <div style={{marginTop:16}}>
           <button className="report-toggle" onClick={()=>setShowExtra(v=>!v)}>
-            <I.doc/> {r.transcript ? "Show transcript" : "Show image descriptions"}
+            <I.doc/> {r.transcript ? t("showTranscriptBtn") : t("showAltTextBtn")}
           </button>
           {showExtra && (
             <div className="card" style={{display:"block", marginTop:10}}>
@@ -2493,22 +2512,27 @@ function PathsView({ onBack, progress, setProgress, notify, t, lang, onOpenLesso
 }
 
 /* ============ scan text (client-side OCR, no server) ============ */
-const OCR_LANG_MAP = { ru:"rus", uz:"uzb", en:"eng" };
+const OCR_LANG_OPTIONS = [
+  { code:"ru", tess:"rus", labelKey:"scanLangRu" },
+  { code:"uk", tess:"ukr", labelKey:"scanLangUk" },
+  { code:"uz", tess:"uzb", labelKey:"scanLangUz" },
+  { code:"en", tess:"eng", labelKey:"scanLangEn" }
+];
 function ScanText({ onBack, t, lang, notify }){
   const [imgSrc, setImgSrc] = useState(null);
+  const [file, setFile] = useState(null);
   const [text, setText] = useState("");
   const [status, setStatus] = useState("idle"); // idle | processing | done | empty
+  const [ocrLang, setOcrLang] = useState(()=> OCR_LANG_OPTIONS.some(o=>o.code===lang) ? lang : "ru");
   const fileRef = useRef(null);
 
-  const runOcr = async (file)=>{
+  const runOcr = async (f, tessCode)=>{
     setStatus("processing");
     setText("");
-    const url = URL.createObjectURL(file);
-    setImgSrc(url);
     try{
       const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker(OCR_LANG_MAP[lang] || "eng");
-      const { data } = await worker.recognize(url);
+      const worker = await createWorker(tessCode);
+      const { data } = await worker.recognize(imgSrc || URL.createObjectURL(f));
       await worker.terminate();
       const cleaned = (data.text || "").trim();
       setText(cleaned);
@@ -2519,7 +2543,19 @@ function ScanText({ onBack, t, lang, notify }){
   };
   const onPick = (e)=>{
     const f = e.target.files && e.target.files[0];
-    if(f) runOcr(f);
+    if(!f) return;
+    setFile(f);
+    const url = URL.createObjectURL(f);
+    setImgSrc(url);
+    const tessCode = (OCR_LANG_OPTIONS.find(o=>o.code===ocrLang) || {}).tess || "eng";
+    runOcr(f, tessCode);
+  };
+  const changeLangAndRerun = (code)=>{
+    setOcrLang(code);
+    if(file){
+      const tessCode = (OCR_LANG_OPTIONS.find(o=>o.code===code) || {}).tess || "eng";
+      runOcr(file, tessCode);
+    }
   };
   const copyText = ()=>{
     try{ navigator.clipboard.writeText(text); notify(t("scanCopied")); }catch(e){}
@@ -2529,15 +2565,26 @@ function ScanText({ onBack, t, lang, notify }){
     <Detail title={t("scanTitle")} onBack={onBack} onSwipeBack={onBack}>
       <p className="choice-quote" style={{fontSize:"calc(15px * var(--fs))"}}>{t("scanSub")}</p>
 
+      <div className="eyebrow section-label">{t("scanLangLabel")}</div>
+      <div className="chips" style={{paddingBottom:6}}>
+        {OCR_LANG_OPTIONS.map(o=>(
+          <button key={o.code} className={"chip" + (ocrLang === o.code ? " on" : "")} onClick={()=>changeLangAndRerun(o.code)}>
+            {t(o.labelKey)}
+          </button>
+        ))}
+      </div>
+      <p className="muted" style={{fontSize:"calc(11px * var(--fs))", marginTop:0, marginBottom:10, lineHeight:1.5}}>{t("scanLangHint")}</p>
+
       <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={onPick}/>
 
       {imgSrc && (
-        <img src={imgSrc} alt="" style={{width:"100%", borderRadius:14, marginTop:14, maxHeight:180, objectFit:"cover"}}/>
+        <img src={imgSrc} alt="" style={{width:"100%", borderRadius:14, marginTop:6, maxHeight:180, objectFit:"cover"}}/>
       )}
 
       <button className="cta" style={{marginTop:14}} onClick={()=>fileRef.current && fileRef.current.click()}>
         <I.upload/> {imgSrc ? t("scanRetake") : t("scanTakePhoto")}
       </button>
+      <p className="muted" style={{fontSize:"calc(11px * var(--fs))", marginTop:8, lineHeight:1.5}}>{t("scanScreenTip")}</p>
 
       {status === "processing" && (
         <div className="rec-box" style={{marginTop:16}}>
@@ -3207,9 +3254,17 @@ function App(){
     );
   }
 
+  const storyForVoice = view?.type === "story"
+    ? [...(account.myStories || []), ...STORIES].find(s=>s.id===view.id)
+    : (view?.type === "article" ? ARTICLES.find(a=>a.id===view.id) : null);
+  const storyForVoiceIsRedirect = view?.type === "article" && storyForVoice && storyForVoice.storyId;
+  const actualStory = storyForVoiceIsRedirect
+    ? [...(account.myStories || []), ...STORIES].find(s=>s.id===storyForVoice.storyId)
+    : (view?.type === "story" ? storyForVoice : null);
+
   const screenTitle =
-    view?.type === "article" ? pick(ARTICLES.find(a=>a.id===view.id)?.title, lang) :
-    view?.type === "story" ? t("storyLabel") :
+    view?.type === "article" ? (storyForVoiceIsRedirect ? pick(actualStory?.title, lang) : pick(storyForVoice?.title, lang)) :
+    view?.type === "story" ? (pick(actualStory?.title, lang) || t("storyLabel")) :
     view?.type === "resource" ? pick(LIBRARY.find(r=>r.id===view.id)?.title, lang) :
     view?.type === "paths" ? t("tileHubTitle") :
     view?.type === "lesson" ? pick(PATHS.find(p=>p.id===view.id)?.title, lang) :
@@ -3225,11 +3280,26 @@ function App(){
     tab === "home" ? t("welcomeTitle") : tab === "library" ? t("libraryTitle") :
     tab === "stories" ? t("storiesTitle") : t("profileTitle");
 
+  const resourceForVoice = view?.type === "resource" ? LIBRARY.find(r=>r.id===view.id) : null;
+  const lessonForVoice = (()=>{
+    if(view?.type !== "lesson") return null;
+    const path = PATHS.find(p=>p.id===view.id);
+    if(!path) return null;
+    const total = path.lessons.length;
+    const v = account.progress[view.id] || 0;
+    const idx = Math.min(total - 1, Math.round(v / 100 * total));
+    return path.lessons[idx];
+  })();
+
   const screenHint =
     !view && tab === "home" ? t("exploreLabel") + ": " + [t("tileLibraryTitle"), t("tileHubTitle"), t("tileShareTitle"), t("tileCommunityTitle")].join(", ") :
     !view && tab === "library" ? t("searchPlaceholder") :
     !view && tab === "stories" ? t("storiesSubtitle") :
     !view && tab === "profile" ? t("accessibilityLabel") :
+    view?.type === "article" ? (storyForVoiceIsRedirect ? (pick(actualStory?.body, lang) || []).join(" ") : (pick(storyForVoice?.body, lang) || []).join(" ")) :
+    view?.type === "story" ? (pick(actualStory?.body, lang) || []).join(" ") :
+    view?.type === "resource" ? ((pick(resourceForVoice?.content, lang) || []).join(" ") || pick(resourceForVoice?.description, lang) || pick(resourceForVoice?.meta, lang) || "") :
+    view?.type === "lesson" ? (lessonForVoice ? pick(lessonForVoice.title, lang) + ". " + pick(lessonForVoice.body, lang) : "") :
     "";
 
   const announceScreen = ()=> speakText(screenTitle + (screenHint ? ". " + screenHint : ""));
