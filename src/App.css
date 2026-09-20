@@ -46,6 +46,9 @@
   .screen[data-readable="on"] h1, .screen[data-readable="on"] h2, .screen[data-readable="on"] h3,
   .screen[data-readable="on"] .serif{ font-family:"Atkinson Hyperlegible", Fraunces, serif; }
 
+  .screen[data-bold="on"]{ font-weight:600; }
+  .screen[data-bold="on"] .muted{ color:var(--body-text); }
+
   /* colour-vision filters, applied via SVG filter defs injected once at app root */
   .screen[data-colorfilter="protanopia"]{ filter:url(#mwm-protanopia); }
   .screen[data-colorfilter="deuteranopia"]{ filter:url(#mwm-deuteranopia); }

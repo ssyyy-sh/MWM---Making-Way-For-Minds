@@ -54,9 +54,10 @@ function makeAccount({ name, email, lang }){
     onboarded: false, profile: null,
     saved: [], liked: [], myStories: [], myRatings: {},
     progress: { p1: 0, p2: 0, p3: 0, p4: 0 },
-    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false, darkMode: "off", readableFont: false, haptics: true, speechRate: 1, colorFilter: "none", showActivity: true },
+    settings: { textSize: 1, contrast: false, motion: true, captions: true, dyslexic: false, voiceGuide: false, darkMode: "off", readableFont: false, haptics: true, speechRate: 1, colorFilter: "none", showActivity: true, boldText: false },
     tourSeen: false,
-    activityDates: []
+    activityDates: [],
+    lastViewed: null
   };
 }
 function normalizeDarkMode(v){
@@ -355,6 +356,13 @@ const STRINGS = {
     a11yScreenReader: "Проверено с экранным диктором", a11yAltText: "Alt-текст у всех изображений",
     a11yAdjustable: "Регулируемый размер текста", a11yTranscript: "Полная расшифровка", a11yLargePrint: "Издание крупным шрифтом",
     showTranscriptBtn: "Показать расшифровку", showAltTextBtn: "Показать описания изображений",
+
+    boldTextTitle: "Жирный текст", boldTextSub: "Делает текст контрастнее без увеличения размера",
+    continueWhereLabel: "Продолжить с места остановки",
+    exportSavedBtn: "Выгрузить сохранённое в файл",
+    quizTitle: "Мини-проверка", quizBtn: "Мини-проверка",
+    quizDoneTitle: "Готово!", quizDoneBody: "Правильных ответов: {n} из {total}. Это не экзамен — просто закрепление пройденного.",
+    quizNextBtn: "Следующий вопрос", quizFinishBtn: "Завершить",
     removeSavedBtn: "Убрать из сохранённого", saveForLaterBtn: "Сохранить на потом",
     readRelatedBtn: "Похожие материалы",
     storyLabel: "История",
@@ -599,6 +607,13 @@ const STRINGS = {
     a11yScreenReader: "Ekran diktori bilan sinovdan o'tgan", a11yAltText: "Barcha rasmlarda alt-matn",
     a11yAdjustable: "Sozlanadigan matn o'lchami", a11yTranscript: "To'liq transkripsiya", a11yLargePrint: "Katta shriftli nashr",
     showTranscriptBtn: "Transkripsiyani ko'rsatish", showAltTextBtn: "Rasm tavsiflarini ko'rsatish",
+
+    boldTextTitle: "Qalin matn", boldTextSub: "O'lchamni oshirmasdan matnni kontrastliroq qiladi",
+    continueWhereLabel: "To'xtagan joyingizdan davom eting",
+    exportSavedBtn: "Saqlanganlarni faylga yuklab olish",
+    quizTitle: "Qisqa tekshiruv", quizBtn: "Qisqa tekshiruv",
+    quizDoneTitle: "Tayyor!", quizDoneBody: "To'g'ri javoblar: {total} tadan {n} ta. Bu imtihon emas — shunchaki mustahkamlash.",
+    quizNextBtn: "Keyingi savol", quizFinishBtn: "Yakunlash",
     removeSavedBtn: "Saqlanganlardan olib tashlash", saveForLaterBtn: "Keyinroq uchun saqlash",
     readRelatedBtn: "O'xshash materiallar",
     storyLabel: "Hikoya",
@@ -843,6 +858,13 @@ const STRINGS = {
     a11yScreenReader: "Screen-reader tested", a11yAltText: "Alt text on all images",
     a11yAdjustable: "Adjustable text size", a11yTranscript: "Full transcript", a11yLargePrint: "Large-print edition",
     showTranscriptBtn: "Show transcript", showAltTextBtn: "Show image descriptions",
+
+    boldTextTitle: "Bold text", boldTextSub: "Makes text bolder without increasing its size",
+    continueWhereLabel: "Continue where you left off",
+    exportSavedBtn: "Export saved items to a file",
+    quizTitle: "Quick check-in", quizBtn: "Quick check-in",
+    quizDoneTitle: "Done!", quizDoneBody: "Correct answers: {n} out of {total}. This isn't an exam — just reinforcing what you covered.",
+    quizNextBtn: "Next question", quizFinishBtn: "Finish",
     removeSavedBtn: "Remove from saved", saveForLaterBtn: "Save for later",
     readRelatedBtn: "Read related resources",
     storyLabel: "Story",
@@ -1100,6 +1122,20 @@ const PATHS = [
         body:{ en:"The fastest way to get accessibility wrong is to guess on someone's behalf. A two-minute conversation usually beats an hour of assumptions.",
           ru:"Быстрее всего ошибиться в доступности — решить за человека. Двухминутный разговор обычно полезнее часа предположений.",
           uz:"Qulaylikda eng tez xato qilish yo'li — kimningdir o'rniga qaror qabul qilish. Ikki daqiqalik suhbat odatda bir soatlik taxmindan foydaliroq." } }
+    ],
+    quiz:[
+      { q:{ en:"What should you look at first, before adjusting anything for one learner?", ru:"Что стоит посмотреть в первую очередь, прежде чем что-то менять под одного ученика?", uz:"Bitta o'quvchi uchun biror narsani o'zgartirishdan oldin birinchi navbatda nimaga qarash kerak?" },
+        options:{ en:["The student's diagnosis file","The room itself — lighting, noise, seating","A specialist's report"],
+          ru:["Диагноз в личном деле","Само помещение — свет, шум, рассадку","Заключение специалиста"],
+          uz:["Shaxsiy ishdagi tashxis","Xonaning o'zi — yorug'lik, shovqin, o'tirish joyi","Mutaxassis xulosasi"] }, correct:1 },
+      { q:{ en:"What's often more useful than asking what a diagnosis means?", ru:"Что обычно полезнее, чем гадать, что значит диагноз?", uz:"Tashxis nimani anglatishini taxmin qilishdan ko'ra nima foydaliroq?" },
+        options:{ en:["Reading a textbook","Asking the student directly","Guessing based on similar cases"],
+          ru:["Прочитать учебник","Спросить ученика напрямую","Опираться на похожие случаи"],
+          uz:["Darslik o'qish","O'quvchidan to'g'ridan-to'g'ri so'rash","O'xshash holatlarga tayanish"] }, correct:1 },
+      { q:{ en:"A good lesson should offer:", ru:"Хороший урок должен предлагать:", uz:"Yaxshi dars nimani taklif qilishi kerak:" },
+        options:{ en:["One fixed format for everyone","At least two entry points chosen by the student","Only a written worksheet"],
+          ru:["Один фиксированный формат для всех","Минимум два входа на выбор ученика","Только письменный лист"],
+          uz:["Hamma uchun bitta qat'iy format","O'quvchi tanlashi uchun kamida ikkita kirish nuqtasi","Faqat yozma varaq"] }, correct:1 }
     ] },
   { id:"p2", emoji:"📝", mins:45,
     title:{ en:"Designing Readable Materials", ru:"Создание читаемых материалов", uz:"O'qish uchun qulay materiallar yaratish" },
@@ -1121,6 +1157,20 @@ const PATHS = [
         body:{ en:"Dense paragraphs hide their point. One idea, then a break, makes a worksheet far easier to navigate — for everyone, not only accessibility needs.",
           ru:"Плотные абзацы прячут свою суть. Одна мысль, затем пауза — рабочий лист становится намного проще для навигации, причём для всех, не только с особыми потребностями.",
           uz:"Zich abzatslar o'z mohiyatini yashiradi. Bitta fikr, keyin tanaffus — ish varag'ini navigatsiya qilish ancha osonlashadi, va bu faqat qulaylik ehtiyoji borlar uchun emas, hamma uchun." } }
+    ],
+    quiz:[
+      { q:{ en:"For fast, accurate reading, which font works best?", ru:"Для быстрого и точного чтения лучше всего подходит:", uz:"Tez va aniq o'qish uchun eng yaxshi mos keladigani:" },
+        options:{ en:["A stylish decorative font","A plain, well-spaced sans-serif font","Italic throughout"],
+          ru:["Стильный декоративный шрифт","Простой, хорошо разнесённый шрифт без засечек","Курсив по всему тексту"],
+          uz:["Chiroyli bezakli shrift","Oddiy, yaxshi oralig'i bor serif-siz shrift","Butun matn kursiv"] }, correct:1 },
+      { q:{ en:"Light grey text on white is a problem because:", ru:"Светло-серый текст на белом — проблема, потому что:", uz:"Oq fondagi och kulrang matn muammo, chunki:" },
+        options:{ en:["It looks unprofessional","It's nearly unreadable for many people","It uses more ink"],
+          ru:["Выглядит непрофессионально","Почти нечитаем для многих людей","Расходует больше чернил"],
+          uz:["Norasmiy ko'rinadi","Ko'pchilik uchun deyarli o'qib bo'lmaydi","Ko'proq siyoh sarflaydi"] }, correct:1 },
+      { q:{ en:"Long unbroken lines of text are:", ru:"Длинные сплошные строки текста:", uz:"Uzun, uzluksiz matn qatorlari:" },
+        options:{ en:["Easier to scan","Tiring to track, especially for dyslexic readers","Always faster to read"],
+          ru:["Легче пробегать глазами","Утомляют взгляд, особенно при дислексии","Всегда читаются быстрее"],
+          uz:["Ko'z bilan kuzatish osonroq","Charchatadi, ayniqsa disleksiyada","Har doim tezroq o'qiladi"] }, correct:1 }
     ] },
   { id:"p3", emoji:"🖥️", mins:70,
     title:{ en:"Assistive Technology in Class", ru:"Вспомогательные технологии в классе", uz:"Sinfda yordamchi texnologiyalar" },
@@ -1146,6 +1196,20 @@ const PATHS = [
         body:{ en:"The only way to know if a tool actually helps is to watch the student use it — not to assume it will work because it worked for someone else.",
           ru:"Единственный способ узнать, помогает ли инструмент на самом деле — понаблюдать, как ученик им пользуется, а не решить, что сработает, потому что сработало у кого-то другого.",
           uz:"Vosita haqiqatan yordam berayotganini bilishning yagona yo'li — o'quvchi undan qanday foydalanayotganini kuzatish, boshqa birov uchun ishlagani uchun ishlaydi deb taxmin qilish emas." } }
+    ],
+    quiz:[
+      { q:{ en:"A screen reader announces:", ru:"Экранный диктор объявляет:", uz:"Ekran diktori nimani e'lon qiladi:" },
+        options:{ en:["Only the words on the page","Headings, lists, and buttons by their structure","Nothing unless told to"],
+          ru:["Только слова на странице","Заголовки, списки и кнопки по их структуре","Ничего, пока не попросишь"],
+          uz:["Faqat sahifadagi so'zlarni","Sarlavhalar, ro'yxatlar va tugmalarni tuzilmasiga qarab","So'ralmaguncha hech narsani"] }, correct:1 },
+      { q:{ en:"Captions are useful for:", ru:"Субтитры полезны:", uz:"Subtitrlar foydali:" },
+        options:{ en:["Only deaf and hard-of-hearing students","A much wider range of learners","Nobody in a quiet room"],
+          ru:["Только глухим и слабослышащим","Гораздо более широкому кругу людей","Никому в тихой комнате"],
+          uz:["Faqat kar va zaif eshituvchilarga","Ancha keng doiradagi o'quvchilarga","Tinch xonada hech kimga"] }, correct:1 },
+      { q:{ en:"The best way to know if a tool helps a student:", ru:"Лучший способ узнать, помогает ли инструмент ученику:", uz:"Vosita o'quvchiga haqiqatan yordam berayotganini bilishning eng yaxshi yo'li:" },
+        options:{ en:["Assume it works because it worked elsewhere","Watch the student actually use it","Skip testing entirely"],
+          ru:["Решить, что сработает, раз сработало у других","Понаблюдать, как ученик им реально пользуется","Вообще не проверять"],
+          uz:["Boshqalarda ishlagani uchun ishlaydi deb taxmin qilish","O'quvchi undan qanday foydalanayotganini kuzatish","Umuman tekshirmaslik"] }, correct:1 }
     ] },
   { id:"p4", emoji:"💬", mins:40,
     title:{ en:"Interviewing Learners with Care", ru:"Бережное интервьюирование учеников", uz:"O'quvchilar bilan ehtiyotkorlik bilan intervyu" },
@@ -1167,6 +1231,20 @@ const PATHS = [
         body:{ en:"Before publishing anything from an interview, ask the person what they'd rather you not include. Consent isn't a one-time checkbox.",
           ru:"Прежде чем публиковать что-либо из интервью, спросите человека, что он предпочёл бы не включать. Согласие — не разовая галочка.",
           uz:"Intervyudan biror narsa nashr qilishdan oldin, odamdan nimani kiritmaslikni xohlashini so'rang. Rozilik bir martalik belgi emas." } }
+    ],
+    quiz:[
+      { q:{ en:"How should you open an interview with a student?", ru:"Как лучше начать интервью с учеником?", uz:"O'quvchi bilan intervyuni qanday boshlash kerak?" },
+        options:{ en:["With the hardest question first","With something concrete and positive","With a written form only"],
+          ru:["Сразу с самого трудного вопроса","С чего-то конкретного и позитивного","Только с письменной анкеты"],
+          uz:["Darhol eng qiyin savoldan","Aniq va ijobiy narsadan","Faqat yozma anketadan"] }, correct:1 },
+      { q:{ en:"A pause after a question is:", ru:"Пауза после вопроса — это:", uz:"Savoldan keyingi pauza — bu:" },
+        options:{ en:["A problem to fix immediately","Often where honest answers come from","A sign the question was bad"],
+          ru:["Проблема, которую надо сразу исправлять","Часто момент, откуда приходят честные ответы","Признак того, что вопрос был плохим"],
+          uz:["Darhol tuzatish kerak bo'lgan muammo","Ko'pincha samimiy javoblar keladigan payt","Savol yomon bo'lganining belgisi"] }, correct:1 },
+      { q:{ en:"Before publishing anything from an interview, you should:", ru:"Перед публикацией чего-либо из интервью нужно:", uz:"Intervyudan biror narsa nashr qilishdan oldin nima qilish kerak:" },
+        options:{ en:["Just publish it","Ask what they'd rather you not include","Assume it's fine since they talked to you"],
+          ru:["Просто опубликовать","Спросить, что человек предпочёл бы не включать","Считать, что раз согласился говорить — значит, согласен на всё"],
+          uz:["Shunchaki nashr qilish","Odamdan nimani kiritmaslikni xohlashini so'rash","Gaplashishga rozi bo'lgani uchun hammasiga rozi deb hisoblash"] }, correct:1 }
     ] }
 ];
 
@@ -1533,7 +1611,7 @@ function VoiceFab({ onPress, hasTabbar }){
 }
 
 /* ============ home ============ */
-function Home({ go, t, lang, greeting, simplified }){
+function Home({ go, t, lang, greeting, simplified, lastViewed }){
   const tiles = [
     { key:"tileLibrary", emoji:"📚", to:{ tab:"library" } },
     { key:"tileHub", emoji:"🎓", to:{ view:{ type:"learn" } } },
@@ -1553,6 +1631,15 @@ function Home({ go, t, lang, greeting, simplified }){
           <button className="avatar" onClick={()=>go({ tab:"profile" }, t("navProfile"))} aria-label={t("navProfile")}>M</button>
         </div>
       </div>
+
+      {lastViewed && !simplified && (
+        <button className="row-item" style={{background:"var(--cream-2)", borderRadius:14, marginTop:14}}
+                onClick={()=>go({ view:{ type:lastViewed.type, id:lastViewed.id } }, lastViewed.title)}>
+          <span className="row-icon"><I.doc/></span>
+          <span style={{flex:1}}><b>{t("continueWhereLabel")}</b><small>{lastViewed.title}</small></span>
+          <I.chevron style={{color:"var(--muted)"}}/>
+        </button>
+      )}
 
       <section className="mission">
         <div className="row">
@@ -1627,6 +1714,23 @@ function Library({ go, saved, toggleSave, t, lang }){
     return okF && okQ;
   }), [q, filter, saved, lang]);
 
+  const exportSaved = ()=>{
+    const savedItems = LIBRARY.filter(it=>saved.includes(it.id));
+    const lines = savedItems.map(it=>{
+      const title = pick(it.title, lang);
+      const meta = pick(it.meta, lang) || pick(it.description, lang) || "";
+      const content = (pick(it.content, lang) || []).join("\n\n");
+      return title + "\n" + it.author + " · " + it.year + "\n" + meta + "\n\n" + content;
+    });
+    const text = lines.join("\n\n" + "—".repeat(20) + "\n\n");
+    const blob = new Blob([text], { type:"text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = "mwm-saved.txt";
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="scroll with-tabs anim-fade">
       <h1 style={{fontSize:"calc(26px * var(--fs))", marginBottom:14}}>{t("libraryTitle")}</h1>
@@ -1641,6 +1745,12 @@ function Library({ go, saved, toggleSave, t, lang }){
           </button>
         ))}
       </div>
+
+      {filter === "Saved" && saved.length > 0 && (
+        <button className="report-toggle" style={{marginBottom:14}} onClick={exportSaved}>
+          <I.download/> {t("exportSavedBtn")}
+        </button>
+      )}
 
       {items.length === 0 ? (
         <div className="empty">
@@ -1805,6 +1915,7 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
         upd("readableFont", turningOn);
         if(turningOn) upd("textSize", 1.8);
       }}/>
+      <Row title={t("boldTextTitle")} sub={t("boldTextSub")} on={s.boldText} onToggle={()=>upd("boldText", !s.boldText)}/>
       <Row title={t("hapticsTitle")} sub={t("hapticsSub")} on={s.haptics} onToggle={()=>upd("haptics", !s.haptics)}/>
 
       <div className="eyebrow section-label">{t("colorFilterLabel")}</div>
@@ -2103,6 +2214,80 @@ function LessonView({ pathId, onBack, progress, setProgress, notify, t, lang }){
       }}>
         {isReviewing ? t("continueCta") : t("markDoneBtn")} <I.arrow/>
       </button>
+    </Detail>
+  );
+}
+
+function QuizView({ pathId, onBack, t, lang }){
+  const path = PATHS.find(p=>p.id===pathId);
+  const quiz = path.quiz || [];
+  const [idx, setIdx] = useState(0);
+  const [picked, setPicked] = useState(null);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [done, setDone] = useState(false);
+
+  if(quiz.length === 0){
+    return (
+      <Detail title={t("quizTitle")} onBack={onBack} onSwipeBack={onBack}>
+        <p className="muted">{t("libraryEmpty")}</p>
+      </Detail>
+    );
+  }
+
+  const q = quiz[idx];
+  const options = pick(q.options, lang);
+  const isLast = idx === quiz.length - 1;
+
+  const choose = (i)=>{
+    if(picked !== null) return;
+    setPicked(i);
+    if(i === q.correct) setCorrectCount(c=>c+1);
+  };
+  const next = ()=>{
+    if(isLast){ setDone(true); return; }
+    setIdx(idx+1);
+    setPicked(null);
+  };
+
+  if(done){
+    return (
+      <Detail title={t("quizTitle")} onBack={onBack} onSwipeBack={onBack}>
+        <div style={{textAlign:"center", marginTop:30}}>
+          <div style={{fontSize:40}}>🎉</div>
+          <h1 className="serif" style={{fontSize:"calc(20px * var(--fs))", marginTop:12}}>{t("quizDoneTitle")}</h1>
+          <p className="muted" style={{fontSize:"calc(13.5px * var(--fs))", marginTop:8}}>
+            {t("quizDoneBody").replace("{n}", correctCount).replace("{total}", quiz.length)}
+          </p>
+          <button className="cta" style={{marginTop:20}} onClick={onBack}>{t("continueCta")} <I.arrow/></button>
+        </div>
+      </Detail>
+    );
+  }
+
+  return (
+    <Detail title={t("quizTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <div className="eyebrow">{idx + 1} / {quiz.length}</div>
+      <h1 style={{fontSize:"calc(18px * var(--fs))", marginTop:8, lineHeight:1.35}}>{pick(q.q, lang)}</h1>
+      <div style={{marginTop:16}}>
+        {options.map((opt,i)=>{
+          const isCorrect = i === q.correct;
+          const isPicked = i === picked;
+          let cls = "format-card";
+          if(picked !== null && isCorrect) cls += " on";
+          return (
+            <button key={i} className={cls} onClick={()=>choose(i)} disabled={picked !== null}
+                    style={picked !== null && isPicked && !isCorrect ? { borderColor:"var(--danger)", background:"rgba(180,84,63,.08)" } : undefined}>
+              <span style={{flex:1, textAlign:"left"}}>{opt}</span>
+              {picked !== null && isCorrect ? <I.check style={{color:"var(--green)"}}/> : null}
+            </button>
+          );
+        })}
+      </div>
+      {picked !== null && (
+        <button className="cta" style={{marginTop:16}} onClick={next}>
+          {isLast ? t("quizFinishBtn") : t("quizNextBtn")} <I.arrow/>
+        </button>
+      )}
     </Detail>
   );
 }
@@ -2468,7 +2653,7 @@ function InsightsView({ onBack, accounts, reports, t }){
   );
 }
 
-function PathsView({ onBack, progress, setProgress, notify, t, lang, onOpenLesson, onOpenCertificate }){
+function PathsView({ onBack, progress, setProgress, notify, t, lang, onOpenLesson, onOpenCertificate, onOpenQuiz }){
   return (
     <Detail title={t("tileHubTitle")} onBack={onBack} onSwipeBack={onBack}>
       <p className="muted" style={{fontSize:"calc(13px * var(--fs))", marginTop:0, lineHeight:1.6}}>
@@ -2492,11 +2677,18 @@ function PathsView({ onBack, progress, setProgress, notify, t, lang, onOpenLesso
             <div style={{display:"flex", alignItems:"center", gap:10, marginTop:10, flexWrap:"wrap"}}>
               <span className="muted" style={{fontSize:"calc(11.5px * var(--fs))"}}>{v}% {t("completeWord")}</span>
               {v>=100 && (
-                <button
-                  style={{fontWeight:600, color:"var(--gold)", fontSize:"calc(12.5px * var(--fs))", display:"flex", alignItems:"center", gap:5}}
-                  onClick={()=>onOpenCertificate(p.id)}>
-                  <I.award/> {t("certificateBtn")}
-                </button>
+                <React.Fragment>
+                  <button
+                    style={{fontWeight:600, color:"var(--gold)", fontSize:"calc(12.5px * var(--fs))", display:"flex", alignItems:"center", gap:5}}
+                    onClick={()=>onOpenCertificate(p.id)}>
+                    <I.award/> {t("certificateBtn")}
+                  </button>
+                  <button
+                    style={{fontWeight:600, color:"var(--navy)", fontSize:"calc(12.5px * var(--fs))", display:"flex", alignItems:"center", gap:5}}
+                    onClick={()=>onOpenQuiz(p.id)}>
+                    <I.check/> {t("quizBtn")}
+                  </button>
+                </React.Fragment>
               )}
               <button
                 style={{marginLeft:"auto", fontWeight:600, color:"var(--green)", fontSize:"calc(12.5px * var(--fs))"}}
@@ -2955,6 +3147,7 @@ function App(){
   const [tgUser, setTgUser] = useState(null);
   const scrollRef = useRef(null);
   const deviceScreenRef = useRef(null);
+  const touchRef = useRef({ x:0, y:0 });
   const ds = useDeviceScale(deviceScreenRef);
 
   const account = session ? accounts[session.email] : null;
@@ -3035,7 +3228,13 @@ function App(){
     if(voiceGuide && label) speakText(label);
     if(hapticsOn) vibrate(10);
     if(to.tab){ setTab(to.tab); setView(null); }
-    if(to.view){ setView(to.view); }
+    if(to.view){
+      setView(to.view);
+      const trackable = ["resource","story","article","lesson"];
+      if(session && trackable.includes(to.view.type) && label){
+        updateAccount(session.email, p=>({ ...p, lastViewed: { type: to.view.type, id: to.view.id, title: label, at: new Date().toISOString() } }));
+      }
+    }
   };
   const toggleSave = (id)=>{
     if(!session) return;
@@ -3269,6 +3468,7 @@ function App(){
     view?.type === "paths" ? t("tileHubTitle") :
     view?.type === "lesson" ? pick(PATHS.find(p=>p.id===view.id)?.title, lang) :
     view?.type === "certificate" ? t("certificateTitle") :
+    view?.type === "quiz" ? t("quizTitle") :
     view?.type === "switchAccount" ? t("switchAccountTitle") :
     view?.type === "learn" ? t("tileHubTitle") :
     view?.type === "scan" ? t("scanTitle") :
@@ -3316,7 +3516,6 @@ function App(){
     const next = tabOrder[Math.min(tabOrder.length - 1, Math.max(0, i + dir))];
     if(next !== tab){ if(hapticsOn) vibrate(10); setTab(next); }
   };
-  const touchRef = useRef({ x:0, y:0 });
   const onTabTouchStart = (e)=>{ const t0=e.touches[0]; touchRef.current = { x:t0.clientX, y:t0.clientY }; };
   const onTabTouchEnd = (e)=>{
     const t0 = e.changedTouches[0];
@@ -3334,9 +3533,11 @@ function App(){
                                                            rating={ratings[view.id]} myVote={account.myRatings ? account.myRatings[view.id] : undefined} onRate={rateResource}/>;
     else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}
                                                      onOpenLesson={(pathId)=>setView({ type:"lesson", id:pathId })}
-                                                     onOpenCertificate={(pathId)=>setView({ type:"certificate", id:pathId })}/>;
+                                                     onOpenCertificate={(pathId)=>setView({ type:"certificate", id:pathId })}
+                                                     onOpenQuiz={(pathId)=>setView({ type:"quiz", id:pathId })}/>;
     else if(view.type==="lesson") body = <LessonView pathId={view.id} onBack={()=>setView({ type:"paths" })} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}/>;
     else if(view.type==="certificate") body = <CertificateView pathId={view.id} onBack={()=>setView({ type:"paths" })} accountName={account.name} t={t} lang={lang}/>;
+    else if(view.type==="quiz") body = <QuizView pathId={view.id} onBack={()=>setView({ type:"paths" })} t={t} lang={lang}/>;
     else if(view.type==="switchAccount") body = <SwitchAccountView onBack={back} accounts={accounts} currentEmail={session.email}
                                                                      onSwitch={switchAccount} onAddNew={logout} t={t}/>;
     else if(view.type==="learn") body = <LearnUpload onBack={back} onApply={handleLearnApply} onBrowsePaths={()=>setView({ type:"paths" })}
@@ -3347,7 +3548,7 @@ function App(){
     else if(view.type==="insights") body = <InsightsView onBack={back} accounts={accounts} reports={reports} t={t}/>;
     else if(view.type==="about") body = <AboutView onBack={back} t={t}/>;
     else if(view.type==="search") body = <GlobalSearch onBack={back} go={go} t={t} lang={lang}/>;
-  } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified}/>;
+  } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified} lastViewed={account.lastViewed}/>;
   else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t} lang={lang}/>;
   else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang}/>;
   else body = <Profile account={account} set={(u)=>updateAccount(session.email, u)} saved={account.saved} myStories={account.myStories} go={go} notify={notify}
@@ -3372,7 +3573,8 @@ function App(){
              data-motion={s.motion ? "on" : "off"}
              data-dark={isDark ? "on" : "off"}
              data-readable={s.readableFont ? "on" : "off"}
-             data-colorfilter={s.colorFilter || "none"}>
+             data-colorfilter={s.colorFilter || "none"}
+             data-bold={s.boldText ? "on" : "off"}>
           <StatusBar dark={isDark}/>
           <div className="sr-only" aria-live="polite">{screenTitle}</div>
           <div ref={scrollRef} className="body-wrap" key={view ? view.type + (view.id||"") : tab}
