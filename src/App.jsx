@@ -66,6 +66,96 @@ function normalizeDarkMode(v){
   return v;
 }
 
+const APP_BUGS_KEY = "mwm:appbugs:v1";
+function loadAppBugs(){
+  try{ const raw = localStorage.getItem(APP_BUGS_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
+}
+function saveAppBugs(list){ try{ localStorage.setItem(APP_BUGS_KEY, JSON.stringify(list.slice(-50))); }catch(e){} }
+function addAppBug(entry){
+  const list = loadAppBugs();
+  list.push({ id:"bug" + Date.now(), at:new Date().toISOString(), ...entry });
+  saveAppBugs(list);
+}
+
+function getCrashLang(){
+  try{
+    const sessRaw = localStorage.getItem(SESSION_KEY);
+    const accRaw = localStorage.getItem(ACCOUNTS_KEY);
+    if(sessRaw && accRaw){
+      const sess = JSON.parse(sessRaw);
+      const accs = JSON.parse(accRaw);
+      const acc = accs[sess.email];
+      if(acc && acc.lang) return acc.lang;
+    }
+    const uiLang = localStorage.getItem(LANG_KEY);
+    if(uiLang) return uiLang;
+  }catch(e){}
+  return "ru";
+}
+const CRASH_TEXT = {
+  ru: { title:"Что-то сломалось", body:"Произошла непредвиденная ошибка. Ваши данные — сохранённое, аккаунт, прогресс — не пострадали, они хранятся отдельно от экрана, который сейчас упал.",
+    reload:"Перезагрузить", report:"Отправить отчёт и перезагрузить", sent:"Отчёт сохранён локально" },
+  uz: { title:"Nimadir buzildi", body:"Kutilmagan xatolik yuz berdi. Ma'lumotlaringiz — saqlanganlar, hisob, progress — buzilmagan, ular hozir qulagan ekrandan alohida saqlanadi.",
+    reload:"Qayta yuklash", report:"Xabar yuborish va qayta yuklash", sent:"Xabar lokal saqlandi" },
+  en: { title:"Something broke", body:"An unexpected error happened. Your data — saved items, account, progress — is safe, it's stored separately from the screen that just crashed.",
+    reload:"Reload", report:"Send report and reload", sent:"Report saved locally" }
+};
+function CrashScreen({ error, onReload, onReport }){
+  const lang = getCrashLang();
+  const tx = CRASH_TEXT[lang] || CRASH_TEXT.ru;
+  const [sent, setSent] = useState(false);
+  return (
+    <div style={{
+      position:"fixed", inset:0, background:"#F7F4EA", color:"#16243F",
+      display:"flex", alignItems:"center", justifyContent:"center", padding:28, fontFamily:"Inter,sans-serif", zIndex:9999
+    }}>
+      <div style={{ maxWidth:360, textAlign:"center" }}>
+        <div style={{ fontSize:38, marginBottom:14 }}>⚠️</div>
+        <h1 style={{ fontFamily:"Georgia,serif", fontSize:22, margin:0 }}>{tx.title}</h1>
+        <p style={{ fontSize:14, lineHeight:1.6, color:"#3A465E", marginTop:12 }}>{tx.body}</p>
+        <button onClick={onReload} style={{
+          width:"100%", marginTop:20, background:"#16243F", color:"#F7F4EA", border:0,
+          borderRadius:999, padding:16, fontSize:15, fontWeight:600, cursor:"pointer"
+        }}>{tx.reload}</button>
+        {!sent ? (
+          <button onClick={()=>{ onReport(error); setSent(true); }} style={{
+            width:"100%", marginTop:10, background:"none", color:"#3A465E", border:"1px solid rgba(22,36,63,.25)",
+            borderRadius:999, padding:14, fontSize:13, fontWeight:600, cursor:"pointer"
+          }}>{tx.report}</button>
+        ) : (
+          <p style={{ fontSize:12, color:"#4E7031", marginTop:12 }}>{tx.sent}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+class ErrorBoundary extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error){
+    return { error };
+  }
+  componentDidCatch(error, info){
+    try{ console.error("MWM crash:", error, info); }catch(e){}
+  }
+  render(){
+    if(this.state.error){
+      return (
+        <CrashScreen
+          error={this.state.error}
+          onReload={()=>{ try{ window.location.reload(); }catch(e){} }}
+          onReport={(error)=>{
+            addAppBug({ source:"crash", message: String(error && error.message || error), stack: (error && error.stack || "").slice(0,2000) });
+          }}
+        />
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const RATINGS_KEY = "mwm:ratings:v1";
 function loadRatings(){
   try{ const raw = localStorage.getItem(RATINGS_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){ return {}; }
@@ -363,6 +453,14 @@ const STRINGS = {
     quizTitle: "Мини-проверка", quizBtn: "Мини-проверка",
     quizDoneTitle: "Готово!", quizDoneBody: "Правильных ответов: {n} из {total}. Это не экзамен — просто закрепление пройденного.",
     quizNextBtn: "Следующий вопрос", quizFinishBtn: "Завершить",
+
+    appBugRow: "Сообщить о проблеме в приложении", appBugRowSub: "Не про материал, а про само приложение",
+    appBugTitle: "Проблема в приложении",
+    appBugIntro: "Опишите, что пошло не так — что вы делали и что произошло вместо ожидаемого. Это не про содержимое материалов, а про работу самого приложения.",
+    appBugFieldLabel: "Что случилось", appBugPlaceholder: "Например: нажал «Выйти из аккаунта», и экран завис…",
+    appBugSubmitBtn: "Отправить", appBugSentToast: "Спасибо, отчёт сохранён",
+    appBugsListLabel: "Отчёты о проблемах приложения",
+    appBugSourceCrash: "Автоматически при сбое", appBugSourceUser: "От пользователя",
     removeSavedBtn: "Убрать из сохранённого", saveForLaterBtn: "Сохранить на потом",
     readRelatedBtn: "Похожие материалы",
     storyLabel: "История",
@@ -614,6 +712,14 @@ const STRINGS = {
     quizTitle: "Qisqa tekshiruv", quizBtn: "Qisqa tekshiruv",
     quizDoneTitle: "Tayyor!", quizDoneBody: "To'g'ri javoblar: {total} tadan {n} ta. Bu imtihon emas — shunchaki mustahkamlash.",
     quizNextBtn: "Keyingi savol", quizFinishBtn: "Yakunlash",
+
+    appBugRow: "Ilovadagi muammo haqida xabar berish", appBugRowSub: "Material haqida emas, ilovaning o'zi haqida",
+    appBugTitle: "Ilovadagi muammo",
+    appBugIntro: "Nima noto'g'ri ketganini tasvirlang — nima qilayotgan edingiz va kutilganidan boshqa nima sodir bo'ldi. Bu materiallar mazmuni haqida emas, ilovaning o'zi ishlashi haqida.",
+    appBugFieldLabel: "Nima bo'ldi", appBugPlaceholder: "Masalan: «Hisobdan chiqish»ni bosdim, ekran muzlab qoldi…",
+    appBugSubmitBtn: "Yuborish", appBugSentToast: "Rahmat, xabar saqlandi",
+    appBugsListLabel: "Ilova muammolari haqidagi xabarlar",
+    appBugSourceCrash: "Nosozlikda avtomatik", appBugSourceUser: "Foydalanuvchidan",
     removeSavedBtn: "Saqlanganlardan olib tashlash", saveForLaterBtn: "Keyinroq uchun saqlash",
     readRelatedBtn: "O'xshash materiallar",
     storyLabel: "Hikoya",
@@ -865,6 +971,14 @@ const STRINGS = {
     quizTitle: "Quick check-in", quizBtn: "Quick check-in",
     quizDoneTitle: "Done!", quizDoneBody: "Correct answers: {n} out of {total}. This isn't an exam — just reinforcing what you covered.",
     quizNextBtn: "Next question", quizFinishBtn: "Finish",
+
+    appBugRow: "Report an app problem", appBugRowSub: "Not about content — about the app itself",
+    appBugTitle: "App problem",
+    appBugIntro: "Describe what went wrong — what you were doing and what happened instead of what you expected. This is about how the app itself behaves, not about the content of any material.",
+    appBugFieldLabel: "What happened", appBugPlaceholder: "For example: tapped \"Log out\" and the screen froze…",
+    appBugSubmitBtn: "Send", appBugSentToast: "Thanks, the report was saved",
+    appBugsListLabel: "App problem reports",
+    appBugSourceCrash: "Automatic, on crash", appBugSourceUser: "From a user",
     removeSavedBtn: "Remove from saved", saveForLaterBtn: "Save for later",
     readRelatedBtn: "Read related resources",
     storyLabel: "Story",
@@ -1960,6 +2074,11 @@ function Profile({ account, set, saved, myStories, go, notify, onRerunSetup, t, 
         <span style={{flex:1}}><b>{t("aboutRow")}</b></span>
         <I.chevron style={{color:"var(--muted)"}}/>
       </button>
+      <button className="row-item" onClick={()=>go({ view:{ type:"appBugReport" } }, t("appBugTitle"))}>
+        <span className="row-icon"><I.flag/></span>
+        <span style={{flex:1}}><b>{t("appBugRow")}</b><small>{t("appBugRowSub")}</small></span>
+        <I.chevron style={{color:"var(--muted)"}}/>
+      </button>
       <button className="row-item" onClick={onOpenInsights}>
         <span className="row-icon"><I.chart/></span>
         <span style={{flex:1}}><b>{t("insightsRow")}</b><small>{t("insightsSub")}</small></span>
@@ -2545,6 +2664,39 @@ function OnboardTour({ t, onDone }){
   );
 }
 
+function AppBugReportView({ onBack, notify, t }){
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+  const ok = text.trim().length > 5;
+  const submit = ()=>{
+    if(!ok) return;
+    addAppBug({ source:"user", description:text.trim() });
+    setSent(true);
+    notify(t("appBugSentToast"));
+  };
+  return (
+    <Detail title={t("appBugTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <p className="muted" style={{fontSize:"calc(13px * var(--fs))", marginTop:0, lineHeight:1.6}}>{t("appBugIntro")}</p>
+      {sent ? (
+        <div className="card" style={{display:"block", textAlign:"center", padding:24}}>
+          <div style={{fontSize:30}}>✅</div>
+          <p style={{marginTop:8, fontSize:"calc(13.5px * var(--fs))"}}>{t("appBugSentToast")}</p>
+        </div>
+      ) : (
+        <React.Fragment>
+          <div className="field">
+            <label htmlFor="bug-desc">{t("appBugFieldLabel")}</label>
+            <textarea id="bug-desc" rows={7} value={text} onChange={e=>setText(e.target.value)} placeholder={t("appBugPlaceholder")}/>
+          </div>
+          <button className="cta" style={{opacity: ok ? 1 : .45}} disabled={!ok} onClick={submit}>
+            {t("appBugSubmitBtn")} <I.arrow/>
+          </button>
+        </React.Fragment>
+      )}
+    </Detail>
+  );
+}
+
 function AboutView({ onBack, t }){
   const features = ["aboutFeatureVoice","aboutFeatureScan","aboutFeatureTranscript","aboutFeatureOffline","aboutFeatureLangs"];
   return (
@@ -2572,7 +2724,7 @@ function AboutView({ onBack, t }){
   );
 }
 
-function InsightsView({ onBack, accounts, reports, t }){
+function InsightsView({ onBack, accounts, reports, appBugs, t }){
   const list = Object.values(accounts || {});
   const total = list.length;
   const byProfile = { "low-vision":0, "blind":0, "hearing":0, "standard":0, "—":0 };
@@ -2646,6 +2798,22 @@ function InsightsView({ onBack, accounts, reports, t }){
               <I.upload/> {t("insightsExportCsv")}
             </button>
           </React.Fragment>
+        )}
+      </div>
+      <div className="insight-card">
+        <b>{t("appBugsListLabel")}</b>
+        {(appBugs || []).length === 0 ? (
+          <p className="muted" style={{fontSize:"calc(12px * var(--fs))"}}>{t("insightsNoReports")}</p>
+        ) : (
+          [...appBugs].reverse().map(b=>(
+            <div key={b.id} style={{padding:"9px 0", borderBottom:"1px solid var(--line)"}}>
+              <div style={{display:"flex", justifyContent:"space-between", gap:8}}>
+                <b style={{fontSize:"calc(12px * var(--fs))"}}>{b.source === "crash" ? t("appBugSourceCrash") : t("appBugSourceUser")}</b>
+                <span className="muted" style={{fontSize:"calc(10.5px * var(--fs))", flex:"none"}}>{new Date(b.at).toLocaleDateString()}</span>
+              </div>
+              <p style={{fontSize:"calc(12px * var(--fs))", margin:"4px 0 0", color:"var(--body-text)"}}>{b.description || b.message}</p>
+            </div>
+          ))
         )}
       </div>
       <p className="muted" style={{fontSize:"calc(11.5px * var(--fs))", lineHeight:1.5}}>{t("insightsNote")}</p>
@@ -3126,7 +3294,7 @@ function useDeviceScale(ref){
 }
 
 /* ============ app ============ */
-function App(){
+function AppInner(){
   const [accounts, setAccounts] = useState(()=> MIGRATED ? MIGRATED.accounts : loadAccounts());
   const [session, setSession] = useState(()=> MIGRATED ? MIGRATED.session : loadSession());
   const [uiLang, setUiLang] = useState(()=>{
@@ -3476,6 +3644,7 @@ function App(){
     view?.type === "compose" ? t("tileShareTitle") :
     view?.type === "insights" ? t("insightsTitle") :
     view?.type === "about" ? t("aboutTitle") :
+    view?.type === "appBugReport" ? t("appBugTitle") :
     view?.type === "search" ? t("globalSearchTitle") :
     tab === "home" ? t("welcomeTitle") : tab === "library" ? t("libraryTitle") :
     tab === "stories" ? t("storiesTitle") : t("profileTitle");
@@ -3545,8 +3714,9 @@ function App(){
     else if(view.type==="scan") body = <ScanText onBack={back} t={t} lang={lang} notify={notify}/>;
     else if(view.type==="transcript") body = <LiveTranscript onBack={back} t={t} lang={lang} notify={notify}/>;
     else if(view.type==="compose") body = <Compose onBack={back} onSubmit={publish} t={t}/>;
-    else if(view.type==="insights") body = <InsightsView onBack={back} accounts={accounts} reports={reports} t={t}/>;
+    else if(view.type==="insights") body = <InsightsView onBack={back} accounts={accounts} reports={reports} appBugs={loadAppBugs()} t={t}/>;
     else if(view.type==="about") body = <AboutView onBack={back} t={t}/>;
+    else if(view.type==="appBugReport") body = <AppBugReportView onBack={back} notify={notify} t={t}/>;
     else if(view.type==="search") body = <GlobalSearch onBack={back} go={go} t={t} lang={lang}/>;
   } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified} lastViewed={account.lastViewed}/>;
   else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t} lang={lang}/>;
@@ -3600,6 +3770,14 @@ function App(){
       </div>
       {tourVisible && <OnboardTour t={t} onDone={dismissTour}/>}
     </React.Fragment>
+  );
+}
+
+function App(){
+  return (
+    <ErrorBoundary>
+      <AppInner/>
+    </ErrorBoundary>
   );
 }
 
