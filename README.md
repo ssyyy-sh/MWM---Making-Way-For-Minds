@@ -1,16 +1,73 @@
-# React + Vite
+# Общая лента историй — настройка Supabase
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Без этого шага «Поделиться историей» продолжает работать как раньше — сохраняет только
+у самого автора локально. С этим шагом текстовые истории (не голосовые/видео — см. ниже
+почему) становятся видны всем, кто пользуется приложением.
 
-Currently, two official plugins are available:
+## Шаг 1. Создайте проект Supabase
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Зайдите на **supabase.com** → **Start your project** → войдите через GitHub (бесплатно, карта не нужна).
+2. **New project** → дайте имя (например `mwm`), придумайте пароль для базы (сохраните его отдельно,
+   он редко понадобится напрямую, но пусть будет), выберите регион ближе к вам.
+3. Подождите минуту-две, пока проект создастся.
 
-## React Compiler
+## Шаг 2. Создайте таблицу
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Слева в меню — **SQL Editor** → **New query**.
+2. Откройте файл `setup.sql` из этой папки, скопируйте всё содержимое, вставьте в редактор.
+3. **Run**. Должно появиться `Success. No rows returned`.
 
-## Expanding the ESLint configuration
+Это создаёт таблицу `stories` и настраивает права: читать может любой, публиковать —
+тоже любой, а редактировать или удалять чужие записи через обычный ключ приложения
+нельзя вообще (таких прав в скрипте просто нет).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Шаг 3. Возьмите ключи
+
+1. Слева — **Project Settings** (шестерёнка) → **API**.
+2. Скопируйте:
+   - **Project URL** (вида `https://xxxxxxxxxxxx.supabase.co`)
+   - **anon public** ключ (длинная строка, начинается с `eyJ...`)
+
+Это можно спокойно вставлять прямо в код приложения — этот ключ специально сделан
+безопасным для использования в браузере, вся защита данных настроена правами доступа
+из шага 2, а не секретностью ключа.
+
+## Шаг 4. Подключите к приложению
+
+В `App.jsx` найдите:
+
+```js
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+```
+
+Замените на свои значения из шага 3:
+
+```js
+const SUPABASE_URL = "https://xxxxxxxxxxxx.supabase.co";
+const SUPABASE_ANON_KEY = "eyJ...ваш ключ...";
+```
+
+`npm install` (подтянет пакет `@supabase/supabase-js`, он уже прописан в `package.json`),
+затем `npm run deploy`.
+
+## Что теперь работает
+
+- Кто угодно публикует текстовую историю → она сразу появляется в общей ленте у всех.
+- При открытии вкладки «Истории» приложение подгружает свежие публикации с сервера.
+- Если сервер недоступен (нет интернета, ключи не настроены) — приложение тихо
+  показывает только локальные и встроенные истории, ничего не ломается.
+
+## Честное ограничение
+
+Голосовые записи и видео **не** синхронизируются через эту базу — они остаются только
+локально у автора (та же ситуация, что и раньше). Причина простая: аудио/видео —
+это файлы, а не текст, для них нужно отдельное файловое хранилище (Supabase Storage),
+это заметно больше настройки. Если понадобится — можно добавить отдельным шагом.
+
+## Модерация (на будущее)
+
+Сейчас публиковать может кто угодно, и удалить чужую историю через обычный доступ
+приложения нельзя — только руками, через сам Supabase (Table Editor → выбрать строку →
+Delete). Если начнётся спам — самый быстрый способ остановить: в Supabase зайти в
+**Authentication → Policies** и временно отключить политику `Anyone can publish a story`.

@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { createClient } from "@supabase/supabase-js";
 import "./App.css";
+
+// Shared community stories, real cross-device sync via Supabase (free tier).
+// Empty by default — the app works entirely offline/local until these are filled in.
+// See /supabase-setup/README.md for the exact setup steps.
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY) ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 /* ============ storage: multi-account ============ */
 const ACCOUNTS_KEY = "mwm:accounts:v1";
@@ -46,6 +54,21 @@ function telegramUserToAccount(tgUser, colorScheme){
   const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ") || tgUser.username || "Telegram";
   const email = "tg_" + tgUser.id + "@telegram.local";
   return { name, email, lang, dark: colorScheme === "dark" };
+}
+
+// Minimal usage log: fire-and-forget message to a Cloudflare Worker, which relays
+// it into a Telegram chat via the Bot API. See /telegram-log-worker/README.md.
+// Empty by default — nothing is sent anywhere until this is filled in.
+const LOG_WORKER_URL = "";
+function logToTelegram(user, event){
+  if(!LOG_WORKER_URL || !user) return;
+  try{
+    fetch(LOG_WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user, event })
+    }).catch(()=>{});
+  }catch(e){}
 }
 
 function makeAccount({ name, email, lang }){
@@ -154,6 +177,53 @@ class ErrorBoundary extends React.Component {
     }
     return this.props.children;
   }
+}
+
+async function fetchSharedStories(){
+  if(!supabase) return [];
+  try{
+    const { data, error } = await supabase
+      .from("stories")
+      .select("*")
+      .order("created_at", { ascending:false })
+      .limit(200);
+    if(error || !data) return [];
+    return data.map(row=>({
+      id: row.id,
+      title: row.title,
+      author: row.author,
+      country: row.country || "—",
+      ago: timeAgo(row.created_at),
+      likes: row.likes || 0,
+      format: "write",
+      body: Array.isArray(row.body) ? row.body : String(row.body || "").split("\n\n").filter(Boolean),
+      shared: true
+    }));
+  }catch(e){ return []; }
+}
+async function publishSharedStory(story, lang){
+  if(!supabase) return;
+  try{
+    await supabase.from("stories").insert({
+      id: story.id,
+      title: story.title,
+      author: story.author,
+      country: story.country,
+      body: story.body,
+      lang: lang || "ru"
+    });
+  }catch(e){}
+}
+function timeAgo(iso){
+  try{
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if(mins < 1) return "just now";
+    if(mins < 60) return mins + "m ago";
+    const hrs = Math.floor(mins / 60);
+    if(hrs < 24) return hrs + "h ago";
+    return Math.floor(hrs / 24) + "d ago";
+  }catch(e){ return ""; }
 }
 
 const RATINGS_KEY = "mwm:ratings:v1";
@@ -1895,8 +1965,13 @@ function Library({ go, saved, toggleSave, t, lang }){
 }
 
 /* ============ stories ============ */
-function Stories({ go, liked, toggleLike, myStories, t, lang }){
-  const all = [...myStories, ...STORIES];
+function Stories({ go, liked, toggleLike, myStories, sharedStories, t, lang }){
+  const seen = new Set();
+  const all = [...myStories, ...(sharedStories || []), ...STORIES].filter(s=>{
+    if(seen.has(s.id)) return false;
+    seen.add(s.id);
+    return true;
+  });
   return (
     <div className="scroll with-tabs anim-fade">
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14}}>
@@ -2192,8 +2267,8 @@ function ArticleView({ id, onBack, go, t, lang, onReport }){
   );
 }
 
-function StoryView({ id, onBack, liked, toggleLike, myStories, t, lang, onReport }){
-  const all = [...(myStories||[]), ...STORIES];
+function StoryView({ id, onBack, liked, toggleLike, myStories, sharedStories, t, lang, onReport }){
+  const all = [...(myStories||[]), ...(sharedStories||[]), ...STORIES];
   const s = all.find(x=>x.id===id) || STORIES[0];
   const on = (liked||[]).includes(s.id);
   const body = pick(s.body, lang) || [];
@@ -2542,7 +2617,7 @@ function SwitchAccountView({ onBack, accounts, currentEmail, onSwitch, onAddNew,
   );
 }
 
-function GlobalSearch({ onBack, go, t, lang }){
+function GlobalSearch({ onBack, go, sharedStories, t, lang }){
   const [q, setQ] = useState("");
   const query = q.trim().toLowerCase();
 
@@ -2558,12 +2633,12 @@ function GlobalSearch({ onBack, go, t, lang }){
 
   const storyResults = useMemo(()=>{
     if(!query) return [];
-    return STORIES.filter(s=>{
+    return [...(sharedStories || []), ...STORIES].filter(s=>{
       const title = pick(s.title, lang).toLowerCase();
       const body = (pick(s.body, lang) || []).join(" ").toLowerCase();
       return title.includes(query) || body.includes(query) || s.author.toLowerCase().includes(query) || s.country.toLowerCase().includes(query);
     });
-  }, [query, lang]);
+  }, [query, lang, sharedStories]);
 
   const articleResults = useMemo(()=>{
     if(!query) return [];
@@ -3310,6 +3385,18 @@ function AppInner(){
     return (sess && accs[sess.email]) ? "app" : "splash";
   });
   const [reports, setReports] = useState(loadReports);
+  const [sharedStories, setSharedStories] = useState([]);
+  useEffect(()=>{
+    let cancelled = false;
+    fetchSharedStories().then(list=>{ if(!cancelled) setSharedStories(list); });
+    return ()=>{ cancelled = true; };
+  }, []);
+  useEffect(()=>{
+    if(tab !== "stories" || view) return;
+    let cancelled = false;
+    fetchSharedStories().then(list=>{ if(!cancelled) setSharedStories(list); });
+    return ()=>{ cancelled = true; };
+  }, [tab]);
   const [ratings, setRatings] = useState(loadRatings);
   const [systemDark, setSystemDark] = useState(()=> typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const [tgUser, setTgUser] = useState(null);
@@ -3342,7 +3429,7 @@ function AppInner(){
     try{ tg.isVerticalSwipesEnabled = false; }catch(e){}
     try{ tg.setHeaderColor && tg.setHeaderColor("#16243F"); }catch(e){}
     try{ tg.setBackgroundColor && tg.setBackgroundColor("#16243F"); }catch(e){}
-    try{ if(tg.initDataUnsafe && tg.initDataUnsafe.user) setTgUser(tg.initDataUnsafe.user); }catch(e){}
+    try{ if(tg.initDataUnsafe && tg.initDataUnsafe.user){ setTgUser(tg.initDataUnsafe.user); logToTelegram(tg.initDataUnsafe.user, "open"); } }catch(e){}
   }, []);
 
   useEffect(()=>{ saveAccounts(accounts); }, [accounts]);
@@ -3460,6 +3547,9 @@ function AppInner(){
       videoUrl: f.videoUrl || null
     };
     updateAccount(session.email, p=>({ ...p, myStories:[story, ...p.myStories], activityDates: logActivityDate(p.activityDates) }));
+    if(story.format === "write" && supabase){
+      publishSharedStory(story, lang).then(()=>fetchSharedStories()).then(list=>setSharedStories(list));
+    }
     setView(null); setTab("stories"); notify(t("storyPublished"));
   };
   const handleLearnApply = (opts, fileName)=>{
@@ -3559,6 +3649,7 @@ function AppInner(){
       setAccounts(prev=>({ ...prev, [info.email]: acc }));
       setSession({ email: info.email });
       setStage("setup");
+      logToTelegram(tgUser, "register");
     }else{
       setSession({ email: info.email });
       setStage(existing.onboarded ? "app" : "setup");
@@ -3622,11 +3713,11 @@ function AppInner(){
   }
 
   const storyForVoice = view?.type === "story"
-    ? [...(account.myStories || []), ...STORIES].find(s=>s.id===view.id)
+    ? [...(account.myStories || []), ...sharedStories, ...STORIES].find(s=>s.id===view.id)
     : (view?.type === "article" ? ARTICLES.find(a=>a.id===view.id) : null);
   const storyForVoiceIsRedirect = view?.type === "article" && storyForVoice && storyForVoice.storyId;
   const actualStory = storyForVoiceIsRedirect
-    ? [...(account.myStories || []), ...STORIES].find(s=>s.id===storyForVoice.storyId)
+    ? [...(account.myStories || []), ...sharedStories, ...STORIES].find(s=>s.id===storyForVoice.storyId)
     : (view?.type === "story" ? storyForVoice : null);
 
   const screenTitle =
@@ -3697,7 +3788,7 @@ function AppInner(){
   if(view){
     const back = ()=>setView(null);
     if(view.type==="article") body = <ArticleView id={view.id} onBack={back} go={go} t={t} lang={lang} onReport={submitReport}/>;
-    else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang} onReport={submitReport}/>;
+    else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} sharedStories={sharedStories} t={t} lang={lang} onReport={submitReport}/>;
     else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} lang={lang} onReport={submitReport}
                                                            rating={ratings[view.id]} myVote={account.myRatings ? account.myRatings[view.id] : undefined} onRate={rateResource}/>;
     else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}
@@ -3717,10 +3808,10 @@ function AppInner(){
     else if(view.type==="insights") body = <InsightsView onBack={back} accounts={accounts} reports={reports} appBugs={loadAppBugs()} t={t}/>;
     else if(view.type==="about") body = <AboutView onBack={back} t={t}/>;
     else if(view.type==="appBugReport") body = <AppBugReportView onBack={back} notify={notify} t={t}/>;
-    else if(view.type==="search") body = <GlobalSearch onBack={back} go={go} t={t} lang={lang}/>;
+    else if(view.type==="search") body = <GlobalSearch onBack={back} go={go} sharedStories={sharedStories} t={t} lang={lang}/>;
   } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified} lastViewed={account.lastViewed}/>;
   else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t} lang={lang}/>;
-  else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} t={t} lang={lang}/>;
+  else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} sharedStories={sharedStories} t={t} lang={lang}/>;
   else body = <Profile account={account} set={(u)=>updateAccount(session.email, u)} saved={account.saved} myStories={account.myStories} go={go} notify={notify}
                         onRerunSetup={()=>setStage("setup")} t={t} onLogout={logout}
                         onChangeLang={(code)=>updateAccount(session.email, p=>({ ...p, lang:code }))}
