@@ -513,6 +513,8 @@ const STRINGS = {
     scanLangHint: "Распознавание работает точнее, если выбрать язык, на котором написан текст — не обязательно язык интерфейса.",
     scanLangRu: "Русский", scanLangUk: "Українська", scanLangUz: "O'zbekcha", scanLangEn: "English",
     scanScreenTip: "Фото с бумаги или книги распознаётся лучше, чем фото экрана телефона или монитора — это общее ограничение любого распознавания текста.",
+    scanLowConfidence: "Распознавание получилось ненадёжным — сам движок не уверен в результате. Попробуйте: более яркий свет, текст ближе и крупнее в кадре, без наклона, и проверьте, тот ли язык выбран выше.",
+    scanShowAnyway: "Всё равно показать, что распозналось",
 
     transcriptTitle: "Живая расшифровка",
     transcriptSub: "Говорите — текст появится на экране. Хорошо подходит для лекций и уроков.",
@@ -777,6 +779,8 @@ const STRINGS = {
     scanLangHint: "Matn qaysi tilda yozilgan bo'lsa, o'sha tilni tanlasangiz, tanish aniqroq bo'ladi — bu interfeys tili bilan bir xil bo'lishi shart emas.",
     scanLangRu: "Ruscha", scanLangUk: "Ukraincha", scanLangUz: "O'zbekcha", scanLangEn: "Inglizcha",
     scanScreenTip: "Qog'oz yoki kitobdan olingan surat telefon yoki monitor ekranidan olingan suratdan yaxshiroq tanib olinadi — bu har qanday matn tanish texnologiyasining umumiy cheklovi.",
+    scanLowConfidence: "Tanish ishonchli chiqmadi — dvigatelning o'zi natijaga ishonchi yo'q. Sinab ko'ring: yorqinroq yorug'lik, matnni kadrga yaqinroq va kattaroq joylashtiring, egmasdan, va yuqorida to'g'ri til tanlanganini tekshiring.",
+    scanShowAnyway: "Baribir nima tanilganini ko'rsatish",
 
     transcriptTitle: "Jonli transkripsiya",
     transcriptSub: "Gapiring — matn ekranda paydo bo'ladi. Ma'ruza va darslar uchun qulay.",
@@ -1041,6 +1045,8 @@ const STRINGS = {
     scanLangHint: "Recognition works better when you pick the language the text is actually written in — it doesn't have to match the interface language.",
     scanLangRu: "Russian", scanLangUk: "Ukrainian", scanLangUz: "Uzbek", scanLangEn: "English",
     scanScreenTip: "A photo of paper or a book is recognized better than a photo of a phone or monitor screen — that's a general limitation of any text recognition, not specific to this app.",
+    scanLowConfidence: "The recognition came out unreliable — the engine itself isn't confident in the result. Try: brighter light, text closer and larger in the frame, no tilt, and check the language chip above matches the text.",
+    scanShowAnyway: "Show what it recognized anyway",
 
     transcriptTitle: "Live Transcript",
     transcriptSub: "Speak — the text appears on screen. Good for lectures and lessons.",
@@ -3006,21 +3012,37 @@ function ScanText({ onBack, t, lang, notify }){
   const [imgSrc, setImgSrc] = useState(null);
   const [file, setFile] = useState(null);
   const [text, setText] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | processing | done | empty
+  const [status, setStatus] = useState("idle"); // idle | processing | done | empty | lowConfidence
+  const [confidence, setConfidence] = useState(null);
   const [ocrLang, setOcrLang] = useState(()=> OCR_LANG_OPTIONS.some(o=>o.code===lang) ? lang : "ru");
   const fileRef = useRef(null);
 
-  const runOcr = async (f, tessCode)=>{
+  const MIN_CONFIDENCE = 45; // Tesseract's own 0-100 confidence score for the result
+
+  const runOcr = async (url, tessCode)=>{
     setStatus("processing");
     setText("");
+    setConfidence(null);
     try{
       const { createWorker } = await import("tesseract.js");
       const worker = await createWorker(tessCode);
-      const { data } = await worker.recognize(imgSrc || URL.createObjectURL(f));
+      const { data } = await worker.recognize(url);
       await worker.terminate();
       const cleaned = (data.text || "").trim();
-      setText(cleaned);
-      setStatus(cleaned ? "done" : "empty");
+      const conf = typeof data.confidence === "number" ? data.confidence : 100;
+      setConfidence(conf);
+      if(!cleaned){
+        setStatus("empty");
+      }else if(conf < MIN_CONFIDENCE){
+        // Tesseract itself is not confident in this result — showing it as real text
+        // would be misleading, so we surface an honest "couldn't read this reliably"
+        // state instead of displaying garbled output.
+        setText(cleaned);
+        setStatus("lowConfidence");
+      }else{
+        setText(cleaned);
+        setStatus("done");
+      }
     }catch(e){
       setStatus("empty");
     }
@@ -3028,17 +3050,17 @@ function ScanText({ onBack, t, lang, notify }){
   const onPick = (e)=>{
     const f = e.target.files && e.target.files[0];
     if(!f) return;
-    setFile(f);
     const url = URL.createObjectURL(f);
+    setFile(f);
     setImgSrc(url);
     const tessCode = (OCR_LANG_OPTIONS.find(o=>o.code===ocrLang) || {}).tess || "eng";
-    runOcr(f, tessCode);
+    runOcr(url, tessCode);
   };
   const changeLangAndRerun = (code)=>{
     setOcrLang(code);
-    if(file){
+    if(imgSrc){
       const tessCode = (OCR_LANG_OPTIONS.find(o=>o.code===code) || {}).tess || "eng";
-      runOcr(file, tessCode);
+      runOcr(imgSrc, tessCode);
     }
   };
   const copyText = ()=>{
@@ -3078,6 +3100,18 @@ function ScanText({ onBack, t, lang, notify }){
 
       {status === "empty" && (
         <p className="muted" style={{marginTop:16, fontSize:"calc(13px * var(--fs))"}}>{t("scanEmpty")}</p>
+      )}
+
+      {status === "lowConfidence" && (
+        <div className="card" style={{display:"block", marginTop:16, borderColor:"var(--danger)"}}>
+          <div style={{display:"flex", gap:9, alignItems:"flex-start"}}>
+            <span style={{fontSize:20}}>⚠️</span>
+            <p style={{fontSize:"calc(13px * var(--fs))", lineHeight:1.6, margin:0}}>{t("scanLowConfidence")}</p>
+          </div>
+          <button className="report-toggle" style={{marginTop:12}} onClick={()=>setStatus("done")}>
+            {t("scanShowAnyway")}
+          </button>
+        </div>
       )}
 
       {status === "done" && (
