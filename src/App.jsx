@@ -5,8 +5,8 @@ import "./App.css";
 // Shared community stories, real cross-device sync via Supabase (free tier).
 // Empty by default — the app works entirely offline/local until these are filled in.
 // See /supabase-setup/README.md for the exact setup steps.
-const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+const SUPABASE_URL = "https://kxfwcgfnwffxeabksgfq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_q8X3jHb2KS-eTQ6jEnpf3g_DzeV3uBp";
 const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY) ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 /* ============ storage: multi-account ============ */
