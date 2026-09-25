@@ -182,9 +182,11 @@ class ErrorBoundary extends React.Component {
 async function fetchSharedStories(){
   if(!supabase) return [];
   try{
+    // owner_token is deliberately excluded here — it must never be readable by
+    // anyone but the author's own browser, since it's what authorizes deletion.
     const { data, error } = await supabase
       .from("stories")
-      .select("*")
+      .select("id,title,author,country,body,lang,likes,created_at")
       .order("created_at", { ascending:false })
       .limit(200);
     if(error || !data) return [];
@@ -201,7 +203,13 @@ async function fetchSharedStories(){
     }));
   }catch(e){ return []; }
 }
-async function publishSharedStory(story, lang){
+function makeOwnerToken(){
+  try{
+    if(typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  }catch(e){}
+  return "t" + Date.now() + Math.random().toString(36).slice(2);
+}
+async function publishSharedStory(story, lang, ownerToken){
   if(!supabase) return;
   try{
     await supabase.from("stories").insert({
@@ -210,8 +218,15 @@ async function publishSharedStory(story, lang){
       author: story.author,
       country: story.country,
       body: story.body,
-      lang: lang || "ru"
+      lang: lang || "ru",
+      owner_token: ownerToken
     });
+  }catch(e){}
+}
+async function deleteSharedStory(id, ownerToken){
+  if(!supabase || !ownerToken) return;
+  try{
+    await supabase.from("stories").delete().eq("id", id).eq("owner_token", ownerToken);
   }catch(e){}
 }
 function timeAgo(iso){
@@ -531,6 +546,11 @@ const STRINGS = {
     appBugSubmitBtn: "Отправить", appBugSentToast: "Спасибо, отчёт сохранён",
     appBugsListLabel: "Отчёты о проблемах приложения",
     appBugSourceCrash: "Автоматически при сбое", appBugSourceUser: "От пользователя",
+
+    deleteStoryBtn: "Удалить эту историю",
+    deleteStoryConfirm: "Удалить историю без возможности восстановить?",
+    deleteStoryYes: "Да, удалить", deleteStoryCancel: "Отмена",
+    storyDeletedToast: "История удалена",
     removeSavedBtn: "Убрать из сохранённого", saveForLaterBtn: "Сохранить на потом",
     readRelatedBtn: "Похожие материалы",
     storyLabel: "История",
@@ -790,6 +810,11 @@ const STRINGS = {
     appBugSubmitBtn: "Yuborish", appBugSentToast: "Rahmat, xabar saqlandi",
     appBugsListLabel: "Ilova muammolari haqidagi xabarlar",
     appBugSourceCrash: "Nosozlikda avtomatik", appBugSourceUser: "Foydalanuvchidan",
+
+    deleteStoryBtn: "Bu hikoyani o'chirish",
+    deleteStoryConfirm: "Hikoyani qaytarib bo'lmaydigan tarzda o'chirasizmi?",
+    deleteStoryYes: "Ha, o'chirish", deleteStoryCancel: "Bekor qilish",
+    storyDeletedToast: "Hikoya o'chirildi",
     removeSavedBtn: "Saqlanganlardan olib tashlash", saveForLaterBtn: "Keyinroq uchun saqlash",
     readRelatedBtn: "O'xshash materiallar",
     storyLabel: "Hikoya",
@@ -1049,6 +1074,11 @@ const STRINGS = {
     appBugSubmitBtn: "Send", appBugSentToast: "Thanks, the report was saved",
     appBugsListLabel: "App problem reports",
     appBugSourceCrash: "Automatic, on crash", appBugSourceUser: "From a user",
+
+    deleteStoryBtn: "Delete this story",
+    deleteStoryConfirm: "Delete this story permanently?",
+    deleteStoryYes: "Yes, delete", deleteStoryCancel: "Cancel",
+    storyDeletedToast: "Story deleted",
     removeSavedBtn: "Remove from saved", saveForLaterBtn: "Save for later",
     readRelatedBtn: "Read related resources",
     storyLabel: "Story",
@@ -2267,11 +2297,13 @@ function ArticleView({ id, onBack, go, t, lang, onReport }){
   );
 }
 
-function StoryView({ id, onBack, liked, toggleLike, myStories, sharedStories, t, lang, onReport }){
+function StoryView({ id, onBack, liked, toggleLike, myStories, sharedStories, t, lang, onReport, onDelete }){
   const all = [...(myStories||[]), ...(sharedStories||[]), ...STORIES];
   const s = all.find(x=>x.id===id) || STORIES[0];
   const on = (liked||[]).includes(s.id);
   const body = pick(s.body, lang) || [];
+  const isMine = (myStories||[]).some(m=>m.id===s.id);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   return (
     <Detail title={t ? t("storyLabel") : "Story"} onBack={onBack} onSwipeBack={onBack}
       action={toggleLike ? (
@@ -2284,6 +2316,23 @@ function StoryView({ id, onBack, liked, toggleLike, myStories, sharedStories, t,
         {s.audioUrl ? <audio className="rec-audio" controls src={s.audioUrl} style={{marginTop:14}}/> : null}
         {s.videoUrl ? <video className="rec-video" controls src={s.videoUrl} style={{marginTop:14}}/> : null}
         {body.map((p,i)=><p key={i}>{p}</p>)}
+
+        {isMine && onDelete && (
+          confirmDelete ? (
+            <div className="card" style={{display:"block", marginTop:18, borderColor:"var(--danger)"}}>
+              <p style={{fontSize:"calc(13px * var(--fs))", margin:0}}>{t("deleteStoryConfirm")}</p>
+              <div style={{display:"flex", gap:8, marginTop:12}}>
+                <button className="cta" style={{flex:1, background:"var(--danger)"}} onClick={()=>onDelete(s)}>{t("deleteStoryYes")}</button>
+                <button className="cta" style={{flex:1, background:"var(--cream-2)", color:"var(--navy)"}} onClick={()=>setConfirmDelete(false)}>{t("deleteStoryCancel")}</button>
+              </div>
+            </div>
+          ) : (
+            <button className="report-toggle" style={{marginTop:18, color:"var(--danger)"}} onClick={()=>setConfirmDelete(true)}>
+              {t("deleteStoryBtn")}
+            </button>
+          )
+        )}
+
         {t ? <ReportBox t={t} onSubmit={(r)=>onReport && onReport({ type:"story", id:s.id, ...r })}/> : null}
       </article>
     </Detail>
@@ -3538,19 +3587,30 @@ function AppInner(){
   };
   const publish = (f)=>{
     if(!session || !account) return;
+    const ownerToken = (f.format === "write" && supabase) ? makeOwnerToken() : null;
     const story = {
       id:"my" + Date.now(), title:f.title.trim(), author: account.name || "You",
       country:f.country.trim() || "—", ago:"just now", likes:0,
       format: f.format || "write",
       body: f.format === "write" ? f.body.trim().split(/\n{1,}/).filter(Boolean) : [],
       audioUrl: f.audioUrl || null,
-      videoUrl: f.videoUrl || null
+      videoUrl: f.videoUrl || null,
+      ownerToken
     };
     updateAccount(session.email, p=>({ ...p, myStories:[story, ...p.myStories], activityDates: logActivityDate(p.activityDates) }));
     if(story.format === "write" && supabase){
-      publishSharedStory(story, lang).then(()=>fetchSharedStories()).then(list=>setSharedStories(list));
+      publishSharedStory(story, lang, ownerToken).then(()=>fetchSharedStories()).then(list=>setSharedStories(list));
     }
     setView(null); setTab("stories"); notify(t("storyPublished"));
+  };
+  const removeMyStory = (story)=>{
+    if(!session) return;
+    updateAccount(session.email, p=>({ ...p, myStories: p.myStories.filter(s=>s.id !== story.id) }));
+    if(story.ownerToken && supabase){
+      deleteSharedStory(story.id, story.ownerToken).then(()=>fetchSharedStories()).then(list=>setSharedStories(list));
+    }
+    notify(t("storyDeletedToast"));
+    setView(null);
   };
   const handleLearnApply = (opts, fileName)=>{
     if(!session) return;
@@ -3788,7 +3848,7 @@ function AppInner(){
   if(view){
     const back = ()=>setView(null);
     if(view.type==="article") body = <ArticleView id={view.id} onBack={back} go={go} t={t} lang={lang} onReport={submitReport}/>;
-    else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} sharedStories={sharedStories} t={t} lang={lang} onReport={submitReport}/>;
+    else if(view.type==="story") body = <StoryView id={view.id} onBack={back} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} sharedStories={sharedStories} t={t} lang={lang} onReport={submitReport} onDelete={removeMyStory}/>;
     else if(view.type==="resource") body = <ResourceView id={view.id} onBack={back} saved={account.saved} toggleSave={toggleSave} notify={notify} t={t} lang={lang} onReport={submitReport}
                                                            rating={ratings[view.id]} myVote={account.myRatings ? account.myRatings[view.id] : undefined} onRate={rateResource}/>;
     else if(view.type==="paths") body = <PathsView onBack={back} progress={account.progress} setProgress={setProgress} notify={notify} t={t} lang={lang}
