@@ -3032,6 +3032,70 @@ const OCR_LANG_OPTIONS = [
   { code:"uz", tess:"uzb", labelKey:"scanLangUz" },
   { code:"en", tess:"eng", labelKey:"scanLangEn" }
 ];
+// Real camera photos have color noise, uneven lighting and JPEG artifacts that
+// hurt OCR accuracy. Converting to high-contrast grayscale and upscaling small
+// images before handing them to Tesseract is a standard technique that measurably
+// improves real-world recognition accuracy.
+function preprocessImageForOcr(url){
+  return new Promise((resolve)=>{
+    try{
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = ()=>{
+        try{
+          const MAX_DIM = 2000, MIN_DIM = 1200;
+          let scale = 1;
+          const longSide = Math.max(img.naturalWidth, img.naturalHeight);
+          if(longSide > MAX_DIM) scale = MAX_DIM / longSide;
+          else if(longSide < MIN_DIM) scale = MIN_DIM / longSide;
+          const w = Math.round(img.naturalWidth * scale);
+          const h = Math.round(img.naturalHeight * scale);
+
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+
+          const imgData = ctx.getImageData(0, 0, w, h);
+          const d = imgData.data;
+          const contrast = 1.35; // >1 sharpens the split between ink and background
+          for(let i = 0; i < d.length; i += 4){
+            const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+            let v = (gray - 128) * contrast + 128;
+            v = Math.max(0, Math.min(255, v));
+            d[i] = d[i+1] = d[i+2] = v;
+          }
+          ctx.putImageData(imgData, 0, 0);
+          canvas.toBlob(blob=>{
+            if(blob) resolve(URL.createObjectURL(blob));
+            else resolve(url);
+          }, "image/png");
+        }catch(e){ resolve(url); }
+      };
+      img.onerror = ()=>resolve(url);
+      img.src = url;
+    }catch(e){ resolve(url); }
+  });
+}
+// Tesseract sometimes turns visual noise (edges, dust, JPEG artifacts) into stray
+// punctuation-only "words" — a lone |, \, ', ", or similar with no letters or digits
+// around it. Stripping those is safe: it only removes tokens that carry no actual
+// content, never touches a real word, so it can't turn a correct letter into a wrong
+// one.
+function cleanupOcrNoise(raw){
+  return raw
+    .split("\n")
+    .map(line=>
+      line
+        .split(/\s+/)
+        .filter(tok=>tok.length === 0 || /[\p{L}\p{N}]/u.test(tok))
+        .join(" ")
+    )
+    .join("\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
 function ScanText({ onBack, t, lang, notify }){
   const [imgSrc, setImgSrc] = useState(null);
   const [file, setFile] = useState(null);
@@ -3048,11 +3112,12 @@ function ScanText({ onBack, t, lang, notify }){
     setText("");
     setConfidence(null);
     try{
+      const preprocessedUrl = await preprocessImageForOcr(url);
       const { createWorker } = await import("tesseract.js");
       const worker = await createWorker(tessCode);
-      const { data } = await worker.recognize(url);
+      const { data } = await worker.recognize(preprocessedUrl);
       await worker.terminate();
-      const cleaned = (data.text || "").trim();
+      const cleaned = cleanupOcrNoise((data.text || "").trim());
       const conf = typeof data.confidence === "number" ? data.confidence : 100;
       setConfidence(conf);
       if(!cleaned){
