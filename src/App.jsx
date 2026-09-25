@@ -189,7 +189,11 @@ async function fetchSharedStories(){
       .select("id,title,author,country,body,lang,likes,created_at")
       .order("created_at", { ascending:false })
       .limit(200);
-    if(error || !data) return [];
+    if(error){
+      try{ console.error("MWM: fetchSharedStories failed:", error); }catch(e){}
+      return [];
+    }
+    if(!data) return [];
     return data.map(row=>({
       id: row.id,
       title: row.title,
@@ -210,9 +214,9 @@ function makeOwnerToken(){
   return "t" + Date.now() + Math.random().toString(36).slice(2);
 }
 async function publishSharedStory(story, lang, ownerToken){
-  if(!supabase) return;
+  if(!supabase) return { ok:false, reason:"not-configured" };
   try{
-    await supabase.from("stories").insert({
+    const { error } = await supabase.from("stories").insert({
       id: story.id,
       title: story.title,
       author: story.author,
@@ -221,13 +225,30 @@ async function publishSharedStory(story, lang, ownerToken){
       lang: lang || "ru",
       owner_token: ownerToken
     });
-  }catch(e){}
+    if(error){
+      try{ console.error("MWM: publishSharedStory failed:", error); }catch(e){}
+      try{ addAppBug({ source:"sync", message:"publish failed: " + (error.message || JSON.stringify(error)) }); }catch(e){}
+      return { ok:false, reason:error.message || String(error) };
+    }
+    return { ok:true };
+  }catch(e){
+    try{ console.error("MWM: publishSharedStory threw:", e); }catch(e2){}
+    try{ addAppBug({ source:"sync", message:"publish threw: " + String(e && e.message || e) }); }catch(e2){}
+    return { ok:false, reason:String(e) };
+  }
 }
 async function deleteSharedStory(id, ownerToken){
-  if(!supabase || !ownerToken) return;
+  if(!supabase || !ownerToken) return { ok:false };
   try{
-    await supabase.from("stories").delete().eq("id", id).eq("owner_token", ownerToken);
-  }catch(e){}
+    const { error } = await supabase.from("stories").delete().eq("id", id).eq("owner_token", ownerToken);
+    if(error){
+      try{ console.error("MWM: deleteSharedStory failed:", error); }catch(e){}
+      return { ok:false, reason:error.message };
+    }
+    return { ok:true };
+  }catch(e){
+    return { ok:false, reason:String(e) };
+  }
 }
 function timeAgo(iso){
   try{
@@ -438,6 +459,7 @@ const STRINGS = {
     savedAdded: "Сохранено в библиотеке", savedRemoved: "Убрано из сохранённого",
     likeAdded: "Понравилось", likeRemoved: "Лайк убран",
     storyPublished: "История опубликована",
+    storySyncFailedToast: "Сохранена у вас, но не отправилась в общую ленту — проверьте интернет",
     lessonDone: "Урок отмечен пройденным", pathwayDone: "Маршрут завершён",
     resetDone: "Данные сброшены",
     profileApplied: "Интерфейс подстроен под вас", profileAppliedPlain: "Готово",
@@ -547,7 +569,7 @@ const STRINGS = {
     appBugFieldLabel: "Что случилось", appBugPlaceholder: "Например: нажал «Выйти из аккаунта», и экран завис…",
     appBugSubmitBtn: "Отправить", appBugSentToast: "Спасибо, отчёт сохранён",
     appBugsListLabel: "Отчёты о проблемах приложения",
-    appBugSourceCrash: "Автоматически при сбое", appBugSourceUser: "От пользователя",
+    appBugSourceCrash: "Автоматически при сбое", appBugSourceUser: "От пользователя", appBugSourceSync: "Сбой синхронизации",
 
     deleteStoryBtn: "Удалить эту историю",
     deleteStoryConfirm: "Удалить историю без возможности восстановить?",
@@ -704,6 +726,7 @@ const STRINGS = {
     savedAdded: "Kutubxonaga saqlandi", savedRemoved: "Saqlanganlardan olib tashlandi",
     likeAdded: "Yoqdi", likeRemoved: "Layk olib tashlandi",
     storyPublished: "Hikoya nashr qilindi",
+    storySyncFailedToast: "Sizda saqlandi, lekin umumiy lentaga yuborilmadi — internetni tekshiring",
     lessonDone: "Dars tugallangan deb belgilandi", pathwayDone: "Yo'nalish tugallandi",
     resetDone: "Ma'lumotlar tozalandi",
     profileApplied: "Interfeys siz uchun moslashtirildi", profileAppliedPlain: "Tayyor",
@@ -813,7 +836,7 @@ const STRINGS = {
     appBugFieldLabel: "Nima bo'ldi", appBugPlaceholder: "Masalan: «Hisobdan chiqish»ni bosdim, ekran muzlab qoldi…",
     appBugSubmitBtn: "Yuborish", appBugSentToast: "Rahmat, xabar saqlandi",
     appBugsListLabel: "Ilova muammolari haqidagi xabarlar",
-    appBugSourceCrash: "Nosozlikda avtomatik", appBugSourceUser: "Foydalanuvchidan",
+    appBugSourceCrash: "Nosozlikda avtomatik", appBugSourceUser: "Foydalanuvchidan", appBugSourceSync: "Sinxronlashda xato",
 
     deleteStoryBtn: "Bu hikoyani o'chirish",
     deleteStoryConfirm: "Hikoyani qaytarib bo'lmaydigan tarzda o'chirasizmi?",
@@ -970,6 +993,7 @@ const STRINGS = {
     savedAdded: "Saved to your library", savedRemoved: "Removed from saved",
     likeAdded: "Liked", likeRemoved: "Like removed",
     storyPublished: "Story published",
+    storySyncFailedToast: "Saved on your device, but didn't reach the shared feed — check your connection",
     lessonDone: "Lesson marked done", pathwayDone: "Pathway finished",
     resetDone: "Everything reset",
     profileApplied: "Interface adjusted for you", profileAppliedPlain: "Done",
@@ -1079,7 +1103,7 @@ const STRINGS = {
     appBugFieldLabel: "What happened", appBugPlaceholder: "For example: tapped \"Log out\" and the screen froze…",
     appBugSubmitBtn: "Send", appBugSentToast: "Thanks, the report was saved",
     appBugsListLabel: "App problem reports",
-    appBugSourceCrash: "Automatic, on crash", appBugSourceUser: "From a user",
+    appBugSourceCrash: "Automatic, on crash", appBugSourceUser: "From a user", appBugSourceSync: "Sync failure",
 
     deleteStoryBtn: "Delete this story",
     deleteStoryConfirm: "Delete this story permanently?",
@@ -2938,7 +2962,7 @@ function InsightsView({ onBack, accounts, reports, appBugs, t }){
           [...appBugs].reverse().map(b=>(
             <div key={b.id} style={{padding:"9px 0", borderBottom:"1px solid var(--line)"}}>
               <div style={{display:"flex", justifyContent:"space-between", gap:8}}>
-                <b style={{fontSize:"calc(12px * var(--fs))"}}>{b.source === "crash" ? t("appBugSourceCrash") : t("appBugSourceUser")}</b>
+                <b style={{fontSize:"calc(12px * var(--fs))"}}>{b.source === "crash" ? t("appBugSourceCrash") : b.source === "sync" ? t("appBugSourceSync") : t("appBugSourceUser")}</b>
                 <span className="muted" style={{fontSize:"calc(10.5px * var(--fs))", flex:"none"}}>{new Date(b.at).toLocaleDateString()}</span>
               </div>
               <p style={{fontSize:"calc(12px * var(--fs))", margin:"4px 0 0", color:"var(--body-text)"}}>{b.description || b.message}</p>
@@ -3633,7 +3657,13 @@ function AppInner(){
     };
     updateAccount(session.email, p=>({ ...p, myStories:[story, ...p.myStories], activityDates: logActivityDate(p.activityDates) }));
     if(story.format === "write" && supabase){
-      publishSharedStory(story, lang, ownerToken).then(()=>fetchSharedStories()).then(list=>setSharedStories(list));
+      publishSharedStory(story, lang, ownerToken).then(result=>{
+        if(result && result.ok){
+          fetchSharedStories().then(list=>setSharedStories(list));
+        }else{
+          notify(t("storySyncFailedToast"));
+        }
+      });
     }
     setView(null); setTab("stories"); notify(t("storyPublished"));
   };
