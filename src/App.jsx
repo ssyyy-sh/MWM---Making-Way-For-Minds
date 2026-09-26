@@ -350,6 +350,7 @@ const STRINGS = {
     splashQuote: "«Каждый разум заслуживает доступа к знаниям»",
     splashCta: "Начать",
     splashFooter: "Исследования · Инклюзия · Равенство",
+    splashVoiceIntro: "Приложение MWM — Делаем путь для разума. Внизу экрана — кнопка «Начать». Нажмите на неё, чтобы перейти к регистрации.",
 
     authTitle: "Добро пожаловать",
     authSubtitleLogin: "Войдите, чтобы вернуться к своим настройкам",
@@ -368,6 +369,8 @@ const STRINGS = {
     switchToRegister: "Нет аккаунта? Зарегистрироваться",
     switchToLogin: "Уже есть аккаунт? Войти",
     guestLink: "Продолжить без регистрации",
+    authVoiceIntro: "Экран регистрации. Вверху — вход через Телеграм, если доступен. Ниже — поля: имя, email и пароль, и кнопка «Регистрация» снизу. Есть также вкладка «Вход» для тех, у кого уже есть аккаунт, и ссылка «Продолжить без регистрации». Чтобы услышать это снова, нажмите на круглую кнопку с динамиком внизу экрана.",
+    replayAudioLabel: "Озвучить экран ещё раз",
     errNameRequired: "Введите имя",
     errEmailInvalid: "Проверьте email",
     errPasswordShort: "Пароль слишком короткий",
@@ -381,6 +384,7 @@ const STRINGS = {
     setupTitle: "Каким должен быть интерфейс для вас?",
     setupSubtitle: "Мы делаем приложение для людей с разными типами восприятия. Выберите вариант — его всегда можно изменить в профиле.",
     setupContinue: "Продолжить",
+    setupVoiceIntro: "Экран настройки. Выберите, каким должен быть интерфейс: слабовидящим — крупный текст и контраст; незрячим — одна кнопка озвучивает экран; слабослышащим — субтитры; или обычный вид. Нажмите на вариант, чтобы услышать его название, затем — «Продолжить» внизу.",
     lowVisionTitle: "Слабое зрение",
     lowVisionSub: "Очень крупный текст и контраст",
     blindTitle: "Незрячим",
@@ -617,6 +621,7 @@ const STRINGS = {
     splashQuote: "“Har bir ong bilimga ega bo'lishga loyiq”",
     splashCta: "Boshlash",
     splashFooter: "Tadqiqot · Inklyuziya · Tenglik",
+    splashVoiceIntro: "MWM ilovasi — Ongga yo'l ochamiz. Ekran pastida «Boshlash» tugmasi bor. Ro'yxatdan o'tishga o'tish uchun uni bosing.",
 
     authTitle: "Xush kelibsiz",
     authSubtitleLogin: "Sozlamalaringizga qaytish uchun tizimga kiring",
@@ -635,6 +640,8 @@ const STRINGS = {
     switchToRegister: "Hisobingiz yo'qmi? Ro'yxatdan o'ting",
     switchToLogin: "Hisobingiz bormi? Kiring",
     guestLink: "Ro'yxatdan o'tmasdan davom etish",
+    authVoiceIntro: "Ro'yxatdan o'tish ekrani. Yuqorida — agar mavjud bo'lsa, Telegram orqali kirish. Pastda — ism, email va parol maydonlari, va pastda «Ro'yxatdan o'tish» tugmasi. Shuningdek, hisobi bor foydalanuvchilar uchun «Kirish» bo'limi va «Ro'yxatdan o'tmasdan davom etish» havolasi bor. Buni qayta eshitish uchun ekran pastidagi dumaloq karnay tugmasini bosing.",
+    replayAudioLabel: "Ekranni qayta ovozli o'qish",
     errNameRequired: "Ismingizni kiriting",
     errEmailInvalid: "Emailni tekshiring",
     errPasswordShort: "Parol juda qisqa",
@@ -648,6 +655,7 @@ const STRINGS = {
     setupTitle: "Interfeys siz uchun qanday bo'lishi kerak?",
     setupSubtitle: "Biz turli idrok turiga ega odamlar uchun ilova yaratyapmiz. Variantni tanlang — buni istalgan vaqt profilda o'zgartirish mumkin.",
     setupContinue: "Davom etish",
+    setupVoiceIntro: "Sozlash ekrani. Interfeys qanday bo'lishini tanlang: kam ko'ruvchilar uchun — katta matn va kontrast; ko'rmaydiganlar uchun — bitta tugma ekranni ovoz bilan o'qiydi; eshitishda qiyinchiligi borlar uchun — subtitrlar; yoki oddiy ko'rinish. Nomini eshitish uchun variantga bosing, so'ng pastdagi «Davom etish» tugmasini bosing.",
     lowVisionTitle: "Zaif ko'rish",
     lowVisionSub: "Juda katta matn va kontrast",
     blindTitle: "Ko'rmaydiganlar uchun",
@@ -884,6 +892,7 @@ const STRINGS = {
     splashQuote: "“Every mind deserves access to learning.”",
     splashCta: "Get Started",
     splashFooter: "Research · Inclusion · Equity",
+    splashVoiceIntro: "The MWM app — Making Way for Minds. There's a Get Started button at the bottom of the screen. Tap it to go to registration.",
 
     authTitle: "Welcome",
     authSubtitleLogin: "Log in to return to your settings",
@@ -902,6 +911,8 @@ const STRINGS = {
     switchToRegister: "No account? Register",
     switchToLogin: "Already have an account? Log in",
     guestLink: "Continue without an account",
+    authVoiceIntro: "Registration screen. At the top, sign in with Telegram if available. Below are fields for name, email and password, with a Register button underneath. There's also a Login tab for people who already have an account, and a link to continue without an account. To hear this again, press the round speaker button at the bottom of the screen.",
+    replayAudioLabel: "Read this screen aloud again",
     errNameRequired: "Enter your name",
     errEmailInvalid: "Check your email",
     errPasswordShort: "Password is too short",
@@ -915,6 +926,7 @@ const STRINGS = {
     setupTitle: "What should the interface be like for you?",
     setupSubtitle: "We're building this app for people with different kinds of perception. Pick an option — you can always change it later in your profile.",
     setupContinue: "Continue",
+    setupVoiceIntro: "Setup screen. Choose how the interface should work for you: low vision — large text and contrast; blind — one button reads the screen aloud; hard of hearing — captions; or the standard look. Tap an option to hear its name, then tap Continue at the bottom.",
     lowVisionTitle: "Low vision",
     lowVisionSub: "Extra-large text and contrast",
     blindTitle: "Blind",
@@ -1669,6 +1681,10 @@ function LangRow({ lang, setLang }){
 
 /* ============ splash ============ */
 function Splash({ onStart, lang, setLang, t }){
+  useEffect(()=>{
+    const timer = setTimeout(()=>{ speakText(t("splashVoiceIntro"), { lang: TTS_LANG_MAP[lang] }); }, 500);
+    return ()=>clearTimeout(timer);
+  }, [lang]);
   return (
     <div className="screen anim-fade">
       <StatusBar/>
@@ -1701,6 +1717,10 @@ function Splash({ onStart, lang, setLang, t }){
         <button className="cta" onClick={onStart}>{t("splashCta")} <I.arrow/></button>
         <div className="foot-note">{t("splashFooter")}</div>
       </div>
+      <button className="voice-fab no-tabbar" aria-label={t("replayAudioLabel")}
+              onClick={()=>speakText(t("splashVoiceIntro"), { lang: TTS_LANG_MAP[lang] })}>
+        <I.speaker/>
+      </button>
     </div>
   );
 }
@@ -1710,6 +1730,11 @@ function AuthScreen({ lang, setLang, t, onAuth, error, setError, tgUser, onTeleg
   const [mode, setMode] = useState("register");
   const [form, setForm] = useState({ name:"", email:"", password:"" });
   const emailOk = (v)=> /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
+  useEffect(()=>{
+    const timer = setTimeout(()=>{ speakText(t("authVoiceIntro"), { lang: TTS_LANG_MAP[lang] }); }, 500);
+    return ()=>clearTimeout(timer);
+  }, [lang]);
 
   const submit = ()=>{
     const email = form.email.trim().toLowerCase();
@@ -1791,6 +1816,10 @@ function AuthScreen({ lang, setLang, t, onAuth, error, setError, tgUser, onTeleg
           {t("guestLink")}
         </button>
       </div>
+      <button className="voice-fab no-tabbar" aria-label={t("replayAudioLabel")}
+              onClick={()=>speakText(t("authVoiceIntro"), { lang: TTS_LANG_MAP[lang] })}>
+        <I.speaker/>
+      </button>
     </div>
   );
 }
@@ -1798,6 +1827,10 @@ function AuthScreen({ lang, setLang, t, onAuth, error, setError, tgUser, onTeleg
 /* ============ accessibility setup ============ */
 function AccessibilitySetup({ onPick, t }){
   const [picked, setPicked] = useState(null);
+  useEffect(()=>{
+    const timer = setTimeout(()=>{ speakText(t("setupVoiceIntro")); }, 500);
+    return ()=>clearTimeout(timer);
+  }, []);
   const PROFILES = [
     { id:"low-vision", icon:I.eye, titleKey:"lowVisionTitle", subKey:"lowVisionSub" },
     { id:"blind", icon:I.eyeOff, titleKey:"blindTitle", subKey:"blindSub" },
@@ -1838,6 +1871,10 @@ function AccessibilitySetup({ onPick, t }){
           {t("setupContinue")} <I.arrow/>
         </button>
       </div>
+      <button className="voice-fab no-tabbar" aria-label={t("replayAudioLabel")}
+              onClick={()=>speakText(t("setupVoiceIntro"))}>
+        <I.speaker/>
+      </button>
     </div>
   );
 }
