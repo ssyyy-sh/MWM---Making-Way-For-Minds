@@ -179,8 +179,19 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// Tracks whether the shared-stories sync is actually working on THIS deployed
+// build — surfaced in the UI (see SYNC_STATUS_BANNER logic in Stories/Insights)
+// because "published on my phone but nobody else sees it" is invisible from
+// inside the app otherwise: it looks identical whether Supabase isn't
+// configured on this particular build, or the read query is being blocked
+// (e.g. a Row Level Security policy), or it's a real network problem.
+let LAST_SYNC_STATUS = { configured: !!supabase, ok: null, reason: null };
+let SYNC_ERROR_LOGGED = false;
 async function fetchSharedStories(){
-  if(!supabase) return [];
+  if(!supabase){
+    LAST_SYNC_STATUS = { configured:false, ok:false, reason:"not-configured" };
+    return [];
+  }
   try{
     // owner_token is deliberately excluded here — it must never be readable by
     // anyone but the author's own browser, since it's what authorizes deletion.
@@ -191,8 +202,14 @@ async function fetchSharedStories(){
       .limit(200);
     if(error){
       try{ console.error("MWM: fetchSharedStories failed:", error); }catch(e){}
+      LAST_SYNC_STATUS = { configured:true, ok:false, reason: error.message || String(error) };
+      if(!SYNC_ERROR_LOGGED){
+        SYNC_ERROR_LOGGED = true;
+        try{ addAppBug({ source:"sync", message:"fetch failed: " + (error.message || JSON.stringify(error)) }); }catch(e){}
+      }
       return [];
     }
+    LAST_SYNC_STATUS = { configured:true, ok:true, reason:null };
     if(!data) return [];
     return data.map(row=>({
       id: row.id,
@@ -205,7 +222,10 @@ async function fetchSharedStories(){
       body: Array.isArray(row.body) ? row.body : String(row.body || "").split("\n\n").filter(Boolean),
       shared: true
     }));
-  }catch(e){ return []; }
+  }catch(e){
+    LAST_SYNC_STATUS = { configured:true, ok:false, reason:String(e) };
+    return [];
+  }
 }
 function makeOwnerToken(){
   try{
@@ -464,6 +484,8 @@ const STRINGS = {
     likeAdded: "Понравилось", likeRemoved: "Лайк убран",
     storyPublished: "История опубликована",
     storySyncFailedToast: "Сохранена у вас, но не отправилась в общую ленту — проверьте интернет",
+    syncUnconfiguredBanner: "Общая база не подключена на этом устройстве — здесь видны только ваши локальные истории, другие люди их не увидят",
+    syncErrorBanner: "Не удалось загрузить общую ленту — показаны только ваши локальные истории",
     lessonDone: "Урок отмечен пройденным", pathwayDone: "Маршрут завершён",
     resetDone: "Данные сброшены",
     profileApplied: "Интерфейс подстроен под вас", profileAppliedPlain: "Готово",
@@ -482,6 +504,8 @@ const STRINGS = {
     reportSubmit: "Отправить",
     reportThanks: "Спасибо, мы посмотрим",
     insightsTitle: "Аналитика команды",
+    insightsSyncLabel: "Синхронизация общей ленты",
+    insightsSyncOk: "Подключено и работает",
     insightsRow: "Аналитика команды",
     insightsSub: "Аккаунты, обучающие на этом устройстве",
     insightsAccounts: "Аккаунтов создано",
@@ -735,6 +759,8 @@ const STRINGS = {
     likeAdded: "Yoqdi", likeRemoved: "Layk olib tashlandi",
     storyPublished: "Hikoya nashr qilindi",
     storySyncFailedToast: "Sizda saqlandi, lekin umumiy lentaga yuborilmadi — internetni tekshiring",
+    syncUnconfiguredBanner: "Bu qurilmada umumiy baza ulanmagan — faqat sizning lokal hikoyalaringiz ko'rinadi, boshqalar ularni ko'rmaydi",
+    syncErrorBanner: "Umumiy lentani yuklab bo'lmadi — faqat lokal hikoyalaringiz ko'rsatilmoqda",
     lessonDone: "Dars tugallangan deb belgilandi", pathwayDone: "Yo'nalish tugallandi",
     resetDone: "Ma'lumotlar tozalandi",
     profileApplied: "Interfeys siz uchun moslashtirildi", profileAppliedPlain: "Tayyor",
@@ -753,6 +779,8 @@ const STRINGS = {
     reportSubmit: "Yuborish",
     reportThanks: "Rahmat, ko'rib chiqamiz",
     insightsTitle: "Jamoa tahlili",
+    insightsSyncLabel: "Umumiy lenta sinxronlashuvi",
+    insightsSyncOk: "Ulangan va ishlayapti",
     insightsRow: "Jamoa tahlili",
     insightsSub: "Shu qurilmada o'qigan hisoblar",
     insightsAccounts: "Yaratilgan hisoblar",
@@ -1006,6 +1034,8 @@ const STRINGS = {
     likeAdded: "Liked", likeRemoved: "Like removed",
     storyPublished: "Story published",
     storySyncFailedToast: "Saved on your device, but didn't reach the shared feed — check your connection",
+    syncUnconfiguredBanner: "Shared storage isn't connected on this device — only your local stories are shown here, other people won't see them",
+    syncErrorBanner: "Couldn't load the shared feed — showing your local stories only",
     lessonDone: "Lesson marked done", pathwayDone: "Pathway finished",
     resetDone: "Everything reset",
     profileApplied: "Interface adjusted for you", profileAppliedPlain: "Done",
@@ -1024,6 +1054,8 @@ const STRINGS = {
     reportSubmit: "Submit",
     reportThanks: "Thanks, we'll take a look",
     insightsTitle: "Team insights",
+    insightsSyncLabel: "Shared feed sync",
+    insightsSyncOk: "Connected and working",
     insightsRow: "Team insights",
     insightsSub: "Accounts that trained on this device",
     insightsAccounts: "Accounts created",
@@ -2062,13 +2094,14 @@ function Library({ go, saved, toggleSave, t, lang }){
 }
 
 /* ============ stories ============ */
-function Stories({ go, liked, toggleLike, myStories, sharedStories, t, lang }){
+function Stories({ go, liked, toggleLike, myStories, sharedStories, syncStatus, t, lang }){
   const seen = new Set();
   const all = [...myStories, ...(sharedStories || []), ...STORIES].filter(s=>{
     if(seen.has(s.id)) return false;
     seen.add(s.id);
     return true;
   });
+  const showSyncWarning = syncStatus && syncStatus.ok === false;
   return (
     <div className="scroll with-tabs anim-fade">
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14}}>
@@ -2078,6 +2111,16 @@ function Stories({ go, liked, toggleLike, myStories, sharedStories, t, lang }){
       <p className="muted" style={{fontSize:"calc(12.5px * var(--fs))", marginTop:0, marginBottom:16, lineHeight:1.5}}>
         {t("storiesSubtitle")}
       </p>
+      {showSyncWarning && (
+        <div className="card" style={{display:"block", marginBottom:14, borderColor:"var(--danger)"}}>
+          <div style={{display:"flex", gap:9, alignItems:"flex-start"}}>
+            <span style={{fontSize:18}}>⚠️</span>
+            <p style={{fontSize:"calc(12.5px * var(--fs))", lineHeight:1.55, margin:0}}>
+              {syncStatus.configured ? t("syncErrorBanner") : t("syncUnconfiguredBanner")}
+            </p>
+          </div>
+        </div>
+      )}
       {all.map(s=>{
         const title = pick(s.title, lang);
         const body = pick(s.body, lang) || [];
@@ -2927,8 +2970,20 @@ function InsightsView({ onBack, accounts, reports, appBugs, t }){
   });
   const profileLabels = { "low-vision":t("lowVisionTitle"), "blind":t("blindTitle"), "hearing":t("hearingTitle"), "standard":t("standardTitle"), "—":"—" };
   const maxProfile = Math.max(1, ...Object.values(byProfile));
+  const sync = LAST_SYNC_STATUS;
+  const syncText = !sync.configured
+    ? t("syncUnconfiguredBanner")
+    : sync.ok === false
+      ? t("syncErrorBanner") + (sync.reason ? " — " + sync.reason : "")
+      : sync.ok === true
+        ? "✅ " + t("insightsSyncOk")
+        : "…";
   return (
     <Detail title={t("insightsTitle")} onBack={onBack} onSwipeBack={onBack}>
+      <div className="insight-card">
+        <b>{t("insightsSyncLabel")}</b>
+        <p style={{fontSize:"calc(12.5px * var(--fs))", marginTop:6, lineHeight:1.5, color: sync.ok === false ? "var(--danger)" : "var(--body-text)"}}>{syncText}</p>
+      </div>
       <div className="insight-card">
         <b>{t("insightsAccounts")}</b>
         <div style={{fontSize:"calc(30px * var(--fs))", fontFamily:"Fraunces,serif", fontWeight:700}}>{total}</div>
@@ -3595,15 +3650,16 @@ function AppInner(){
   });
   const [reports, setReports] = useState(loadReports);
   const [sharedStories, setSharedStories] = useState([]);
+  const [syncStatus, setSyncStatus] = useState(LAST_SYNC_STATUS);
   useEffect(()=>{
     let cancelled = false;
-    fetchSharedStories().then(list=>{ if(!cancelled) setSharedStories(list); });
+    fetchSharedStories().then(list=>{ if(!cancelled){ setSharedStories(list); setSyncStatus(LAST_SYNC_STATUS); } });
     return ()=>{ cancelled = true; };
   }, []);
   useEffect(()=>{
     if(tab !== "stories" || view) return;
     let cancelled = false;
-    fetchSharedStories().then(list=>{ if(!cancelled) setSharedStories(list); });
+    fetchSharedStories().then(list=>{ if(!cancelled){ setSharedStories(list); setSyncStatus(LAST_SYNC_STATUS); } });
     return ()=>{ cancelled = true; };
   }, [tab]);
   const [ratings, setRatings] = useState(loadRatings);
@@ -3758,14 +3814,23 @@ function AppInner(){
       ownerToken
     };
     updateAccount(session.email, p=>({ ...p, myStories:[story, ...p.myStories], activityDates: logActivityDate(p.activityDates) }));
-    if(story.format === "write" && supabase){
-      publishSharedStory(story, lang, ownerToken).then(result=>{
-        if(result && result.ok){
-          fetchSharedStories().then(list=>setSharedStories(list));
-        }else{
-          notify(t("storySyncFailedToast"));
-        }
-      });
+    if(story.format === "write"){
+      if(supabase){
+        publishSharedStory(story, lang, ownerToken).then(result=>{
+          if(result && result.ok){
+            fetchSharedStories().then(list=>setSharedStories(list));
+          }else{
+            notify(t("storySyncFailedToast"));
+          }
+        });
+      }else{
+        // No Supabase keys configured on THIS build — the story only ever
+        // saved to this one device/browser. Silently skipping this used to
+        // look identical to a successful cross-device publish, which is
+        // exactly what made "not visible to others" so hard to track down.
+        // Delayed so it doesn't get clobbered by the "story published" toast below.
+        setTimeout(()=>notify(t("storySyncFailedToast")), 2400);
+      }
     }
     setView(null); setTab("stories"); notify(t("storyPublished"));
   };
@@ -4037,7 +4102,7 @@ function AppInner(){
     else if(view.type==="search") body = <GlobalSearch onBack={back} go={go} sharedStories={sharedStories} t={t} lang={lang}/>;
   } else if(tab==="home") body = <Home go={go} t={t} lang={lang} greeting={greeting} simplified={simplified} lastViewed={account.lastViewed}/>;
   else if(tab==="library") body = <Library go={go} saved={account.saved} toggleSave={toggleSave} t={t} lang={lang}/>;
-  else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} sharedStories={sharedStories} t={t} lang={lang}/>;
+  else if(tab==="stories") body = <Stories go={go} liked={account.liked} toggleLike={toggleLike} myStories={account.myStories} sharedStories={sharedStories} syncStatus={syncStatus} t={t} lang={lang}/>;
   else body = <Profile account={account} set={(u)=>updateAccount(session.email, u)} saved={account.saved} myStories={account.myStories} go={go} notify={notify}
                         onRerunSetup={()=>setStage("setup")} t={t} onLogout={logout}
                         onChangeLang={(code)=>updateAccount(session.email, p=>({ ...p, lang:code }))}
